@@ -19,6 +19,9 @@
     sudo snap install kubectl --classic
     sudo snap install helm --classic
     
+    # microk8s add-on'ları aktive et. dns olması şart, ingress ve dashboard opsiyonel
+    sudo microk8s enable dns dashboard ingress
+    
     # Oluşan kubernetes erişim config dosyasını kubectl'nin görebileceği yere dump et
     mkdir .kube
     sudo microk8s config > ~/.kube/config
@@ -41,7 +44,20 @@
     # (opsiyonel) Kurulumu gözlemlemek için:
     watch -n1 "kubectl get pods -A"
     ```
-- Güncelleme / Parametre değiştirme:
+- Güncelleme / Parametre değiştirme (parametre set ederek):
+    ```bash
+    # Upgrade komutunda --reuse-values diyerek
+    # eski parametrelerin üzerine değiştirilecek her bir parametre için
+    # --set ya da --set-string kullan.
+    # --set param=1000 değeri direk 1000 olarak basar (bu durumda number olur)
+    # --set-string=1000 değeri tırnak içinde "1000" olarak basar (bu durumda string olur)
+    helm upgrade \
+    --set parametreAdi=parametreDegeri \
+    --set-string sql.saPassword=123456789 \
+    --set sql.memoryLimit=8000 \
+    --reuse-values
+    elektraweb travelaps/elektraweb
+- Güncelleme / Parametre değiştirme (values.yaml export ederek):
     ```bash
     # Mevcut kurulumda kullanılan parametreleri dosyaya çıkar:
     helm get values elektraweb > values.yaml
