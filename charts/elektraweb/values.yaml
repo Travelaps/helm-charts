@@ -1,7 +1,7 @@
 # Programlarımıza erişim için gerekli GitHub erişim anahtarı
 regcred:
   enabled: true
-  user: REQUIRED-github-user
+  user: talyabilisim
   key: REQUIRED-github-access-token
 # NodeJS Web Servis
 worker:
@@ -16,7 +16,7 @@ sql:
   memoryLimit: 16000
   tcpPort: 1433
   agentEnabled: true
-  localPath: /home/tolgagerekci/Desktop/sql-data
+  localPath: /elektraweb/sql-data
   elektraAdminUser:
     username: elektraweb
     password: eE!01012000
@@ -37,7 +37,7 @@ pos:
 reporting:
   install: false
   host: elektrawebreport
-  localPath: /run/desktop/mnt/host/c/Users/Administrator/Desktop/GitHub/ReportingDesigns/fastreport
+  localPath: /elektraweb/fastreport
 # Kanal Yönetimi
 channelManager:
   install: false
@@ -49,10 +49,10 @@ dashboard:
 # Kubernetes Dashboard'a dışarıdan erişim için ingress/user
 dashboardAccess:
   ingress:
-    enabled: true
+    enabled: false
     host: kubernetes.docker.internal
   adminUser:
-    enabled: true
+    enabled: false
     name: admin-user
 # Nginx Ingress
 ingressNginx:
