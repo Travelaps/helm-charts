@@ -1,20 +1,46 @@
-## Usage
+# Kullanım
 
-[Helm](https://helm.sh) must be installed to use the charts.  Please refer to
-Helm's [documentation](https://helm.sh/docs) to get started.
+- Helm komutu çalıştırılan yerde [Helm](https://helm.sh) kurulu olmalı.
+  - Linux: `sudo snap install helm`
+  - Windows: [Releases helm/helm](https://github.com/helm/helm/releases/latest)
+- Travelaps helm chart'larını nereden indireceğini tanımla:
+  `helm repo add travelaps https://travelaps.github.io/helm-charts/`
+- Kurulum parametrelerini değiştirmek için parametreleri dosyaya çıkar:
+  `helm show values travelaps/<chart-adı> > values.yaml`
+- Parametreleri ayarladıktan sonra kurulumu başlat:
+  `helm install <isim> travelaps/<chart-adı> --values values.yaml --timeout 30m`
+  
+## ElektraWeb
 
-Once Helm has been set up correctly, add the repo as follows:
+- Sıfır kurulum:
+    ```bash
+    # Travelaps kaynağını tanımla
+    helm repo add travelaps https://travelaps.github.io/helm-charts/
 
-helm repo add <alias> https://<orgname>.github.io/helm-charts
+    # Parametre dosya şablonunu values.yaml isimli dosyaya indir
+    helm show values travelaps/elektraweb > values.yaml
 
-If you had already added this repo earlier, run `helm repo update` to retrieve
-the latest versions of the packages.  You can then run `helm search repo
-<alias>` to see the charts.
+    # Parametreleri ayarla
+    nano values.yaml
 
-To install the <chart-name> chart:
+    # Bu parametreler ile kurulumu başlat
+    helm install elektraweb travelaps/elektraweb --values values.yaml --timeout 30m
 
-    helm install my-<chart-name> <alias>/<chart-name>
+    # (opsiyonel) Kurulumu gözlemlemek için:
+    watch -n1 "kubectl get pods -A"
+    ```
+- Güncelleme / Parametre değiştirme:
+    ```bash
+    # Mevcut kurulumda kullanılan parametreleri dosyaya çıkar:
+    helm get values elektraweb > values.yaml
 
-To uninstall the chart:
+    # Parametreleri değiştir
+    nano values.yaml
 
-    helm delete my-<chart-name>
+    # Değişiklikleri uygula
+    helm upgrade elektraweb travelaps/elektraweb --values values.yaml --timeout 30m
+    ```
+- Silme:
+    ```bash
+    helm uninstall elektraweb
+    ```
