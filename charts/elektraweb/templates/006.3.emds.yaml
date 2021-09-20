@@ -1,0 +1,2165 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: sql-create-emds
+  namespace: default
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-4"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: initial-creator
+          image: ghcr.io/travelaps/mssql2019fts:v2
+          command:
+            - /opt/mssql-tools/bin/sqlcmd
+          args:
+            - '-S'
+            - sql
+            - '-U'
+            - sa
+            - '-P'
+            - {{ .Values.sql.saPassword }}
+            - '-Q'
+            - |
+              CREATE DATABASE EMDS COLLATE TURKISH_CI_AS
+              GO
+              ALTER DATABASE [EMDS] SET RECOVERY SIMPLE
+              GO
+              ALTER DATABASE [EMDS] SET AUTO_CLOSE OFF WITH NO_WAIT
+              GO
+              ALTER DATABASE [EMDS] SET AUTO_CREATE_STATISTICS OFF
+              GO
+              ALTER DATABASE [EMDS] SET AUTO_UPDATE_STATISTICS OFF WITH NO_WAIT
+              GO
+              USE [EMDS]
+              GO
+              ALTER DATABASE SCOPED CONFIGURATION SET MAXDOP = 1
+              GO
+              ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET MAXDOP = 1
+              GO
+              USE [EMDS]
+              GO
+              /****** Object:  Table [dbo].[APISEQUENCE]    Script Date: 17.08.2021 4:40:30 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[APISEQUENCE](
+              	[ID] [int] IDENTITY(1,1) NOT NULL,
+              	[NAME] [nvarchar](100) NOT NULL,
+              	[SEQUENCETYPE] [tinyint] NOT NULL,
+              	[XMLSERVICEID] [int] NULL,
+              	[AUTHREQUIRED] [bit] NULL,
+              	[LOGREQUIRED] [bit] NOT NULL,
+              	[LASTRUN] [datetime] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = ON, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+              UNIQUE NONCLUSTERED
+              (
+              	[NAME] ASC
+              )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[APISEQUENCE_PERIOD]    Script Date: 17.08.2021 4:40:31 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[APISEQUENCE_PERIOD](
+              	[ID] [int] IDENTITY(1,1) NOT NULL,
+              	[SEQUENCEID] [int] NOT NULL,
+              	[REPEATSECONDS] [int] NOT NULL,
+              	[LASTREPEAT] [datetime] NOT NULL,
+              	[PARAM1] [nvarchar](50) NULL,
+              	[VALUE1] [nvarchar](50) NULL,
+              	[PARAM2] [nvarchar](50) NULL,
+              	[VALUE2] [nvarchar](50) NULL,
+              	[PARAM3] [nvarchar](50) NULL,
+              	[VALUE3] [nvarchar](50) NULL,
+              	[PARAM4] [nvarchar](50) NULL,
+              	[VALUE4] [nvarchar](50) NULL,
+              	[PARAM5] [nvarchar](50) NULL,
+              	[VALUE5] [nvarchar](50) NULL,
+              PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[APISEQUENCE_STEP]    Script Date: 17.08.2021 4:40:31 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[APISEQUENCE_STEP](
+              	[ID] [int] IDENTITY(1,1) NOT NULL,
+              	[SEQUENCEID] [int] NOT NULL,
+              	[STEPORDER] [tinyint] NOT NULL,
+              	[STEPNAME] [nvarchar](100) NOT NULL,
+              	[SP] [nvarchar](60) NULL,
+              	[URL] [varchar](100) NULL,
+              	[METHOD] [varchar](10) NULL,
+              	[CONTENTTYPE] [varchar](50) NULL,
+              	[ACCEPT] [varchar](50) NULL,
+              	[SOAPACTION] [nvarchar](100) NULL,
+              	[HOST] [varchar](50) NULL,
+              	[REMOVEXMLNAMESPACES] [bit] NULL,
+              	[SSLPROTOCOL] [varchar](20) NULL,
+              	[ENCODEGETPARAMS] [bit] NOT NULL,
+              PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[DIGITALMENU_SETTINGS]    Script Date: 17.08.2021 4:40:31 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[DIGITALMENU_SETTINGS](
+              	[HOTELID] [int] NOT NULL,
+              	[DIGITALMENU_LOGINREQUIRED] [bit] NOT NULL,
+              	[DIGITALMENU_CREATECHECK] [bit] NOT NULL,
+              	[DIGITALMENU_TABLEVALIDATIONMODE] [tinyint] NOT NULL,
+              	[DIGITALMENU_PACKAGEMINORDERLIMIT] [decimal](19, 2) NULL,
+              	[DIGITALMENU_PACKAGEORDER] [bit] NULL,
+              	[DIGITALMENU_TABLEORDER] [bit] NULL,
+              	[DIGITALMENU_ROOMORDER] [bit] NULL,
+              	[DIGITALMENU_WHATSAPPNUMBER] [nvarchar](15) NULL,
+              	[DIGITALMENU_BANNERURL] [varchar](250) NULL,
+              	[DIGITALMENU_ONLYWHATSAPPORDER] [bit] NOT NULL,
+              	[DIGITALMENU_ORDERTIMESTART] [time](7) NOT NULL,
+              	[DIGITALMENU_ORDERTIMEEND] [time](7) NOT NULL,
+              	[DIGITALMENU_TAKEAWAYORDER] [bit] NULL,
+              	[DIGITALMENU_GOOGLEMAPAPIKEY] [varchar](50) NULL,
+              	[DIGITALMENU_YANDEXMAPAPIKEY] [varchar](50) NULL,
+              	[DIGITALMENU_SHAREBONUSPERCENT] [tinyint] NULL,
+              	[DIGITALMENU_STARTUPBONUS] [float] NULL,
+              	[DIGITALMENU_REFRESHTIME] [smalldatetime] NULL,
+              	[DIGITALMENU_SHOWPRICES] [bit] NULL,
+              	[LOGOURL] [nvarchar](250) NULL,
+              	[FAVICON] [nvarchar](250) NULL,
+              	[DIGITALMENU_LOGOURL] [nvarchar](250) NULL,
+              	[DIGITALMENU_FAVICON] [nvarchar](250) NULL,
+              	[DIGITALMENU_SHOPPINGBONUSPERCENT] [tinyint] NOT NULL,
+              	[PROMOTIONENABLED] [bit] NOT NULL,
+              	[EWALLETENABLED] [bit] NOT NULL,
+              	[NAMEATPICKUP] [tinyint] NOT NULL,
+              	[MINTIMEFORPICKUP] [tinyint] NOT NULL,
+              	[MAXDAYSFORPICKUP] [tinyint] NOT NULL,
+              	[CNAME] [varchar](100) NULL,
+              	[USERMODULE] [bit] NULL,
+              	[DESIGNMODE] [tinyint] NULL,
+              	[COLORSCHEMES] [varchar](1000) NULL,
+              	[FBPIXELID] [varchar](20) NULL,
+              PRIMARY KEY CLUSTERED
+              (
+              	[HOTELID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[HOTEL]    Script Date: 17.08.2021 4:40:31 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL](
+              	[ID] [int] IDENTITY(1,1) NOT FOR REPLICATION NOT NULL,
+              	[NAME] [nvarchar](250) NULL,
+              	[ADDRESS] [nvarchar](255) NULL,
+              	[EMAIL] [nvarchar](100) NULL,
+              	[WEB] [nvarchar](100) NULL,
+              	[PHONE] [nvarchar](30) NULL,
+              	[FAX] [nvarchar](30) NULL,
+              	[REGIONID] [int] NULL,
+              	[SQLIP] [nvarchar](50) NULL,
+              	[SQLUSER] [nvarchar](50) NULL,
+              	[SQLPASS] [nvarchar](50) NULL,
+              	[SQLDB] [nvarchar](50) NULL,
+              	[NOTES] [nvarchar](max) NULL,
+              	[LOGOURL] [nvarchar](200) NULL,
+              	[SMTPSERVER] [nvarchar](100) NULL,
+              	[SMTPUSER] [nvarchar](100) NULL,
+              	[SMTPPASS] [nvarchar](100) NULL,
+              	[SMTPFROM] [nvarchar](150) NULL,
+              	[MINPRICE] [money] NULL,
+              	[CONCEPTID] [int] NULL,
+              	[CATEGORYID] [int] NULL,
+              	[LATLNG] [nvarchar](25) NULL,
+              	[WEBKEY] [nvarchar](50) NULL,
+              	[TIMEZONEID] [int] NULL,
+              	[ISDISABLED] [bit] NULL,
+              	[ISDELETED] [bit] NULL,
+              	[CREATION_DATE] [datetime] NULL,
+              	[LASTUPDATE_DATE] [datetime] NULL,
+              	[GROUPID] [int] NULL,
+              	[KEYWORD] [nvarchar](500) NULL,
+              	[EhosMemberId] [int] NULL,
+              	[GANALYTICSCODE] [nvarchar](15) NULL,
+              	[FBAPPID] [nvarchar](15) NULL,
+              	[FBAPPPASSWORD] [nvarchar](32) NULL,
+              	[FBPAGEURL] [nvarchar](150) NULL,
+              	[PROGDATE] [date] NOT NULL,
+              	[ESYNC_PASSWORD] [nvarchar](50) NULL,
+              	[ONLINECURRENCYID] [int] NULL,
+              	[RES_CHDMINAGE] [smallint] NULL,
+              	[RES_CHDMAXAGE] [smallint] NULL,
+              	[RES_MAXADULTCOUNT] [smallint] NULL,
+              	[RES_GUESTCARDHOLDER] [bit] NULL,
+              	[RES_USEVISA] [bit] NULL,
+              	[RES_USEMASTERCARD] [bit] NULL,
+              	[RES_USEAMEX] [bit] NULL,
+              	[RES_ASKNATIONALITY] [bit] NULL,
+              	[RES_ASKGENDER] [bit] NULL,
+              	[RES_ASKADDRESS] [bit] NULL,
+              	[RES_ASKREGION] [bit] NULL,
+              	[RES_ASKCITY] [bit] NULL,
+              	[RES_ASKCOUNTRY] [bit] NULL,
+              	[ESYNC_LASTCONNECTION] [datetime] NULL,
+              	[ESYNC_MANUELUPDATE] [bit] NULL,
+              	[ESYNC_VERSION] [nvarchar](4000) NULL,
+              	[SUBDOMAIN] [nvarchar](50) NULL,
+              	[RES_STYLENO] [smallint] NULL,
+              	[COUNTRYID] [int] NULL,
+              	[RES_SHOWRATETYPENAME] [bit] NOT NULL,
+              	[RES_GUESTINFOTEXT] [nvarchar](250) NULL,
+              	[RES_OPTIONALINFOTEXT] [nvarchar](250) NULL,
+              	[RES_CREDITCARTINFOTEXT] [nvarchar](250) NULL,
+              	[RES_RESDETAILINFOTEXT] [nvarchar](250) NULL,
+              	[RES_SHOWONLYDISCOUNTPRICE] [bit] NULL,
+              	[POLICECODE] [nvarchar](10) NULL,
+              	[DEFAULTDEPARTMENTID] [int] NULL,
+              	[DEFAULTREVENUEID] [int] NULL,
+              	[FOLIORESERVATION] [int] NULL,
+              	[FBPAGEID] [nvarchar](50) NULL,
+              	[AIRPORTCODE] [nvarchar](3) NULL,
+              	[LONGITUDE] [float] NULL,
+              	[LATITUDE] [float] NULL,
+              	[LOWRATE] [money] NULL,
+              	[HIGHRATE] [money] NULL,
+              	[PROPERTYDESCRIPTION] [nvarchar](max) NULL,
+              	[DRIVINGDIRECTIONS] [nvarchar](max) NULL,
+              	[NEARBYATTRACTIONS] [nvarchar](max) NULL,
+              	[CHECKINTIME] [time](7) NULL,
+              	[CHECKOUTTIME] [time](7) NULL,
+              	[TWITTERUSERNAME] [nvarchar](50) NULL,
+              	[COLORSCHEMES] [nvarchar](250) NULL,
+              	[RES_ASKEXTRAREQUEST] [bit] NULL,
+              	[SEOURL] [nvarchar](50) NULL,
+              	[HIDEONPORTAL] [bit] NOT NULL,
+              	[RES_HIDERESDAYS] [bit] NOT NULL,
+              	[RES_CUSTOMFIELD1NAME] [nvarchar](50) NULL,
+              	[RES_CUSTOMFIELD1REQUIRED] [bit] NULL,
+              	[RES_CUSTOMFIELD2NAME] [nvarchar](50) NULL,
+              	[RES_CUSTOMFIELD2REQUIRED] [bit] NULL,
+              	[RES_CUSTOMFIELD3NAME] [nvarchar](50) NULL,
+              	[RES_CUSTOMFIELD3REQUIRED] [bit] NULL,
+              	[RES_CUSTOMFIELD4NAME] [nvarchar](50) NULL,
+              	[RES_CUSTOMFIELD4REQUIRED] [bit] NULL,
+              	[RES_CUSTOMFIELD5NAME] [nvarchar](50) NULL,
+              	[RES_CUSTOMFIELD5REQUIRED] [bit] NULL,
+              	[RES_BYPASSCCARD] [bit] NULL,
+              	[ZOHOVERIFYCODE] [varchar](13) NULL,
+              	[SHOWONLYPRICETAB] [bit] NULL,
+              	[PROPERTYDESCRIPTION_1] [nvarchar](max) NULL,
+              	[PROPERTYDESCRIPTION_2] [nvarchar](max) NULL,
+              	[PROPERTYDESCRIPTION_3] [nvarchar](max) NULL,
+              	[PROPERTYDESCRIPTION_4] [nvarchar](max) NULL,
+              	[ZIPCODE] [nvarchar](20) NULL,
+              	[EXPEDIA_REGIONID] [bigint] NULL,
+              	[EXPEDIA_COUNTRYID] [int] NULL,
+              	[EXPEDIA_CITYID] [bigint] NULL,
+              	[EXPEDIAID] [int] NULL,
+              	[STANDARTCOMMISSIONPERCENT] [float] NULL,
+              	[RES_PAYATHOTEL] [tinyint] NOT NULL,
+              	[RES_PAYONLINE] [tinyint] NOT NULL,
+              	[OUTERSYNCPASSWORD] [nvarchar](100) NULL,
+              	[CUSTOMCSSTEMPLATENAME] [nvarchar](250) NULL,
+              	[PORTALPREFERENCE] [int] NOT NULL,
+              	[PORTALID] [int] NOT NULL,
+              	[OBJECTTYPE] [char](1) NOT NULL,
+              	[RES_MAXROOMSALE] [int] NULL,
+              	[RES_CUSTOMTAB1CAPTION] [nvarchar](100) NULL,
+              	[RES_CUSTOMTAB1CONTENT] [nvarchar](max) NULL,
+              	[TRIPADVISORID] [int] NULL,
+              	[WEBORDER] [int] NULL,
+              	[WEBPAGEPASSWORD] [nvarchar](20) NULL,
+              	[RES_LANGUAGES] [nvarchar](240) NULL,
+              	[RES_USEWEBSITEV2] [bit] NULL,
+              	[RES_EMAIL] [varchar](255) NULL,
+              	[USEALLAIRPORTS] [bit] NULL,
+              	[UID] [uniqueidentifier] NOT NULL,
+              	[RES_DONTUSECURRENCY] [bit] NOT NULL,
+              	[RES_LOGOLINK] [nvarchar](150) NULL,
+              	[CNAME_WEB] [nvarchar](150) NULL,
+              	[CNAME_WEBV2] [nvarchar](250) NULL,
+              	[HASEARCHKEYWORDS] [nvarchar](4000) NULL,
+              	[RES_CUSTOMTAB2CAPTION] [nvarchar](100) NULL,
+              	[RES_CUSTOMTAB2CONTENT] [nvarchar](max) NULL,
+              	[RES_TABORDER] [nvarchar](20) NULL,
+              	[RES_PROMOTIONPOPUP] [nvarchar](max) NULL,
+              	[RES_DONTSENDCONTACTMAIL] [bit] NULL,
+              	[RES_FLIGHTCHANGABLEDAYS] [bit] NULL,
+              	[RES_USETRANSFER] [bit] NULL,
+              	[RES_DEFAULTSTAYCOUNT] [int] NULL,
+              	[RES_DEFAULTCHECKINSTART] [int] NULL,
+              	[ESYNC_LASTERROR] [nvarchar](4000) NULL,
+              	[CONTRACTPRICESPRIORITY] [bit] NOT NULL,
+              	[TOPHOTELSRUID] [int] NULL,
+              	[MINPRICESLASTUPDATE] [datetime] NULL,
+              	[OPENACCOUNTCARD] [bit] NOT NULL,
+              	[ROUTEDACCOUNTID] [uniqueidentifier] NULL,
+              	[GLACCOUNTID] [int] NULL,
+              	[RES_ISPREPAY] [bit] NULL,
+              	[URL_GOOGLEPLUS] [varchar](8000) NULL,
+              	[URL_FOURSQUARE] [varchar](8000) NULL,
+              	[URL_BLOGGER] [varchar](8000) NULL,
+              	[URL_FLICKER] [varchar](8000) NULL,
+              	[URL_INSTAGRAM] [varchar](8000) NULL,
+              	[URL_VINE] [varchar](8000) NULL,
+              	[RES_ACCEPTWITHWOMAN] [bit] NULL,
+              	[PAYMENTINFORMATION] [nvarchar](max) NULL,
+              	[CANCELLATIONINFORMATION] [nvarchar](max) NULL,
+              	[RES_SHOWINSTALLMENTOPTIONS] [bit] NOT NULL,
+              	[HOTELPAYMENTTYPE] [int] NULL,
+              	[MONEYTRANSFER_ENABLED] [bit] NULL,
+              	[MONEYTRANSFER_INFO] [nvarchar](4000) NULL,
+              	[HOLIDAYCHECKID] [int] NULL,
+              	[PORTALPRICELISTMODE] [int] NOT NULL,
+              	[COMMISSIONGROUPID] [int] NULL,
+              	[ACCCODE] [nvarchar](150) NULL,
+              	[DEFAULTCURRENCYID] [int] NOT NULL,
+              	[DEBIT] [float] NOT NULL,
+              	[CREDIT] [float] NOT NULL,
+              	[HIDEONPORTAL_B2C] [bit] NOT NULL,
+              	[HOTELRATING] [float] NULL,
+              	[HOTELRATINGCOUNTTEXT] [nvarchar](50) NULL,
+              	[HOTELRATINGTEXT] [nvarchar](50) NULL,
+              	[ESYNC_RATEIDS] [nvarchar](max) NULL,
+              	[ESYNC_QUOTAIDS] [nvarchar](max) NULL,
+              	[CUSTOMFOOTERS] [nvarchar](4000) NULL,
+              	[CUSTOMHEADERS] [nvarchar](4000) NULL,
+              	[SEOTITLE] [nvarchar](100) NULL,
+              	[SEOKEYWORDS] [nvarchar](200) NULL,
+              	[SEODESCRIPTION] [nvarchar](200) NULL,
+              	[RES_GOTOBASKET_AUTO] [bit] NULL,
+              	[CUSTOMJSTEMPLATENAME] [nvarchar](4000) NULL,
+              	[STDPRICE] [float] NULL,
+              	[PROVIDER_KEYID] [nvarchar](25) NULL,
+              	[STDISCOUNTPCT] [float] NULL,
+              	[VIDEOFRAME] [varchar](500) NULL,
+              	[TRANSFER_ENABLE] [bit] NOT NULL,
+              	[TRANSFER_FEE] [float] NOT NULL,
+              	[THEMENO] [nvarchar](20) NULL,
+              	[TRANSFER_ROOMPRICE] [float] NOT NULL,
+              	[TRANSFER_ADULTPRICE] [float] NOT NULL,
+              	[TRANSFER_CHILDPRICE] [float] NOT NULL,
+              	[TRANSFER_TWOWAYFACTOR] [float] NOT NULL,
+              	[ALLOWPAYATSERVICE] [bit] NULL,
+              	[SEASONSTART] [date] NULL,
+              	[AUTHORIZED] [nvarchar](250) NULL,
+              	[CANCELLATIONDAYS] [int] NULL,
+              	[USEHTTPSV3] [bit] NOT NULL,
+              	[USEMULTIPLE_PROMOTION] [bit] NOT NULL,
+              	[DEFAULTCOMMISSION] [float] NULL,
+              	[USEQHOR] [bit] NOT NULL,
+              	[NEWPRICINGENABLED] [bit] NOT NULL,
+              	[SMSPHONE] [bigint] NULL,
+              	[ONLINEAGENCYID] [int] NULL,
+              	[DEFAULTLANGUAGE] [nchar](2) NULL,
+              	[HOTELLISTPRICE] [tinyint] NULL,
+              	[SAVED_EMAIL] [nvarchar](250) NULL,
+              	[SURVEY_POINT] [float] NULL,
+              	[HOTELPRIVACYAGGREEMENT] [nvarchar](max) NULL,
+              	[HOTELENDUSERAGGREEMENT] [nvarchar](max) NULL,
+              	[SENDSMSONCONTRACTUPDATE] [bit] NULL,
+              	[DETAILEDDISCOUNTSACTIVE] [bit] NULL,
+              	[ESYNC_LASTBULKRESXML] [datetime] NULL,
+              	[MAXFREECHILDAGE] [tinyint] NULL,
+              	[USEHOTELPOS] [bit] NOT NULL,
+              	[TRUSTYOUID] [uniqueidentifier] NULL,
+              	[PORTAL_PHONE] [nvarchar](30) NULL,
+              	[BOOKABLEAFTERDAYS] [tinyint] NULL,
+              	[ESYNC_RESROOMTYPEHASH] [binary](64) NULL,
+              	[EXTRASERVICESVISIBLE] [bit] NULL,
+              	[LASTUPDATE] [datetime] NOT NULL,
+              	[GIATAID] [int] NULL,
+              	[ESYNC_MANUALAVAILABILITY] [bit] NULL,
+              	[POSTAGUVERCINIUSERNAME] [nvarchar](50) NULL,
+              	[POSTAGUVERCINIPASSWORD] [nvarchar](50) NULL,
+              	[EMAIL2] [varchar](100) NULL,
+              	[RES_MINLOS] [tinyint] NULL,
+              	[RES_MAXPAX] [tinyint] NULL,
+              	[CREDITCARDREQUIRED] [bit] NULL,
+              	[PAYBYCC] [bit] NOT NULL,
+              	[PAYBYWIRE] [bit] NOT NULL,
+              	[PAYATHOTEL] [bit] NOT NULL,
+              	[PAYATHOTELWITHCCGUARANTEE] [bit] NOT NULL,
+              	[PAYBYDOWNPAYMENT] [bit] NOT NULL,
+              	[DOWNPAYMENTPERCENT] [float] NOT NULL,
+              	[ESYNC_PAYMENTDEPARTMENT] [nvarchar](5) NULL,
+              	[WHATSAPP] [varchar](20) NULL,
+              	[DISABLECHAT] [bit] NULL,
+              	[CHATID] [nvarchar](50) NULL,
+              	[BASEROOMTYPEID] [int] NULL,
+              	[ESYNC_CRMENABLED] [bit] NULL,
+              	[ESYNC_CRMLASTHASH] [binary](64) NULL,
+              	[ESYNC_LICENCEID] [nvarchar](250) NULL,
+              	[ESYNC_ADMINNOTE] [nvarchar](50) NULL,
+              	[ESYNC_UNPAIDRESNEEDSCONFIRMATION] [bit] NULL,
+              	[DEFAULTIMAGEURL] [varchar](500) NULL,
+              	[HOTELPROPERTIES] [varchar](2000) NULL,
+              	[ROOMPROPERTIES] [varchar](2000) NULL,
+              	[ESYNC_PROMOTIONNEEDSCONFIRMATION] [bit] NULL,
+              	[ESYNC_MACHINENAME] [nvarchar](50) NULL,
+              	[ESYNC_RATEIDSHASH] [binary](64) NULL,
+              	[ESYNC_QUOTAIDSHASH] [binary](64) NULL,
+              	[NEWRESCOUNT] [int] NULL,
+              	[MINLADY] [tinyint] NOT NULL,
+              	[SMSPROVIDERID] [int] NULL,
+              	[SMSPROVIDERUSERNAME] [nvarchar](50) NULL,
+              	[SMSPROVIDERPASSWORD] [nvarchar](50) NULL,
+              	[SMSPROVIDERTITLE] [nvarchar](50) NULL,
+              	[TRANSFERLOCATIONID] [int] NULL,
+              	[ERSBOOKINGLISTED] [bit] NULL,
+              	[YANDEXMETRIKA] [nvarchar](20) NULL,
+              	[PRICEWITHBIRTHDATE] [bit] NOT NULL,
+              	[PAYBYCC_B2B] [bit] NULL,
+              	[PAYBYWIRE_B2B] [bit] NULL,
+              	[PAYATHOTEL_B2B] [bit] NULL,
+              	[PAYATHOTELWITHCCGUARANTEE_B2B] [bit] NULL,
+              	[PAYBYDOWNPAYMENT_B2B] [bit] NULL,
+              	[DOWNPAYMENTPERCENT_B2B] [float] NULL,
+              	[PROMOTIONWARNSMS] [bigint] NULL,
+              	[PROMOTIONWARNEMAIL] [varchar](100) NULL,
+              	[PROMOTIONWARNPERCENT] [int] NULL,
+              	[ESYNC_DISCOUNTALLAGENCIES] [bit] NULL,
+              	[RESAUTOSHOWPRICE] [bit] NOT NULL,
+              	[HIDEROOMSMORETHAN] [int] NOT NULL,
+              	[ACCOUNTID_FRONTSAFE] [int] NULL,
+              	[ACCOUNTID_MAINSAFE] [int] NULL,
+              	[ACCOUNTID_BANK] [int] NULL,
+              	[ACCOUNTID_CREDITCARD] [int] NULL,
+              	[ACCOUNTID_CASHCLIENT] [int] NULL,
+              	[ACCOUNTID_INCOME] [int] NULL,
+              	[FRONTSAFE_CASHADVANCE] [float] NULL,
+              	[DEFAULTCASHDEPARTMENTID] [int] NULL,
+              	[TAXCITYSUB] [nvarchar](50) NULL,
+              	[TAXCITY] [nvarchar](50) NULL,
+              	[TAXZIPCODE] [nvarchar](50) NULL,
+              	[TAXCOUNTRY] [nvarchar](50) NULL,
+              	[TAXBUILDINGNUMBER] [nvarchar](50) NULL,
+              	[TAXROOM] [nvarchar](50) NULL,
+              	[INTERNALCHATENABLED] [bit] NOT NULL,
+              	[HOTELBEDS_LOCATIONUID] [uniqueidentifier] NULL,
+              	[HOTELBEDS_HOTELID] [int] NULL,
+              	[RATING] [decimal](2, 1) NULL,
+              	[FRONTOFFICEACCOUNT] [nvarchar](50) NOT NULL,
+              	[KBSCODE] [nvarchar](50) NULL,
+              	[KBSPASSWORD] [nvarchar](50) NULL,
+              	[ROOMCAPACITY] [int] NULL,
+              	[BEDCAPACITY] [int] NULL,
+              	[STOPSALEAFTERSHORTROOM] [tinyint] NULL,
+              	[IGNOREPAYMENTACCOUNTING] [bit] NULL,
+              	[CORAL_HOTELID] [int] NULL,
+              	[PROGDATE_PLUS1]  AS (dateadd(day,(1),[PROGDATE])) PERSISTED,
+              	[KBSMODE] [tinyint] NOT NULL,
+              	[UPDATEUSER] [int] NULL,
+              	[COLORV4] [nvarchar](3000) NULL,
+              	[SPAFOLIORESID] [int] NULL,
+              	[CORAL_DESTINATIONID] [int] NULL,
+              	[TRANSFERDEPID] [int] NULL,
+              	[TRANSFERREVID] [int] NULL,
+              	[MAIN_SETTINGS] [nvarchar](max) NULL,
+              	[HOTELCODE] [nvarchar](15) NULL,
+              	[GENDARMEDEFAULTID] [nvarchar](20) NULL,
+              	[KBSAUTO] [bit] NOT NULL,
+              	[PAYBYAGENCY_B2B] [bit] NULL,
+              	[COMMISSIONTYPE] [varchar](10) NULL,
+              	[PAYBYMAILORDER] [bit] NOT NULL,
+              	[PAYBYMAILORDER_B2B] [bit] NOT NULL,
+              	[ACCOUNTID_EXPENSE] [int] NULL,
+              	[GOOGLETAGMANAGERCODE] [nvarchar](250) NULL,
+              	[LOGOURL_FAVICON] [nvarchar](200) NULL,
+              	[RESCARDDISPLAYPIN] [nvarchar](10) NULL,
+              	[SPECIALCASEIGNOREBABY] [bit] NOT NULL,
+              	[PAXFORMULAID] [tinyint] NOT NULL,
+              	[PBXDEPID] [int] NULL,
+              	[PBXREVID] [int] NULL,
+              	[PBXLOSTRESID] [int] NULL,
+              	[HOTELSPRODESTINATIONID] [nvarchar](50) NULL,
+              	[HOTELSPROID] [nvarchar](50) NULL,
+              	[DOORKEYCARDMODE] [tinyint] NOT NULL,
+              	[RESDAYBOARDFOLIOMODE] [tinyint] NOT NULL,
+              	[POSCURRENCYID] [int] NULL,
+              	[NOSHOW_DEPARTMENTID] [int] NULL,
+              	[NOSHOW_REVENUEID] [int] NULL,
+              	[POSVERSION] [varchar](4) NULL,
+              	[ADMINLEVEL] [tinyint] NOT NULL,
+              	[PROPERTYTYPE] [tinyint] NOT NULL,
+              	[PAXIMUM_HOTELID] [nvarchar](10) NULL,
+              	[PAXIMUM_DESTINATIONID] [nvarchar](10) NULL,
+              	[ENDOFDAYTIME] [int] NULL,
+              	[ACCOUNTID_ROUNDING] [int] NULL,
+              	[ADDRESSID] [int] NULL,
+              	[ACCOUNTING_EMAIL] [nvarchar](200) NULL,
+              	[IPWHITELIST] [varchar](500) NULL,
+              	[2FAREQUIRED] [bit] NOT NULL,
+              	[PASSWORDEXPIREDAYS] [int] NULL,
+              	[INACTIVEUSERDISABLEDAYS] [int] NULL,
+              	[OLDPMSID] [int] NULL,
+              	[REFCODE] [varchar](10) NULL,
+              	[RATECODEPAXFORMULAID] [tinyint] NULL,
+              	[RES_MAXCHDCOUNT] [smallint] NULL,
+              	[USE_ROOMTYPEFACTOR_FORBOARD] [bit] NOT NULL,
+               CONSTRAINT [PK_HOTEL] PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+               CONSTRAINT [UQ_HOTEL_UID] UNIQUE NONCLUSTERED
+              (
+              	[UID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[HOTEL_GROUP]    Script Date: 17.08.2021 4:40:31 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL_GROUP](
+              	[ID] [int] IDENTITY(1,1) NOT FOR REPLICATION NOT NULL,
+              	[GROUPCODE] [nvarchar](50) NULL,
+              	[GROUPNAME] [nvarchar](150) NULL,
+              	[ADRESS] [nvarchar](250) NULL,
+              	[PHONE] [nvarchar](50) NULL,
+              	[EMAIL] [nvarchar](100) NULL,
+              	[WEB] [nvarchar](50) NULL,
+              	[CONTACT] [nvarchar](50) NULL,
+              	[COMPANYNAME] [nvarchar](50) NULL,
+              	[TAXCODE] [nvarchar](50) NULL,
+              	[TAXNO] [nvarchar](50) NULL,
+              	[GSM] [nvarchar](20) NULL,
+              	[FAX] [nvarchar](20) NULL,
+              	[GRUPKEY] [uniqueidentifier] NULL,
+              	[ISDISABLED] [bit] NULL,
+              	[ISDELETED] [bit] NULL,
+              	[CREATION_DATE] [datetime] NULL,
+              	[LASTUPDATE_DATE] [datetime] NULL,
+              	[PORTALVISIBLE] [bit] NULL,
+              	[SUBDOMAIN] [varchar](30) NULL,
+              	[COLORSCHEMES] [nvarchar](600) NULL,
+              	[SEOURL] [nvarchar](30) NULL,
+              	[CUSTOMCSSTEMPLATENAME] [nvarchar](250) NULL,
+              	[PORTALID] [int] NOT NULL,
+              	[LOGOURL] [nvarchar](200) NULL,
+              	[GROUPADMINUSERID] [int] NULL,
+              	[HEADERTYPE] [tinyint] NOT NULL,
+              	[BANNER1] [nvarchar](200) NULL,
+              	[BANNER2] [nvarchar](200) NULL,
+              	[BANNER3] [nvarchar](200) NULL,
+              	[BANNER4] [nvarchar](200) NULL,
+              	[USELARGELOGO] [bit] NULL,
+              	[SEARCHBOXPOSITION] [tinyint] NULL,
+              	[FAVICON] [nvarchar](200) NULL,
+              	[CNAME] [nvarchar](255) NULL,
+              	[IPADDRESS] [varchar](250) NULL,
+              	[MULTITENANCYENABLED] [bit] NULL,
+              	[SEOKEYWORD] [nvarchar](150) NULL,
+              	[SEODESCRIPTION] [nvarchar](180) NULL,
+              	[GROUPINFO] [nvarchar](500) NULL,
+              	[FACEBOOKURL] [nvarchar](155) NULL,
+              	[INSTAGRAMURL] [nvarchar](155) NULL,
+              	[TWITTERURL] [nvarchar](155) NULL,
+              	[YOUTUBEURL] [nvarchar](155) NULL,
+              	[LINKEDINURL] [nvarchar](155) NULL,
+              	[INFO] [nvarchar](600) NULL,
+               CONSTRAINT [PK_HOTEL_GROUP] PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[HOTEL_SETTINGS]    Script Date: 17.08.2021 4:40:31 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL_SETTINGS](
+              	[HOTELID] [int] NOT NULL,
+              	[RES_MARKET_REQUIRED] [bit] NOT NULL,
+              	[RES_SOURCE_REQUIRED] [bit] NOT NULL,
+              	[RES_SEGMENT_REQUIRED] [bit] NOT NULL,
+              	[RES_NAMES_REQUIRED] [bit] NOT NULL,
+              	[INVOICE_REQUIRED_BEFORECHECKOUT] [bit] NOT NULL,
+              	[CL_INVOICE_REQUIRED_BEFORECHECKOUT] [bit] NOT NULL,
+              	[RES_MAXSHORTCOUNT] [smallint] NULL,
+              	[RES_POSLIMIT_DEFAULT] [real] NULL,
+              	[STOCK_PREVENT_SHORT] [bit] NOT NULL,
+              	[INVOICE_ISSUEDATE_CANNOTCHANGE] [bit] NOT NULL,
+              	[INVOICE_ISSUEDATE_MUSTBECHECKOUT] [bit] NOT NULL,
+              	[SIGNATURE_AGELIMIT] [tinyint] NOT NULL,
+              	[ACC_CASHCODE] [varchar](30) NOT NULL,
+              	[ACC_CCARDCODE] [varchar](30) NOT NULL,
+              	[ACC_DEPOSITCODE] [varchar](30) NOT NULL,
+              	[ACC_ADVANCECODE] [varchar](30) NOT NULL,
+              	[INVOICE_NOTUPDATEBLE_AFTER_INTEGRATED] [bit] NOT NULL,
+              	[INVOICE_NOTUPDATEBLE_AFTER_NIGHT] [bit] NOT NULL,
+              	[INVOICE_LANGUAGEID] [int] NULL,
+              	[ELEKTRA_ENDPOINT] [nvarchar](200) NULL,
+              	[ELEKTRA_USER] [nvarchar](20) NULL,
+              	[ELEKTRA_PASSWORD] [nvarchar](20) NULL,
+              	[ELEKTRA_TENANT] [int] NULL,
+              	[USELOCALDATA] [bit] NULL,
+              	[IPTV_ENDPOINT] [nvarchar](500) NULL,
+              	[ROOM_MINTIMETOCHECKIN] [smallint] NULL,
+              	[NONCL_INVOICE_REQUIRED_BEFORECHECKOUT] [bit] NOT NULL,
+              	[RES_AUTOSEND_DOORCODE] [bit] NOT NULL,
+              	[POS_SLIPPRINTER_TOPMARGIN] [real] NOT NULL,
+              	[POS_CHECKPRINTER_TYPE] [tinyint] NOT NULL,
+              	[POS_INVOICEPRINTER_TYPE] [tinyint] NOT NULL,
+              	[POS_SHOWUSDTOTAL] [bit] NOT NULL,
+              	[POS_SHOWEURTOTAL] [bit] NOT NULL,
+              	[POS_SHOWPAYMENTASSUMMARY] [bit] NOT NULL,
+              	[POS_SHOWCLIENTBALANCE] [bit] NOT NULL,
+              	[POS_SHOWTAXSUMMARY] [bit] NOT NULL,
+              	[POS_SHOWROOMNO] [bit] NOT NULL,
+              	[POS_SHOWGUESTNAME] [bit] NOT NULL,
+              	[POS_SHOWSIGNATURE] [bit] NOT NULL,
+              	[POS_SHOWCLOSETIME] [bit] NOT NULL,
+              	[POS_SHOWFOOTERINFO] [bit] NOT NULL,
+              	[POS_SHOWHOTELLOGO] [bit] NOT NULL,
+              	[POSDATA_REFRESHTIME] [smalldatetime] NULL,
+              	[RESTAURANT_PACKAGEORDER_PAYMENTOPTIONS] [nvarchar](50) NULL,
+              	[INVOICE_SUMMARYTYPE] [tinyint] NOT NULL,
+              	[ONLINECHECKIN_SKIPIDSCAN] [bit] NOT NULL,
+              	[EXCHANGECOMMISSIONPERCENT] [float] NULL,
+              	[ONLINECHECKIN_SKIPSURNAME2] [bit] NOT NULL,
+              	[POS_CHECKROOMLIMIT] [bit] NOT NULL,
+              	[ERP_CURRENCYID] [int] NULL,
+              	[ERP_DIARY] [varchar](5) NULL,
+              	[LEGIONELLA] [tinyint] NOT NULL,
+              	[POS_ONLYHAPPYHOUR_DISCOUNT] [bit] NULL,
+              	[POS_ECR_ACTIVE] [bit] NULL,
+              	[INVOICE_HOTELNAME] [nvarchar](250) NULL,
+              	[INVOICE_HOTELVAT] [nvarchar](50) NULL,
+              	[INVOICE_HOTELREG] [nvarchar](50) NULL,
+              	[INVOICE_HOTELADDRESS] [nvarchar](255) NULL,
+              	[INVOICE_HOTELBANK] [nvarchar](100) NULL,
+              	[INVOICE_HOTELIBAN] [nvarchar](30) NULL,
+              	[INVOICE_HOTELPHONE] [nvarchar](50) NULL,
+              	[INVOICE_HOTELCAPITAL] [nvarchar](30) NULL,
+              	[INVOICE_HOTELWEB] [nvarchar](200) NULL,
+              	[INVOICE_HOTELMAIL] [nvarchar](100) NULL,
+              	[INVOICE_HOTELBIC] [nvarchar](30) NULL,
+              	[INVOICE_HOTELKVK] [nvarchar](30) NULL,
+              	[INVOICE_TITLE] [nvarchar](100) NULL,
+              	[INVOICE_LOGO] [nvarchar](255) NULL,
+              	[FORECAST_DEFULTMAINCURRENCYCODE] [nvarchar](10) NULL,
+              	[BULKINVOICE_INFO] [bit] NOT NULL,
+              	[FOLIO_CHECKRESAGENCYCITYLEDGERSTATE] [bit] NOT NULL,
+              	[INVOICE_DEPGROUPIDREQ] [bit] NULL,
+              	[TASK_USESTANDARTDEFINITIONS] [bit] NOT NULL,
+              	[POS_CHECKCOMMISSIONPERCENT] [real] NOT NULL,
+              	[POS_SHOWREVENUEGROUP] [bit] NOT NULL,
+              	[SMTPACCOUNTID] [int] NULL,
+              	[ROOMRACK_COLORS] [varchar](2000) NULL,
+              	[DASHBOARD_CACHETIMEOUT] [smallint] NULL,
+              	[RES_CURRENCYMODE] [tinyint] NOT NULL,
+              	[PAYMENT_STOPCURRENCYRATECHANGE] [bit] NOT NULL,
+              	[STATICIPS] [varchar](200) NULL,
+              	[POS_XREPORT_CASHTRANSFER] [bit] NOT NULL,
+              	[USETRSERVER] [bit] NOT NULL,
+              	[POS_MEDISOFT_INTEGRATION_ACTIVE] [bit] NOT NULL,
+              	[POS_TABLEGROUP_PRINTERACTIVE] [bit] NOT NULL,
+              	[AIRCONDITIONERACTIVE] [bit] NULL,
+              	[CHECKCURRENCYONBULKINVOICE] [bit] NULL,
+              	[USEFOLIOWINDOWFORRESERVATION] [bit] NULL,
+              	[USEGUESTWINDOWFORFOLIO] [bit] NULL,
+              	[ACC_SEALDATE] [date] NOT NULL,
+              	[STOCK_USEFIFOPRICING] [bit] NOT NULL,
+              	[POS_USEDEPARTMENTPROGDATES] [bit] NOT NULL,
+              	[WHATSAPPNUMBER] [nvarchar](15) NULL,
+              	[STOCK_PRODUCTIONMODE] [bit] NOT NULL,
+              	[POS_XREPORT_CHECKTYPE_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_CASHSAFETRANS_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_POSCARDTOTALS_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_CASETOTALS_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_POSCARDTRANSDETAIL_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_DOCTYPE_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_PAYMENTTYPETOTALS_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_PAYMENTNAMETOTALS_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_REVENUEGROUPANALYSIS_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_CASHIERANALYSIS_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_WAITERANALYSIS_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_PRODUCTSALETYPE_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_PRODUCTGROUPSALEANALYSIS_ACTIVE] [bit] NOT NULL,
+              	[POS_XREPORT_PRODUCTSALEANALYSIS_ACTIVE] [bit] NOT NULL,
+              	[DEFAULTACCDEPARTMENTID] [int] NULL,
+              	[DEFAULTACCREVENUEID] [int] NULL,
+              	[NOSHOW_DEPARTMENTID] [int] NULL,
+              	[NOSHOW_REVENUEID] [int] NULL,
+              	[RESDAYBOARDFOLIOMODE] [tinyint] NULL,
+              	[TRANSFERREVID] [int] NULL,
+              	[TRANSFERDEPID] [int] NULL,
+              	[NIGHTAUDITEMAIL] [varchar](100) NULL,
+              	[STOCK_UPDATECOUNTINGFORMAINSTORE] [bit] NOT NULL,
+              	[ACC_UNKNOWNACCOUNTID] [int] NULL,
+              	[BANQUET_DEPID] [int] NULL,
+              	[BANQUET_REVID] [int] NULL,
+              	[BANQUET_EQUIPMENT_DEPID] [int] NULL,
+              	[BANQUET_EQUIPMENT_REVID] [int] NULL,
+              	[BANQUET_MENU_DEPID] [int] NULL,
+              	[BANQUET_MENU_REVID] [int] NULL,
+              	[CONFIRMEREMAIL] [nvarchar](255) NULL,
+              	[PAYMENT_NOTIFICATION_TYPE] [tinyint] NULL,
+              	[MAIDAUTOASSIGNBYLOCATION] [bit] NOT NULL,
+              	[RES_CHECKINROOMSTATES] [varchar](20) NOT NULL,
+              	[HK_ROOMCLEANINGPERIOD] [tinyint] NOT NULL,
+              	[HK_CHANGEBEDSHEETDAYS] [tinyint] NULL,
+              	[POS_ENDOFDAY_OPENTABLE_CONTROL] [bit] NOT NULL,
+              	[SAP_URL] [nvarchar](500) NULL,
+              	[SAP_DBNAME] [nvarchar](50) NULL,
+              	[SAP_USERNAME] [nvarchar](50) NULL,
+              	[SAP_PASSWORD] [nvarchar](50) NULL,
+              	[CHECK_SAME_RES] [bit] NULL,
+              	[SAP_BPLID] [tinyint] NULL,
+              	[DEFAULTUPSELLDEPID] [int] NULL,
+              	[DEFAULTUPSELLREVID] [int] NULL,
+              	[DEFAULTCREDITCARDDEPID] [int] NULL,
+              	[TASK_AUTONOTIFICATION_ACTIVE] [bit] NOT NULL,
+              	[DEFAULTVIRTUALFOLIOAGENCYID] [int] NULL,
+              	[AUTOINVOICENOTEFROMRES] [bit] NULL,
+              	[POS_DAILYCARD_RESNAME_CLEARCARDNUMBER] [bit] NOT NULL,
+              	[SAP_INVOICE_SENDDRAFTS] [bit] NOT NULL,
+              	[SAP_INVOICELINETYPE] [varchar](10) NOT NULL,
+              	[POS_CHARGETOGROUPHOTEL] [bit] NULL,
+              	[INVOICE_CREATEWITHCURRENCY] [bit] NULL,
+              	[POS_DEPARTMENT_PRODUCTSALES_QTY] [bit] NULL,
+              	[CL_CHARGEWITHRESCURRENCY] [bit] NOT NULL,
+              	[POS_USESTOCKCARD] [bit] NOT NULL,
+              	[POS_SHOWGBPTOTAL] [bit] NOT NULL,
+              	[CUR_COPYFROMTCMBATNIGHTAUDIT] [bit] NULL,
+              	[GUESTAPP_WITHOUTRES] [bit] NULL,
+              	[POS_ENDOFDAY_CANBEDONE_BEFORE12] [bit] NULL,
+              	[USEFIXED_EXCHANGERATES] [tinyint] NULL,
+              	[IPTV_SEQUENCEID] [int] NULL,
+              	[RESDAY_DISCOUNTINFOMODE] [tinyint] NULL,
+              	[RES_DEFAULTNATIONID] [int] NULL,
+              	[RES_DEFAULTROOMTYPEID] [int] NULL,
+              	[RES_DEFAULTRATETYPEID] [int] NULL,
+              	[RES_DEFAULTBOARDTYPEID] [int] NULL,
+              	[RES_DEFAULTPAIDBY] [tinyint] NULL,
+              	[RES_DEFAULTPAYMENTTYPE] [tinyint] NULL,
+              	[RES_DEFAULTRATECODEID] [int] NULL,
+              	[RES_DEFAULTCURRENCYID] [int] NULL,
+              	[RES_DEFAULTSEGMENTID] [int] NULL,
+              	[RES_DEFAULTMANUELRATEENABLED] [bit] NULL,
+              	[RES_DEFAULTDISCOUNTSACTIVE] [bit] NULL,
+              	[RES_DEFAULTSOURCEID] [int] NULL,
+              	[GUEST_REGISTERBONUSPERCENT] [decimal](9, 2) NULL,
+              	[MAIDASSIGNONLYONELOCATION] [bit] NOT NULL,
+              	[CREATE_HOTELRETURNINVOICE] [bit] NOT NULL,
+              	[POS_SAMECHECKNO_CANNOTBEUSED] [bit] NULL,
+              	[INVOICE_CREATEWITHCURRENCYINFOTOGUEST] [bit] NULL,
+              	[OFFICIALGUESTLIST_TOPMARGIN] [float] NULL,
+              	[OFFICIALGUESTLIST_LETTERHEAD] [bit] NULL,
+              	[SHOWTIP] [bit] NULL,
+              	[POS_DAILYCARD_ADULTPRICE] [float] NULL,
+              	[POS_DAILYCARD_CHILDPRICE] [float] NULL,
+              	[DEFAULTENTRANCEDEPARTMENTID] [int] NULL,
+              	[DEFAULTENTRANCEREVENUEID] [int] NULL,
+              	[DEFAULTENTRANCEPRICE] [decimal](19, 2) NULL,
+              	[POS_ALLPRODUCTGROUP_ACTIVE] [bit] NOT NULL,
+              	[UNUSEDCARDDEPARTMENTID] [int] NULL,
+              	[UNUSEDCARDREVENUEID] [int] NULL,
+              	[POS_REPORTOFFICIALPSW] [nvarchar](25) NULL,
+              	[POS_REPORTALLPSW] [nvarchar](25) NULL,
+              	[AUTOSELECT_REPEAT_POSDISCOUNT] [bit] NULL,
+              	[POS_RESNAMELIMITCONTROL] [bit] NULL,
+              	[HOTEL_BANQUET_ONLYBANQUET] [bit] NOT NULL,
+              	[LOGONAME] [varchar](15) NULL,
+              	[USE_ROOMCHANGEPLANS_IN_AVAILABILITY] [bit] NOT NULL,
+              	[ASYNCENDOFDAY] [bit] NOT NULL,
+              	[SENDROOMCHANGETOKBS] [bit] NOT NULL,
+              PRIMARY KEY CLUSTERED
+              (
+              	[HOTELID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[HOTEL_SMTPACCOUNTS]    Script Date: 17.08.2021 4:40:31 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL_SMTPACCOUNTS](
+              	[ID] [int] IDENTITY(1,1) NOT NULL,
+              	[HOTELID] [int] NULL,
+              	[SMTP_FROM] [varchar](100) NULL,
+              	[SMTP_SERVER] [varchar](100) NULL,
+              	[SMTP_USER] [varchar](100) NULL,
+              	[SMTP_PASS] [varchar](100) NULL,
+              	[SMTP_SECURE] [bit] NULL,
+              	[SMTP_PORT] [smallint] NULL,
+              	[SMTP_TLS] [bit] NOT NULL,
+              	[SMTP_SENDERFIXED] [bit] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[HOTEL_SUBSCRIPTION]    Script Date: 17.08.2021 4:40:31 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL_SUBSCRIPTION](
+              	[ID] [int] IDENTITY(1,1) NOT NULL,
+              	[OTELID] [int] NOT NULL,
+              	[STARTDATE] [date] NOT NULL,
+              	[ENDDATE] [date] NOT NULL,
+              	[SELLER] [nvarchar](50) NULL,
+              	[INVOICENO] [nvarchar](50) NULL,
+              	[INVOICEADDRESS] [nvarchar](500) NULL,
+              	[PAYMENTDATE] [date] NULL,
+              	[PAYMENTINFO] [nvarchar](500) NULL,
+              	[AMOUNT] [decimal](19, 2) NULL,
+              	[CURRENCY] [char](3) NULL,
+              	[MODULE_PMS] [bit] NULL,
+              	[MODULE_BOOKINGENGINE] [bit] NULL,
+              	[MODULE_CHANNELMANAGER] [bit] NULL,
+              	[MODULE_POS] [bit] NULL,
+              	[MODULE_SPA] [bit] NULL,
+              	[MODULE_ACCOUNTING] [bit] NULL,
+              	[MODULE_SALESANDMARKETING] [bit] NULL,
+              	[DEMOMODE] [bit] NULL,
+              	[MODULE_STOCK] [bit] NULL,
+              	[ISSCHOOL] [bit] NULL,
+              	[ISREFERENCE] [bit] NULL,
+              	[MODULE_PERSONEL] [bit] NULL,
+              	[MODULE_PURCHASING] [bit] NULL,
+              	[MODULE_PMSMINI] [bit] NULL,
+              	[GUESTAPPLICATION] [bit] NULL,
+              	[UPDATEUSER] [int] NULL,
+              	[OVERDUEPAYMENT_CURRENCYCODE] [nvarchar](3) NULL,
+              	[OVERDUEPAYMENT] [decimal](19, 2) NULL,
+              	[DISPLAYMESSAGE] [nvarchar](255) NULL,
+              	[CCTRANID] [int] NULL,
+              	[STOP_IF_OVERDUEPAYMENT] [bit] NOT NULL,
+              	[LICENCEDROOMCOUNT] [smallint] NULL,
+              	[DISCOUNTPERCENT] [real] NOT NULL,
+              	[MODULE_EINVOICE] [bit] NULL,
+              	[MODULE_EARCHIVE] [bit] NULL,
+              	[DISCOUNTAMOUNT] [real] NOT NULL,
+              	[ONLINERESCOUNT] [int] NULL,
+              	[ONLINERESLAST] [smalldatetime] NULL,
+              	[CHANNELRESCOUNT] [int] NULL,
+              	[CHANNELRESLAST] [smalldatetime] NULL,
+              	[PMSRESCOUNT] [int] NULL,
+              	[PMSRESLAST] [smalldatetime] NULL,
+              	[MODULE_RESTAURANT_DIGITALMENU] [bit] NOT NULL,
+              	[MODULE_RESTAURANT_PACKAGEORDER] [bit] NOT NULL,
+              	[MODULE_RESTAURANT_TABLEORDER] [bit] NOT NULL,
+              	[MODULE_RESTAURANT_CCPAYMENT] [bit] NOT NULL,
+              	[INVOICETOTAL] [float] NULL,
+              	[SPA_USER] [int] NULL,
+              	[POS_USER] [int] NULL,
+              	[WEBSERVICE] [bit] NULL,
+              	[DOORLOCK_INTEGRATION] [bit] NULL,
+              	[PBX_INTEGRATION] [bit] NULL,
+              	[TV_INTEGRATION] [bit] NULL,
+              	[AC_INTEGRATION] [bit] NULL,
+              	[CASHREGISTER_INTEGRATION] [bit] NULL,
+              	[INVOICEDATE] [date] NULL,
+              	[EXTRAAMOUNT] [decimal](19, 2) NULL,
+              	[EXTRAAMOUNTDESCRIPTION] [nvarchar](100) NULL,
+              	[LISTPRICE] [decimal](19, 2) NULL,
+              	[DISCOUNTEDLISTPRICE] [decimal](19, 2) NULL,
+              	[ACCOUNTING_INTEGRATION] [bit] NULL,
+              	[MODULE_FIXTURE] [bit] NULL,
+              	[MODULE_EIRSALIYE] [bit] NULL,
+              	[MODULE_EDEFTER] [bit] NULL,
+              	[MODULE_PMSMODE] [tinyint] NOT NULL,
+              	[POSKEY] [nvarchar](10) NULL,
+              	[MODULE_RESTAURANT_ROOMORDER] [bit] NOT NULL,
+              	[MODULE_PROPERTY_MANAGEMENT] [bit] NULL,
+              	[POSCHECKCOUNT] [int] NULL,
+              	[POSCHECKLAST] [date] NULL,
+              	[MODULE_ISAFE] [bit] NULL,
+              	[MODULE_KIMLIKOKUR] [bit] NULL,
+              	[MODULE_PDKS] [bit] NULL,
+              	[MODULE_OPEX] [bit] NULL,
+              	[MODULE_CALLCENTER] [bit] NULL,
+              	[OPERATION_STARTDATE] [date] NULL,
+              	[OPERATION_ENDDATE] [date] NULL,
+              	[MODULE_PRODUCTION] [bit] NULL,
+              	[HIDEONALLHOTELPORTALS] [bit] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STDROLE]    Script Date: 17.08.2021 4:40:31 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDROLE](
+              	[ID] [int] IDENTITY(1,1) NOT NULL,
+              	[ROLENAME] [nvarchar](50) NULL,
+              	[SECURITYLEVEL] [int] NULL,
+              	[TENNANTFILTERFIELD] [nvarchar](max) NULL,
+              	[TENNANTFILTERFIELDNAME] [nvarchar](250) NULL,
+              	[PORTALID] [int] NOT NULL,
+              	[GROUPENABLED] [bit] NOT NULL,
+              	[ONLYAPPLICATION] [nvarchar](50) NULL,
+              	[TOBEDELETED] [bit] NULL,
+              	[ADMINLEVEL] [int] NULL,
+              	[SHOWINPERMISSIONEDITOR] [bit] NOT NULL,
+              	[ROLECODE] [nvarchar](5) NULL,
+               CONSTRAINT [PK_STDROLE] PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STDROLE_DETAIL]    Script Date: 17.08.2021 4:40:31 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDROLE_DETAIL](
+              	[ID] [int] IDENTITY(1,1) NOT NULL,
+              	[STDROLEID] [int] NULL,
+              	[MODELNAME] [nvarchar](100) NULL,
+              	[PREAD] [bit] NULL,
+              	[PNEW] [bit] NULL,
+              	[PUPDATE] [bit] NULL,
+              	[PDELETE] [bit] NULL,
+              	[PEXPORT] [bit] NULL,
+              	[PACTION] [bit] NULL,
+              	[STAFF] [int] NULL,
+              	[CREATEDATE] [datetime] NOT NULL,
+              	[LASTUPDATE] [datetime] NOT NULL,
+               CONSTRAINT [PK_STDROLEDETAIL] PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STDTIMEZONE]    Script Date: 17.08.2021 4:40:31 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDTIMEZONE](
+              	[ID] [int] IDENTITY(1,1) NOT FOR REPLICATION NOT NULL,
+              	[NAME] [nvarchar](50) NULL,
+              	[HOUROFFSET] [float] NULL,
+              	[ISDISABLED] [bit] NULL,
+              	[ISDELETED] [bit] NULL,
+              	[CREATION_DATE] [datetime] NULL,
+              	[LASTUPDATE_DATE] [datetime] NULL,
+               CONSTRAINT [PK_STDTIMEZONE] PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STDUSER]    Script Date: 17.08.2021 4:40:31 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDUSER](
+              	[ID] [int] IDENTITY(1,1) NOT NULL,
+              	[USERCODE] [nvarchar](200) NULL,
+              	[PASSWORD] [nvarchar](50) NULL,
+              	[EMAIL] [nvarchar](200) NULL,
+              	[FIRSTNAME] [nvarchar](50) NULL,
+              	[LASTNAME] [nvarchar](50) NULL,
+              	[GSM] [nvarchar](50) NULL,
+              	[PHONE] [nvarchar](50) NULL,
+              	[POSITION] [nvarchar](50) NULL,
+              	[ROLEID] [int] NULL,
+              	[HOTELID] [int] NULL,
+              	[ISDELETED] [bit] NULL,
+              	[CREATION_DATE] [datetime] NULL,
+              	[LASTUPDATE_DATE] [datetime] NULL,
+              	[ISDISABLED] [bit] NULL,
+              	[LASTLOGINDATE] [datetime] NULL,
+              	[LASTLOGINIP] [varchar](45) NULL,
+              	[SUPERADMIN] [bit] NOT NULL,
+              	[GROUPID] [int] NULL,
+              	[GROUPADMIN] [bit] NULL,
+              	[SYSTEMWEBSERVICE] [bit] NULL,
+              	[HOTELWEBSERVICE] [bit] NULL,
+              	[PORTALID] [int] NULL,
+              	[TENNANTFILTERID] [nvarchar](50) NULL,
+              	[PORTALSELLERID] [int] NULL,
+              	[CUSTOMCONFIGS] [nvarchar](max) NULL,
+              	[ACCOUNTPERIODID] [int] NULL,
+              	[UID] [uniqueidentifier] NOT NULL,
+              	[COMMISSIONTEMPLATEID] [bigint] NULL,
+              	[OPENACCOUNTCARD] [bit] NULL,
+              	[ROUTEDACCOUNTID] [uniqueidentifier] NULL,
+              	[ACCOUNTNAME] [nvarchar](100) NULL,
+              	[ACCCODE] [nvarchar](150) NULL,
+              	[DEFAULTCURRENCYID] [int] NOT NULL,
+              	[DEBIT] [float] NOT NULL,
+              	[CREDIT] [float] NOT NULL,
+              	[FULLNAME]  AS (nullif((isnull([FIRSTNAME],'')+' ')+isnull([LASTNAME],''),' ')),
+              	[FAX] [nvarchar](50) NULL,
+              	[INTERCOM] [nvarchar](10) NULL,
+              	[ACTIVEDIRECTORY_USERNAME] [nvarchar](150) NULL,
+              	[TORKSESSION] [uniqueidentifier] NULL,
+              	[TORKSESSIONVALIDUNTIL] [datetime] NULL,
+              	[IPADDRESS] [varchar](255) NULL,
+              	[PORTALDOMAINID] [int] NULL,
+              	[COPIEDFROM_UID] [uniqueidentifier] NULL,
+              	[LASTACTIONTIME] [datetime] NULL,
+              	[ADMINLEVEL] [tinyint] NOT NULL,
+              	[HOSPITALID] [int] NULL,
+              	[PREMIUMPERCENT] [nvarchar](50) NULL,
+              	[CANLOGINFROM] [time](7) NULL,
+              	[CANLOGINTO] [time](7) NULL,
+              	[INTERNALCHATUSERNAME] [nvarchar](50) NULL,
+              	[INTERNALCHATPASSWORD] [nvarchar](64) NULL,
+              	[ROLELEARNERMODE] [bit] NULL,
+              	[COMPERCENT] [float] NULL,
+              	[PASSWORDLASTCHANGED] [datetime] NULL,
+              	[PASSWORD64] [binary](64) NULL,
+              	[DIGITALMENUUSERNAME] [nvarchar](64) NULL,
+              	[DIGITALMENUPASSWORD] [nvarchar](64) NULL,
+              	[NATIONALIDNO] [nvarchar](20) NULL,
+              	[WAITERID] [int] NULL,
+              	[PARKTENANTID] [int] NULL,
+              	[UPDATEUSER] [int] NULL,
+              	[ISPOSPRINTER] [bit] NULL,
+              	[USEREMINDER] [bit] NULL,
+              	[2FAKEY] [varchar](50) NULL,
+              	[2FASTATE] [tinyint] NOT NULL,
+              	[PINCODE] [char](4) NULL,
+              	[STDUSERDEPID] [int] NULL,
+              	[SUBDEPARTMENT] [nvarchar](25) NULL,
+              	[EXPIREDATE] [smalldatetime] NULL,
+              	[TASKVIEWMODE] [tinyint] NOT NULL,
+              	[LOGOUTTIME] [datetime] NULL,
+              	[MAID] [nvarchar](20) NULL,
+              	[RECEIVENIGHTREPORTS] [bit] NULL,
+              	[MAXDISCOUNTPERCENT] [float] NULL,
+              	[AGENTID] [nvarchar](40) NULL,
+              	[APIKEY] [nvarchar](50) NULL,
+              	[APIURL] [nvarchar](155) NULL,
+              	[LOGINTIME] [datetime] NULL,
+              	[SUBUSER] [bit] NULL,
+              	[CREATORID] [int] NULL,
+              	[MAIDCHEF] [nvarchar](20) NULL,
+              	[CHIEFOFSTOREID] [int] NULL,
+              	[NEEDAPPROVALFORPURCHASE] [bit] NULL,
+              	[RESPUSHSKIPPRICECHECK] [bit] NULL,
+               CONSTRAINT [PK_STDUSER] PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+              UNIQUE NONCLUSTERED
+              (
+              	[UID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ACCOUNTID_BANK]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_ACCOUNTID_BANK] ON [dbo].[HOTEL]
+              (
+              	[ACCOUNTID_BANK] ASC
+              )
+              WHERE ([ACCOUNTID_BANK] IS NOT NULL)
+              WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ACCOUNTID_CREDITCARD]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_ACCOUNTID_CREDITCARD] ON [dbo].[HOTEL]
+              (
+              	[ACCOUNTID_CREDITCARD] ASC
+              )
+              WHERE ([ACCOUNTID_CREDITCARD] IS NOT NULL)
+              WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ACCOUNTID_EXPENSE]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_ACCOUNTID_EXPENSE] ON [dbo].[HOTEL]
+              (
+              	[ACCOUNTID_EXPENSE] ASC
+              )
+              WHERE ([ACCOUNTID_EXPENSE] IS NOT NULL)
+              WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ACCOUNTID_FRONTSAFE]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_ACCOUNTID_FRONTSAFE] ON [dbo].[HOTEL]
+              (
+              	[ACCOUNTID_FRONTSAFE] ASC
+              )
+              WHERE ([ACCOUNTID_FRONTSAFE] IS NOT NULL)
+              WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ACCOUNTID_INCOME]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_ACCOUNTID_INCOME] ON [dbo].[HOTEL]
+              (
+              	[ACCOUNTID_INCOME] ASC
+              )
+              WHERE ([ACCOUNTID_INCOME] IS NOT NULL)
+              WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ACCOUNTID_MAINSAFE]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_ACCOUNTID_MAINSAFE] ON [dbo].[HOTEL]
+              (
+              	[ACCOUNTID_MAINSAFE] ASC
+              )
+              WHERE ([ACCOUNTID_MAINSAFE] IS NOT NULL)
+              WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ACCOUNTID_ROUNDING]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_ACCOUNTID_ROUNDING] ON [dbo].[HOTEL]
+              (
+              	[ACCOUNTID_ROUNDING] ASC
+              )
+              WHERE ([ACCOUNTID_ROUNDING] IS NOT NULL)
+              WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_BASEROOMTYPEID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_BASEROOMTYPEID] ON [dbo].[HOTEL]
+              (
+              	[BASEROOMTYPEID] ASC
+              )
+              WHERE ([BASEROOMTYPEID] IS NOT NULL)
+              WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_CNAMEWEB]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_CNAMEWEB] ON [dbo].[HOTEL]
+              (
+              	[CNAME_WEB] ASC
+              )
+              INCLUDE([ID],[PORTALID]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_COORDINATES]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_COORDINATES] ON [dbo].[HOTEL]
+              (
+              	[LATITUDE] ASC,
+              	[LONGITUDE] ASC
+              )
+              INCLUDE([ID]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_CORAL]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_CORAL] ON [dbo].[HOTEL]
+              (
+              	[CORAL_HOTELID] ASC
+              )
+              INCLUDE([PORTALID],[ISDELETED],[ISDISABLED]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_EMAIL_PASSWORD]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_EMAIL_PASSWORD] ON [dbo].[HOTEL]
+              (
+              	[EMAIL] ASC,
+              	[WEBPAGEPASSWORD] ASC
+              )
+              INCLUDE([ID]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_EXPEDIAID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_EXPEDIAID] ON [dbo].[HOTEL]
+              (
+              	[EXPEDIAID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_EXPEDIAREGIONID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_EXPEDIAREGIONID] ON [dbo].[HOTEL]
+              (
+              	[EXPEDIA_REGIONID] ASC
+              )
+              INCLUDE([ID])
+              WHERE ([EXPEDIA_REGIONID] IS NOT NULL)
+              WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = ON, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_FN_HOTEL_RATECODE_DETAIL]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE UNIQUE NONCLUSTERED INDEX [IX_FN_HOTEL_RATECODE_DETAIL] ON [dbo].[HOTEL]
+              (
+              	[ID] ASC
+              )
+              INCLUDE([CONTRACTPRICESPRIORITY]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_FOLIORESERVATION]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_FOLIORESERVATION] ON [dbo].[HOTEL]
+              (
+              	[FOLIORESERVATION] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_GIATAID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_GIATAID] ON [dbo].[HOTEL]
+              (
+              	[GIATAID] ASC,
+              	[PORTALID] ASC
+              )
+              INCLUDE([ID],[HIDEONPORTAL],[HIDEONPORTAL_B2C],[ISDELETED],[ISDISABLED]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_GROUPID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_GROUPID] ON [dbo].[HOTEL]
+              (
+              	[GROUPID] ASC
+              )
+              INCLUDE([ID]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_HOTEL_ID_ESYNCPASS]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE UNIQUE NONCLUSTERED INDEX [IX_HOTEL_ID_ESYNCPASS] ON [dbo].[HOTEL]
+              (
+              	[ID] ASC,
+              	[ESYNC_PASSWORD] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_HOTEL_SEOURL]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_HOTEL_SEOURL] ON [dbo].[HOTEL]
+              (
+              	[SEOURL] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_OPENACCOUNTCARD]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_OPENACCOUNTCARD] ON [dbo].[HOTEL]
+              (
+              	[OPENACCOUNTCARD] ASC
+              )
+              INCLUDE([UID]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_PORTALID_RESTAURANT]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_PORTALID_RESTAURANT] ON [dbo].[HOTEL]
+              (
+              	[PORTALID] ASC
+              )
+              WHERE ([PROPERTYTYPE]=(2))
+              WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_PORTALSEARCH]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_PORTALSEARCH] ON [dbo].[HOTEL]
+              (
+              	[ID] ASC,
+              	[HIDEONPORTAL] ASC,
+              	[NAME] ASC,
+              	[LATITUDE] ASC,
+              	[LONGITUDE] ASC
+              )
+              INCLUDE([ADDRESS],[EXPEDIA_REGIONID],[EXPEDIA_COUNTRYID],[EXPEDIA_CITYID],[CATEGORYID],[CONCEPTID],[GROUPID],[LOWRATE],[ISDELETED],[ISDISABLED],[HOTELLISTPRICE],[HIDEONPORTAL_B2C],[ONLINECURRENCYID],[PORTALID],[STDPRICE],[ONLINEAGENCYID],[SEOURL],[UID],[HASEARCHKEYWORDS],[PORTALPRICELISTMODE],[STDISCOUNTPCT]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_REFCODE]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_REFCODE] ON [dbo].[HOTEL]
+              (
+              	[REFCODE] ASC
+              )
+              WHERE ([REFCODE] IS NOT NULL)
+              WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_SENDSMSONCONTRACTUPDATE]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_SENDSMSONCONTRACTUPDATE] ON [dbo].[HOTEL]
+              (
+              	[SENDSMSONCONTRACTUPDATE] ASC,
+              	[SMSPHONE] ASC
+              )
+              INCLUDE([ID]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_SUBDOMAIN]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_SUBDOMAIN] ON [dbo].[HOTEL]
+              (
+              	[SUBDOMAIN] ASC
+              )
+              INCLUDE([ID],[PORTALID]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_VISIBILITY]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_VISIBILITY] ON [dbo].[HOTEL]
+              (
+              	[HIDEONPORTAL] ASC
+              )
+              INCLUDE([NAME],[ID],[ISDELETED],[ISDISABLED],[PORTALID]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [UQ_HOTEL_ID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE UNIQUE NONCLUSTERED INDEX [UQ_HOTEL_ID] ON [dbo].[HOTEL]
+              (
+              	[ID] ASC
+              )
+              INCLUDE([PORTALID],[NAME],[ADDRESS],[EMAIL],[WEB],[PHONE],[FAX],[REGIONID],[SQLIP],[SQLUSER],[SQLPASS],[SQLDB],[NOTES],[LOGOURL],[SMTPSERVER],[SMTPUSER],[SMTPPASS],[SMTPFROM],[MINPRICE],[CONCEPTID],[CATEGORYID],[LATLNG],[WEBKEY],[TIMEZONEID],[ISDISABLED],[ISDELETED],[CREATION_DATE],[LASTUPDATE_DATE],[GROUPID],[KEYWORD],[EhosMemberId],[GANALYTICSCODE],[FBAPPID],[FBAPPPASSWORD],[FBPAGEURL],[ONLINECURRENCYID],[RES_CHDMINAGE],[RES_CHDMAXAGE],[RES_MAXADULTCOUNT],[RES_GUESTCARDHOLDER],[RES_USEVISA],[RES_USEMASTERCARD],[RES_USEAMEX],[RES_ASKNATIONALITY],[RES_ASKGENDER],[RES_ASKADDRESS],[RES_ASKREGION],[RES_ASKCITY],[RES_ASKCOUNTRY],[SUBDOMAIN],[RES_STYLENO],[COUNTRYID],[RES_GUESTINFOTEXT],[RES_OPTIONALINFOTEXT],[RES_CREDITCARTINFOTEXT],[RES_RESDETAILINFOTEXT],[RES_SHOWONLYDISCOUNTPRICE],[POLICECODE],[DEFAULTDEPARTMENTID],[DEFAULTREVENUEID],[FOLIORESERVATION],[FBPAGEID],[AIRPORTCODE],[LONGITUDE],[LATITUDE],[LOWRATE],[HIGHRATE],[PROPERTYDESCRIPTION],[DRIVINGDIRECTIONS],[NEARBYATTRACTIONS],[CHECKINTIME],[CHECKOUTTIME],[TWITTERUSERNAME],[COLORSCHEMES],[RES_ASKEXTRAREQUEST],[SEOURL],[HIDEONPORTAL],[RES_HIDERESDAYS],[RES_CUSTOMFIELD1NAME],[RES_CUSTOMFIELD1REQUIRED],[RES_CUSTOMFIELD2NAME],[RES_CUSTOMFIELD2REQUIRED],[RES_CUSTOMFIELD3NAME],[RES_CUSTOMFIELD3REQUIRED],[RES_CUSTOMFIELD4NAME],[RES_CUSTOMFIELD4REQUIRED],[RES_CUSTOMFIELD5NAME],[RES_CUSTOMFIELD5REQUIRED],[RES_BYPASSCCARD],[ZOHOVERIFYCODE],[SHOWONLYPRICETAB],[PROPERTYDESCRIPTION_1],[PROPERTYDESCRIPTION_2],[PROPERTYDESCRIPTION_3],[PROPERTYDESCRIPTION_4],[ZIPCODE],[STANDARTCOMMISSIONPERCENT],[RES_PAYATHOTEL],[RES_PAYONLINE],[OUTERSYNCPASSWORD],[CUSTOMCSSTEMPLATENAME],[PORTALPREFERENCE],[OBJECTTYPE],[RES_MAXROOMSALE],[RES_CUSTOMTAB1CAPTION],[RES_CUSTOMTAB1CONTENT],[TRIPADVISORID],[WEBORDER],[WEBPAGEPASSWORD],[RES_LANGUAGES],[RES_USEWEBSITEV2],[RES_EMAIL],[USEALLAIRPORTS],[UID],[RES_DONTUSECURRENCY],[RES_LOGOLINK],[CNAME_WEB],[CNAME_WEBV2],[HASEARCHKEYWORDS],[RES_CUSTOMTAB2CAPTION],[RES_CUSTOMTAB2CONTENT],[RES_TABORDER],[RES_PROMOTIONPOPUP],[RES_DONTSENDCONTACTMAIL],[RES_FLIGHTCHANGABLEDAYS],[RES_USETRANSFER],[RES_DEFAULTSTAYCOUNT],[RES_DEFAULTCHECKINSTART],[CONTRACTPRICESPRIORITY],[TOPHOTELSRUID],[MINPRICESLASTUPDATE],[OPENACCOUNTCARD],[ROUTEDACCOUNTID],[GLACCOUNTID],[RES_ISPREPAY],[URL_GOOGLEPLUS],[URL_FOURSQUARE],[URL_BLOGGER],[URL_FLICKER],[URL_INSTAGRAM],[URL_VINE],[RES_ACCEPTWITHWOMAN],[PAYMENTINFORMATION],[CANCELLATIONINFORMATION],[RES_SHOWINSTALLMENTOPTIONS],[HOTELPAYMENTTYPE],[MONEYTRANSFER_ENABLED],[MONEYTRANSFER_INFO],[HOLIDAYCHECKID],[PORTALPRICELISTMODE],[COMMISSIONGROUPID],[ACCCODE],[DEFAULTCURRENCYID],[DEBIT],[CREDIT],[HIDEONPORTAL_B2C],[HOTELRATING],[HOTELRATINGCOUNTTEXT],[HOTELRATINGTEXT]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_TORKPLATFORM]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_TORKPLATFORM] ON [dbo].[HOTEL_GROUP]
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ACC_UNKNOWNACCOUNTID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_ACC_UNKNOWNACCOUNTID] ON [dbo].[HOTEL_SETTINGS]
+              (
+              	[ACC_UNKNOWNACCOUNTID] ASC
+              )
+              WHERE ([ACC_UNKNOWNACCOUNTID] IS NOT NULL)
+              WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_OTELID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_OTELID] ON [dbo].[HOTEL_SUBSCRIPTION]
+              (
+              	[OTELID] ASC
+              )
+              INCLUDE([ID],[LICENCEDROOMCOUNT],[ISSCHOOL]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE UNIQUE NONCLUSTERED INDEX [IX_ID] ON [dbo].[STDROLE]
+              (
+              	[ID] ASC
+              )
+              INCLUDE([ROLENAME],[SECURITYLEVEL],[TENNANTFILTERFIELD],[TENNANTFILTERFIELDNAME],[PORTALID],[GROUPENABLED],[ONLYAPPLICATION]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_SELLEROWNER]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_SELLEROWNER] ON [dbo].[STDROLE]
+              (
+              	[PORTALID] ASC,
+              	[ROLENAME] ASC
+              )
+              INCLUDE([ID])
+              WHERE ([PORTALID]=(1) AND ([ROLENAME] IN ('PortalSeller', 'PortalOwner')))
+              WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_TORKPLATFORM]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_TORKPLATFORM] ON [dbo].[STDROLE]
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ROLEID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_ROLEID] ON [dbo].[STDROLE_DETAIL]
+              (
+              	[STDROLEID] ASC
+              )
+              INCLUDE([MODELNAME],[PREAD],[PNEW],[PUPDATE],[PDELETE],[PEXPORT],[PACTION]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_TORKPLATFORM]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_TORKPLATFORM] ON [dbo].[STDROLE_DETAIL]
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = ON, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_TORKPLATFORM]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_TORKPLATFORM] ON [dbo].[STDTIMEZONE]
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_HOTELID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_HOTELID] ON [dbo].[STDUSER]
+              (
+              	[HOTELID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ID_FULL]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE UNIQUE NONCLUSTERED INDEX [IX_ID_FULL] ON [dbo].[STDUSER]
+              (
+              	[ID] ASC
+              )
+              INCLUDE([ROLEID],[USERCODE],[EMAIL],[FIRSTNAME],[LASTNAME],[GSM],[PHONE],[POSITION],[HOTELID],[ISDELETED],[CREATION_DATE],[LASTUPDATE_DATE],[ISDISABLED],[LASTLOGINDATE],[SUPERADMIN],[GROUPID],[GROUPADMIN],[SYSTEMWEBSERVICE],[HOTELWEBSERVICE],[PORTALID],[TENNANTFILTERID],[PORTALSELLERID],[CUSTOMCONFIGS],[ACCOUNTPERIODID],[UID],[COMMISSIONTEMPLATEID],[OPENACCOUNTCARD],[ROUTEDACCOUNTID],[ACCOUNTNAME],[ACCCODE],[DEFAULTCURRENCYID],[DEBIT],[CREDIT],[FULLNAME],[FAX],[INTERCOM],[ACTIVEDIRECTORY_USERNAME],[TORKSESSION],[TORKSESSIONVALIDUNTIL],[IPADDRESS],[PORTALDOMAINID],[COPIEDFROM_UID],[PASSWORD64]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ROLEID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_ROLEID] ON [dbo].[STDUSER]
+              (
+              	[ROLEID] ASC
+              )
+              INCLUDE([TENNANTFILTERID]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_STDUSER_MAID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_STDUSER_MAID] ON [dbo].[STDUSER]
+              (
+              	[MAID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = ON, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_TENNANTFILTERID]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_TENNANTFILTERID] ON [dbo].[STDUSER]
+              (
+              	[TENNANTFILTERID] ASC
+              )
+              INCLUDE([ID],[USERCODE]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_USERCODE_PASSWORD]    Script Date: 17.08.2021 4:40:31 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_USERCODE_PASSWORD] ON [dbo].[STDUSER]
+              (
+              	[USERCODE] ASC,
+              	[PASSWORD] ASC
+              )
+              INCLUDE([ID],[EMAIL],[FIRSTNAME],[LASTNAME],[GSM],[PHONE],[POSITION],[ROLEID],[HOTELID],[ISDELETED],[CREATION_DATE],[LASTUPDATE_DATE],[ISDISABLED],[LASTLOGINDATE],[SUPERADMIN],[GROUPID],[GROUPADMIN],[SYSTEMWEBSERVICE],[HOTELWEBSERVICE],[PORTALID],[TENNANTFILTERID],[PORTALSELLERID],[CUSTOMCONFIGS],[ACCOUNTPERIODID],[UID],[COMMISSIONTEMPLATEID],[OPENACCOUNTCARD],[ROUTEDACCOUNTID],[ACCOUNTNAME],[ACCCODE],[DEFAULTCURRENCYID],[DEBIT],[CREDIT],[FULLNAME],[FAX],[INTERCOM],[ACTIVEDIRECTORY_USERNAME],[TORKSESSION],[TORKSESSIONVALIDUNTIL],[IPADDRESS],[PORTALDOMAINID],[COPIEDFROM_UID]) WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              GO
+              ALTER TABLE [dbo].[APISEQUENCE] ADD  DEFAULT ((1)) FOR [SEQUENCETYPE]
+              GO
+              ALTER TABLE [dbo].[APISEQUENCE] ADD  DEFAULT ((0)) FOR [LOGREQUIRED]
+              GO
+              ALTER TABLE [dbo].[APISEQUENCE_PERIOD] ADD  DEFAULT ((60)) FOR [REPEATSECONDS]
+              GO
+              ALTER TABLE [dbo].[APISEQUENCE_PERIOD] ADD  DEFAULT ('2000-01-01') FOR [LASTREPEAT]
+              GO
+              ALTER TABLE [dbo].[APISEQUENCE_STEP] ADD  DEFAULT ((0)) FOR [ENCODEGETPARAMS]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ((0)) FOR [DIGITALMENU_LOGINREQUIRED]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ((0)) FOR [DIGITALMENU_CREATECHECK]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ((0)) FOR [DIGITALMENU_TABLEVALIDATIONMODE]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ((0)) FOR [DIGITALMENU_ONLYWHATSAPPORDER]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ('00:00') FOR [DIGITALMENU_ORDERTIMESTART]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ('23:59') FOR [DIGITALMENU_ORDERTIMEEND]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ((1)) FOR [DIGITALMENU_SHOWPRICES]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ((5)) FOR [DIGITALMENU_SHOPPINGBONUSPERCENT]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ((0)) FOR [PROMOTIONENABLED]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ((1)) FOR [EWALLETENABLED]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ((0)) FOR [NAMEATPICKUP]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ((30)) FOR [MINTIMEFORPICKUP]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ((30)) FOR [MAXDAYSFORPICKUP]
+              GO
+              ALTER TABLE [dbo].[DIGITALMENU_SETTINGS] ADD  DEFAULT ((1)) FOR [USERMODULE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((19)) FOR [TIMEZONEID]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT (getutcdate()) FOR [CREATION_DATE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT (getdate()) FOR [PROGDATE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  CONSTRAINT [MANUELUPDATEDEFAULT]  DEFAULT ((0)) FOR [ESYNC_MANUELUPDATE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  CONSTRAINT [DF_HOTEL_RES_SHOWRATETYPENAME]  DEFAULT ((1)) FOR [RES_SHOWRATETYPENAME]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  CONSTRAINT [DF_HOTEL_CHECKINTIME]  DEFAULT ('14:00:00') FOR [CHECKINTIME]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  CONSTRAINT [DF_HOTEL_CHECKOUTTIME]  DEFAULT ('12:00:00') FOR [CHECKOUTTIME]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  CONSTRAINT [DF_HOTEL_HIDEONPORTAL]  DEFAULT ((1)) FOR [HIDEONPORTAL]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  CONSTRAINT [DF__HOTEL__RES_HIDER__04708690]  DEFAULT ((0)) FOR [RES_HIDERESDAYS]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  CONSTRAINT [CONSTRAINT_HOTEL_RES_PAYATHOTEL]  DEFAULT ((1)) FOR [RES_PAYATHOTEL]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  CONSTRAINT [CONSTRAINT_HOTEL_RES_PAYONLINE]  DEFAULT ((1)) FOR [RES_PAYONLINE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [PORTALPREFERENCE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [PORTALID]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ('H') FOR [OBJECTTYPE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ('01012000') FOR [WEBPAGEPASSWORD]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ('TR|EN') FOR [RES_LANGUAGES]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [RES_USEWEBSITEV2]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [USEALLAIRPORTS]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT (newid()) FOR [UID]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [RES_DONTUSECURRENCY]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [RES_FLIGHTCHANGABLEDAYS]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [RES_USETRANSFER]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [RES_DEFAULTSTAYCOUNT]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [RES_DEFAULTCHECKINSTART]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [CONTRACTPRICESPRIORITY]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [OPENACCOUNTCARD]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [RES_ISPREPAY]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [RES_ACCEPTWITHWOMAN]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  CONSTRAINT [DF_PAYMENTINFORMATION]  DEFAULT ('') FOR [PAYMENTINFORMATION]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [RES_SHOWINSTALLMENTOPTIONS]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [HOTELPAYMENTTYPE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [PORTALPRICELISTMODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((142)) FOR [DEFAULTCURRENCYID]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [DEBIT]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [CREDIT]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [HIDEONPORTAL_B2C]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [RES_GOTOBASKET_AUTO]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [STDPRICE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [TRANSFER_ENABLE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [TRANSFER_FEE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [TRANSFER_ROOMPRICE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [TRANSFER_ADULTPRICE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [TRANSFER_CHILDPRICE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((2)) FOR [TRANSFER_TWOWAYFACTOR]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [ALLOWPAYATSERVICE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  CONSTRAINT [DF__HOTEL__USEHTTPSV__183DE2D3]  DEFAULT ((0)) FOR [USEHTTPSV3]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [USEMULTIPLE_PROMOTION]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [USEQHOR]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [NEWPRICINGENABLED]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [USEHOTELPOS]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT (getdate()) FOR [LASTUPDATE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [PAYBYCC]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [PAYBYWIRE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [PAYATHOTEL]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [PAYATHOTELWITHCCGUARANTEE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [PAYBYDOWNPAYMENT]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((25)) FOR [DOWNPAYMENTPERCENT]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [MINLADY]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [PRICEWITHBIRTHDATE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [RESAUTOSHOWPRICE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1000)) FOR [HIDEROOMSMORETHAN]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [INTERNALCHATENABLED]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ('181') FOR [FRONTOFFICEACCOUNT]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [KBSMODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [KBSAUTO]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [PAYBYAGENCY_B2B]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [PAYBYMAILORDER]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [PAYBYMAILORDER_B2B]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [SPECIALCASEIGNOREBABY]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((4)) FOR [PAXFORMULAID]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [DOORKEYCARDMODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [RESDAYBOARDFOLIOMODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((99)) FOR [ADMINLEVEL]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((1)) FOR [PROPERTYTYPE]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((5)) FOR [ENDOFDAYTIME]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [2FAREQUIRED]
+              GO
+              ALTER TABLE [dbo].[HOTEL] ADD  DEFAULT ((0)) FOR [USE_ROOMTYPEFACTOR_FORBOARD]
+              GO
+              ALTER TABLE [dbo].[HOTEL_GROUP] ADD  DEFAULT ((1)) FOR [PORTALID]
+              GO
+              ALTER TABLE [dbo].[HOTEL_GROUP] ADD  DEFAULT ((0)) FOR [HEADERTYPE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [RES_MARKET_REQUIRED]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [RES_SOURCE_REQUIRED]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [RES_SEGMENT_REQUIRED]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [RES_NAMES_REQUIRED]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [INVOICE_REQUIRED_BEFORECHECKOUT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [CL_INVOICE_REQUIRED_BEFORECHECKOUT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [STOCK_PREVENT_SHORT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [INVOICE_ISSUEDATE_CANNOTCHANGE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [INVOICE_ISSUEDATE_MUSTBECHECKOUT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((16)) FOR [SIGNATURE_AGELIMIT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ('100.20.001') FOR [ACC_CASHCODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ('181.01.001') FOR [ACC_CCARDCODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ('326.02.001') FOR [ACC_DEPOSITCODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ('340.01') FOR [ACC_ADVANCECODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [INVOICE_NOTUPDATEBLE_AFTER_INTEGRATED]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [INVOICE_NOTUPDATEBLE_AFTER_NIGHT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [USELOCALDATA]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [NONCL_INVOICE_REQUIRED_BEFORECHECKOUT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [RES_AUTOSEND_DOORCODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((5.0)) FOR [POS_SLIPPRINTER_TOPMARGIN]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_CHECKPRINTER_TYPE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((2)) FOR [POS_INVOICEPRINTER_TYPE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_SHOWUSDTOTAL]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_SHOWEURTOTAL]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_SHOWPAYMENTASSUMMARY]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_SHOWCLIENTBALANCE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_SHOWTAXSUMMARY]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_SHOWROOMNO]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_SHOWGUESTNAME]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_SHOWSIGNATURE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_SHOWCLOSETIME]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_SHOWFOOTERINFO]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_SHOWHOTELLOGO]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [INVOICE_SUMMARYTYPE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [ONLINECHECKIN_SKIPIDSCAN]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [ONLINECHECKIN_SKIPSURNAME2]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_CHECKROOMLIMIT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((5)) FOR [LEGIONELLA]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_ONLYHAPPYHOUR_DISCOUNT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_ECR_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [BULKINVOICE_INFO]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [FOLIO_CHECKRESAGENCYCITYLEDGERSTATE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [TASK_USESTANDARTDEFINITIONS]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_CHECKCOMMISSIONPERCENT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_SHOWREVENUEGROUP]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((2)) FOR [RES_CURRENCYMODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [PAYMENT_STOPCURRENCYRATECHANGE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_CASHTRANSFER]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [USETRSERVER]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_MEDISOFT_INTEGRATION_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_TABLEGROUP_PRINTERACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [AIRCONDITIONERACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [USEFOLIOWINDOWFORRESERVATION]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [USEGUESTWINDOWFORFOLIO]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ('1900-01-01') FOR [ACC_SEALDATE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [STOCK_USEFIFOPRICING]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_USEDEPARTMENTPROGDATES]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [STOCK_PRODUCTIONMODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_CHECKTYPE_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_CASHSAFETRANS_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_POSCARDTOTALS_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_CASETOTALS_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_POSCARDTRANSDETAIL_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_DOCTYPE_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_PAYMENTTYPETOTALS_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_PAYMENTNAMETOTALS_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_REVENUEGROUPANALYSIS_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_CASHIERANALYSIS_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_WAITERANALYSIS_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_XREPORT_PRODUCTSALETYPE_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_XREPORT_PRODUCTGROUPSALEANALYSIS_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_XREPORT_PRODUCTSALEANALYSIS_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [RESDAYBOARDFOLIOMODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [STOCK_UPDATECOUNTINGFORMAINSTORE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [PAYMENT_NOTIFICATION_TYPE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [MAIDAUTOASSIGNBYLOCATION]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ('1,4') FOR [RES_CHECKINROOMSTATES]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [HK_ROOMCLEANINGPERIOD]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [HK_CHANGEBEDSHEETDAYS]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_ENDOFDAY_OPENTABLE_CONTROL]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [CHECK_SAME_RES]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [TASK_AUTONOTIFICATION_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [AUTOINVOICENOTEFROMRES]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_DAILYCARD_RESNAME_CLEARCARDNUMBER]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [SAP_INVOICE_SENDDRAFTS]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ('Items') FOR [SAP_INVOICELINETYPE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_CHARGETOGROUPHOTEL]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [INVOICE_CREATEWITHCURRENCY]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_DEPARTMENT_PRODUCTSALES_QTY]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [CL_CHARGEWITHRESCURRENCY]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_USESTOCKCARD]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_SHOWGBPTOTAL]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_ENDOFDAY_CANBEDONE_BEFORE12]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [MAIDASSIGNONLYONELOCATION]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [CREATE_HOTELRETURNINVOICE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [POS_SAMECHECKNO_CANNOTBEUSED]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [INVOICE_CREATEWITHCURRENCYINFOTOGUEST]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [OFFICIALGUESTLIST_TOPMARGIN]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [OFFICIALGUESTLIST_LETTERHEAD]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_ALLPRODUCTGROUP_ACTIVE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [POS_RESNAMELIMITCONTROL]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [HOTEL_BANQUET_ONLYBANQUET]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [USE_ROOMCHANGEPLANS_IN_AVAILABILITY]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((0)) FOR [ASYNCENDOFDAY]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS] ADD  DEFAULT ((1)) FOR [SENDROOMCHANGETOKBS]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SMTPACCOUNTS] ADD  DEFAULT ((0)) FOR [SMTP_TLS]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SUBSCRIPTION] ADD  DEFAULT (getdate()) FOR [STARTDATE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SUBSCRIPTION] ADD  DEFAULT ((0)) FOR [STOP_IF_OVERDUEPAYMENT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SUBSCRIPTION] ADD  DEFAULT ((0)) FOR [DISCOUNTPERCENT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SUBSCRIPTION] ADD  DEFAULT ((0)) FOR [DISCOUNTAMOUNT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SUBSCRIPTION] ADD  CONSTRAINT [DF__HOTEL_SUB__MODUL__7374A996]  DEFAULT ((1)) FOR [MODULE_RESTAURANT_DIGITALMENU]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SUBSCRIPTION] ADD  CONSTRAINT [DF__HOTEL_SUB__MODUL__7468CDCF]  DEFAULT ((1)) FOR [MODULE_RESTAURANT_PACKAGEORDER]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SUBSCRIPTION] ADD  CONSTRAINT [DF__HOTEL_SUB__MODUL__755CF208]  DEFAULT ((1)) FOR [MODULE_RESTAURANT_TABLEORDER]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SUBSCRIPTION] ADD  DEFAULT ((0)) FOR [MODULE_RESTAURANT_CCPAYMENT]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SUBSCRIPTION] ADD  DEFAULT ((1)) FOR [MODULE_PMSMODE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SUBSCRIPTION] ADD  DEFAULT ((1)) FOR [MODULE_RESTAURANT_ROOMORDER]
+              GO
+              ALTER TABLE [dbo].[STDROLE] ADD  CONSTRAINT [DF_SECURITYLEVEL]  DEFAULT ((0)) FOR [SECURITYLEVEL]
+              GO
+              ALTER TABLE [dbo].[STDROLE] ADD  DEFAULT ((1)) FOR [PORTALID]
+              GO
+              ALTER TABLE [dbo].[STDROLE] ADD  DEFAULT ((0)) FOR [GROUPENABLED]
+              GO
+              ALTER TABLE [dbo].[STDROLE] ADD  DEFAULT ((1)) FOR [SHOWINPERMISSIONEDITOR]
+              GO
+              ALTER TABLE [dbo].[STDROLE_DETAIL] ADD  DEFAULT (getutcdate()) FOR [CREATEDATE]
+              GO
+              ALTER TABLE [dbo].[STDROLE_DETAIL] ADD  DEFAULT (getutcdate()) FOR [LASTUPDATE]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  CONSTRAINT [DF_1E280F42_903E_4249_995C_04652C6BC74D]  DEFAULT ((0)) FOR [HOTELID]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  CONSTRAINT [DF_STDUSER_SUPERADMIN]  DEFAULT ((0)) FOR [SUPERADMIN]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  DEFAULT ((1)) FOR [PORTALID]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  CONSTRAINT [DF__STDUSER__ACCOUNT__3CAB8969]  DEFAULT ((0)) FOR [ACCOUNTPERIODID]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  CONSTRAINT [DF__STDUSER__UID__7FAE3378]  DEFAULT (newid()) FOR [UID]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  CONSTRAINT [DF__STDUSER__DEFAULT__5FF65C54]  DEFAULT ((142)) FOR [DEFAULTCURRENCYID]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  CONSTRAINT [DF__STDUSER__DEBIT__60EA808D]  DEFAULT ((0)) FOR [DEBIT]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  CONSTRAINT [DF__STDUSER__CREDIT__61DEA4C6]  DEFAULT ((0)) FOR [CREDIT]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  DEFAULT ((0)) FOR [ADMINLEVEL]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  DEFAULT ((0)) FOR [USEREMINDER]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  DEFAULT ((0)) FOR [2FASTATE]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  DEFAULT ('2049-12-31') FOR [EXPIREDATE]
+              GO
+              ALTER TABLE [dbo].[STDUSER] ADD  DEFAULT ((0)) FOR [TASKVIEWMODE]
+              GO
+              ALTER TABLE [dbo].[APISEQUENCE]  WITH NOCHECK ADD FOREIGN KEY([XMLSERVICEID])
+              REFERENCES [dbo].[STDXMLSERVICE] ([ID])
+              GO
+              ALTER TABLE [dbo].[APISEQUENCE_PERIOD]  WITH NOCHECK ADD FOREIGN KEY([SEQUENCEID])
+              REFERENCES [dbo].[APISEQUENCE] ([ID])
+              GO
+              ALTER TABLE [dbo].[APISEQUENCE_STEP]  WITH NOCHECK ADD FOREIGN KEY([SEQUENCEID])
+              REFERENCES [dbo].[APISEQUENCE] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([ACCOUNTID_FRONTSAFE])
+              REFERENCES [dbo].[APPCARD_VIRTUAL] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([ACCOUNTID_MAINSAFE])
+              REFERENCES [dbo].[APPCARD_VIRTUAL] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([ACCOUNTID_BANK])
+              REFERENCES [dbo].[APPCARD_VIRTUAL] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([ACCOUNTID_CREDITCARD])
+              REFERENCES [dbo].[APPCARD_VIRTUAL] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([ACCOUNTID_EXPENSE])
+              REFERENCES [dbo].[APPCARD_VIRTUAL] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([ACCOUNTID_ROUNDING])
+              REFERENCES [dbo].[APPCARD_VIRTUAL] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([ACCOUNTID_INCOME])
+              REFERENCES [dbo].[APPCARD_VIRTUAL] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([BASEROOMTYPEID])
+              REFERENCES [dbo].[HOTEL_ROOMTYPE] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([COMMISSIONGROUPID])
+              REFERENCES [dbo].[PORTAL_COMMISSIONGROUP] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([DEFAULTCURRENCYID])
+              REFERENCES [dbo].[STDCURCODE] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD  CONSTRAINT [FK__HOTEL__FOLIORESE__7F36D027] FOREIGN KEY([FOLIORESERVATION])
+              REFERENCES [dbo].[HOTEL_RES] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL] CHECK CONSTRAINT [FK__HOTEL__FOLIORESE__7F36D027]
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([GLACCOUNTID])
+              REFERENCES [dbo].[ACCOUNT] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([NOSHOW_DEPARTMENTID])
+              REFERENCES [dbo].[HOTEL_DEPARTMENT] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([NOSHOW_REVENUEID])
+              REFERENCES [dbo].[HOTEL_REVENUE] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([ONLINEAGENCYID])
+              REFERENCES [dbo].[AGENCY] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([PAXFORMULAID])
+              REFERENCES [dbo].[STDPAXFORMULA] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([PBXDEPID])
+              REFERENCES [dbo].[HOTEL_DEPARTMENT] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([PBXLOSTRESID])
+              REFERENCES [dbo].[HOTEL_RES] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([PBXREVID])
+              REFERENCES [dbo].[HOTEL_REVENUE] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD  CONSTRAINT [FK__HOTEL__PORTALID__7B5C1DA2] FOREIGN KEY([PORTALID])
+              REFERENCES [dbo].[PORTAL] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL] CHECK CONSTRAINT [FK__HOTEL__PORTALID__7B5C1DA2]
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([TRANSFERDEPID])
+              REFERENCES [dbo].[HOTEL_DEPARTMENT] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD FOREIGN KEY([TRANSFERREVID])
+              REFERENCES [dbo].[HOTEL_REVENUE] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD  CONSTRAINT [FK_HOTEL_HOTEL_DEPARTMENT] FOREIGN KEY([DEFAULTDEPARTMENTID])
+              REFERENCES [dbo].[HOTEL_DEPARTMENT] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL] CHECK CONSTRAINT [FK_HOTEL_HOTEL_DEPARTMENT]
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD  CONSTRAINT [FK_HOTEL_HOTEL_GROUP] FOREIGN KEY([GROUPID])
+              REFERENCES [dbo].[HOTEL_GROUP] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL] CHECK CONSTRAINT [FK_HOTEL_HOTEL_GROUP]
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH NOCHECK ADD  CONSTRAINT [FK_HOTEL_HOTEL_REVENUE] FOREIGN KEY([DEFAULTREVENUEID])
+              REFERENCES [dbo].[HOTEL_REVENUE] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL] CHECK CONSTRAINT [FK_HOTEL_HOTEL_REVENUE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_GROUP]  WITH NOCHECK ADD FOREIGN KEY([GROUPADMINUSERID])
+              REFERENCES [dbo].[STDUSER] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_GROUP]  WITH NOCHECK ADD  CONSTRAINT [FK__HOTEL_GRO__PORTA__5E8AD4CA] FOREIGN KEY([PORTALID])
+              REFERENCES [dbo].[PORTAL] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_GROUP] CHECK CONSTRAINT [FK__HOTEL_GRO__PORTA__5E8AD4CA]
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS]  WITH NOCHECK ADD FOREIGN KEY([ACC_UNKNOWNACCOUNTID])
+              REFERENCES [dbo].[APPCARD_VIRTUAL] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS]  WITH NOCHECK ADD FOREIGN KEY([DEFAULTACCREVENUEID])
+              REFERENCES [dbo].[HOTEL_REVENUE] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS]  WITH NOCHECK ADD FOREIGN KEY([DEFAULTACCDEPARTMENTID])
+              REFERENCES [dbo].[HOTEL_DEPARTMENT] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS]  WITH NOCHECK ADD FOREIGN KEY([ERP_CURRENCYID])
+              REFERENCES [dbo].[STDCURCODE] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS]  WITH NOCHECK ADD FOREIGN KEY([HOTELID])
+              REFERENCES [dbo].[HOTEL] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS]  WITH NOCHECK ADD FOREIGN KEY([INVOICE_LANGUAGEID])
+              REFERENCES [dbo].[LANGUAGE] ([LANGUAGEID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS]  WITH NOCHECK ADD FOREIGN KEY([IPTV_SEQUENCEID])
+              REFERENCES [dbo].[APISEQUENCE] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS]  WITH NOCHECK ADD FOREIGN KEY([NOSHOW_DEPARTMENTID])
+              REFERENCES [dbo].[HOTEL_DEPARTMENT] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS]  WITH NOCHECK ADD FOREIGN KEY([NOSHOW_REVENUEID])
+              REFERENCES [dbo].[HOTEL_REVENUE] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS]  WITH NOCHECK ADD FOREIGN KEY([SMTPACCOUNTID])
+              REFERENCES [dbo].[HOTEL_SMTPACCOUNTS] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS]  WITH NOCHECK ADD FOREIGN KEY([TRANSFERREVID])
+              REFERENCES [dbo].[HOTEL_REVENUE] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SETTINGS]  WITH NOCHECK ADD FOREIGN KEY([TRANSFERDEPID])
+              REFERENCES [dbo].[HOTEL_DEPARTMENT] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SUBSCRIPTION]  WITH NOCHECK ADD FOREIGN KEY([CCTRANID])
+              REFERENCES [dbo].[HOTEL_TRANSACTION] ([ID])
+              GO
+              ALTER TABLE [dbo].[HOTEL_SUBSCRIPTION]  WITH NOCHECK ADD FOREIGN KEY([OTELID])
+              REFERENCES [dbo].[HOTEL] ([ID])
+              GO
+              ALTER TABLE [dbo].[STDROLE]  WITH NOCHECK ADD FOREIGN KEY([PORTALID])
+              REFERENCES [dbo].[PORTAL] ([ID])
+              GO
+              ALTER TABLE [dbo].[STDROLE_DETAIL]  WITH NOCHECK ADD  CONSTRAINT [FK_STDROLE_DETAIL_STDROLE] FOREIGN KEY([STDROLEID])
+              REFERENCES [dbo].[STDROLE] ([ID])
+              GO
+              ALTER TABLE [dbo].[STDROLE_DETAIL] CHECK CONSTRAINT [FK_STDROLE_DETAIL_STDROLE]
+              GO
+              ALTER TABLE [dbo].[STDUSER]  WITH NOCHECK ADD FOREIGN KEY([CHIEFOFSTOREID])
+              REFERENCES [dbo].[STOCK_STORE] ([ID])
+              GO
+              ALTER TABLE [dbo].[STDUSER]  WITH NOCHECK ADD  CONSTRAINT [FK__STDUSER__COMMISS__00A257B1] FOREIGN KEY([COMMISSIONTEMPLATEID])
+              REFERENCES [dbo].[PORTAL_SELLER_COMISSIONTEMPLATE] ([ID])
+              GO
+              ALTER TABLE [dbo].[STDUSER] CHECK CONSTRAINT [FK__STDUSER__COMMISS__00A257B1]
+              GO
+              ALTER TABLE [dbo].[STDUSER]  WITH NOCHECK ADD  CONSTRAINT [FK__STDUSER__DEFAULT__62D2C8FF] FOREIGN KEY([DEFAULTCURRENCYID])
+              REFERENCES [dbo].[STDCURCODE] ([ID])
+              GO
+              ALTER TABLE [dbo].[STDUSER] CHECK CONSTRAINT [FK__STDUSER__DEFAULT__62D2C8FF]
+              GO
+              ALTER TABLE [dbo].[STDUSER]  WITH NOCHECK ADD  CONSTRAINT [FK__STDUSER__PORTALS__67B5E2FF] FOREIGN KEY([PORTALSELLERID])
+              REFERENCES [dbo].[PORTAL_SELLER] ([ID])
+              ON DELETE SET NULL
+              GO
+              ALTER TABLE [dbo].[STDUSER] CHECK CONSTRAINT [FK__STDUSER__PORTALS__67B5E2FF]
+              GO
+              ALTER TABLE [dbo].[STDUSER]  WITH NOCHECK ADD  CONSTRAINT [FK_STDUSER_HOTEL_GROUP] FOREIGN KEY([GROUPID])
+              REFERENCES [dbo].[HOTEL_GROUP] ([ID])
+              GO
+              ALTER TABLE [dbo].[STDUSER] CHECK CONSTRAINT [FK_STDUSER_HOTEL_GROUP]
+              GO
+              ALTER TABLE [dbo].[STDUSER]  WITH NOCHECK ADD  CONSTRAINT [FK_STDUSER_PORTAL] FOREIGN KEY([PORTALID])
+              REFERENCES [dbo].[PORTAL] ([ID])
+              GO
+              ALTER TABLE [dbo].[STDUSER] CHECK CONSTRAINT [FK_STDUSER_PORTAL]
+              GO
+              ALTER TABLE [dbo].[STDUSER]  WITH NOCHECK ADD  CONSTRAINT [FK_STDUSER_STDROLE] FOREIGN KEY([ROLEID])
+              REFERENCES [dbo].[STDROLE] ([ID])
+              GO
+              ALTER TABLE [dbo].[STDUSER] CHECK CONSTRAINT [FK_STDUSER_STDROLE]
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH CHECK ADD  CONSTRAINT [Name of a hotel cannot be omitted] CHECK  (([NAME] IS NOT NULL AND len([NAME])>(0)))
+              GO
+              ALTER TABLE [dbo].[HOTEL] CHECK CONSTRAINT [Name of a hotel cannot be omitted]
+              GO
+              ALTER TABLE [dbo].[HOTEL]  WITH CHECK ADD  CONSTRAINT [Subdomain cannot contain www or admin or '.'] CHECK  (([SUBDOMAIN] IS NULL OR [SUBDOMAIN]='' OR lower([SUBDOMAIN])<>'www' AND lower([SUBDOMAIN])<>'admin' AND NOT [SUBDOMAIN] like '%.%'))
+              GO
+              ALTER TABLE [dbo].[HOTEL] CHECK CONSTRAINT [Subdomain cannot contain www or admin or '.']
+              GO
+              ALTER TABLE [dbo].[STDUSER]  WITH CHECK ADD  CONSTRAINT [20563 Nolu Otelde Sadece Bayi Tipinde Kullanıcı Yaratılabilir] CHECK  (([HOTELID]<>(20563) OR [ROLEID]=(148)))
+              GO
+              ALTER TABLE [dbo].[STDUSER] CHECK CONSTRAINT [20563 Nolu Otelde Sadece Bayi Tipinde Kullanıcı Yaratılabilir]
+              GO
+              ALTER TABLE [dbo].[STDUSER]  WITH CHECK ADD  CONSTRAINT [Pincode Must be 4 digits exactly] CHECK  (([PINCODE] like '[0-9][0-9][0-9][0-9]'))
+              GO
+              ALTER TABLE [dbo].[STDUSER] CHECK CONSTRAINT [Pincode Must be 4 digits exactly]
+              GO
+              ALTER TABLE [dbo].[STDUSER]  WITH CHECK ADD  CONSTRAINT [Usercode cannot be null] CHECK  (([USERCODE] IS NOT NULL AND [USERCODE]<>''))
+              GO
+              ALTER TABLE [dbo].[STDUSER] CHECK CONSTRAINT [Usercode cannot be null]
+              GO
+              USE [EMDS]
+              GO
+
+              /****** Object:  Table [dbo].[STDUSER_ROLES]    Script Date: 17.08.2021 4:42:49 PM ******/
+              SET ANSI_NULLS ON
+              GO
+
+              SET QUOTED_IDENTIFIER ON
+              GO
+
+              CREATE TABLE [dbo].[STDUSER_ROLES](
+              	[ID] [int] IDENTITY(1,1) NOT NULL,
+              	[HOTELID] [int] NULL,
+              	[PORTALID] [int] NULL,
+              	[USERID] [int] NOT NULL,
+              	[ROLEID] [int] NOT NULL,
+              PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+              UNIQUE NONCLUSTERED
+              (
+              	[USERID] ASC,
+              	[ROLEID] ASC
+              )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+
+              ALTER TABLE [dbo].[STDUSER_ROLES]  WITH NOCHECK ADD FOREIGN KEY([HOTELID])
+              REFERENCES [dbo].[HOTEL] ([ID])
+              GO
+
+              ALTER TABLE [dbo].[STDUSER_ROLES]  WITH NOCHECK ADD FOREIGN KEY([PORTALID])
+              REFERENCES [dbo].[PORTAL] ([ID])
+              GO
+
+              ALTER TABLE [dbo].[STDUSER_ROLES]  WITH NOCHECK ADD FOREIGN KEY([ROLEID])
+              REFERENCES [dbo].[STDROLE] ([ID])
+              GO
+
+              ALTER TABLE [dbo].[STDUSER_ROLES]  WITH NOCHECK ADD FOREIGN KEY([USERID])
+              REFERENCES [dbo].[STDUSER] ([ID])
+              GO
+
+
+              USE [EMDS]
+              GO
+
+              /****** Object:  Table [dbo].[STDUSER_APISEQUENCE]    Script Date: 17.08.2021 4:44:03 PM ******/
+              SET ANSI_NULLS ON
+              GO
+
+              SET QUOTED_IDENTIFIER ON
+              GO
+
+              CREATE TABLE [dbo].[STDUSER_APISEQUENCE](
+              	[ID] [int] IDENTITY(1,1) NOT NULL,
+              	[HOTELID] [int] NULL,
+              	[USERID] [int] NULL,
+              	[APISEQUENCEID] [int] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+              UNIQUE NONCLUSTERED
+              (
+              	[USERID] ASC,
+              	[APISEQUENCEID] ASC
+              )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO

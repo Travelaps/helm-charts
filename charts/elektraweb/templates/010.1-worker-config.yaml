@@ -1,0 +1,250 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: worker-config
+  namespace: default
+data:
+  config.conf.json: |
+    {
+      "dbConfig": {
+        "user": "sa",
+        "password": "aA!01012000",
+        "server": "sql",
+        "database": "EMDS",
+        "options": {
+          "appName": "NodeJS:WebHotelLive",
+          "encrypt": false
+        },
+        "pool": {
+          "min": 20,
+          "max": 300
+        },
+        "requestTimeout": 900000,
+        "normalTimeout": 90000
+      },
+      "redis": {
+        "host": "redis"
+      },
+      "amqp": "amqp://guest:guest@rabbit:5672/hotel",
+      "applicationUpdatePin": "uU!01012000",
+      "applicationUpdateURL": "https://4001.hoteladvisor.net",
+      "syncTokens": {
+        "21713": "datawarehouse#21713$dbd15ee23250eb252e807b4b7bfb65f56f6c71cfddff7c44434637a19c288b6e933f83b35711056ad7da1e526403f1760d281eb6b819e5d410acecc8024b8be0",
+        "20453": "datawarehouse#20453$ce96ef5f5bb237870af2b33a1b0b1a5565c0a00f62af6efbf914e1590089959b34d2c6e4303405e293bf2d15f5c3972d32c651b2671efef7fed9ce40be0fc6a9",
+        "21185": "datawarehouse#21185$45f73b5b434b22c110be49ab955c211e247a0650f802276304cbbbff28b7974091ae065c1c6c35b7ca5c88994a437d11386fa69621a6267300f98cbba519cbee",
+        "21655": "datawarehouse#21655$1057b32484a8b15ee0d52b103ea6b370497045bf7e0a684d65f507559ac90232a9ac4a28ae974c6816c75105eb48d6d9c8961bbcd851e8323aaead207af16da9",
+        "21171": "datawarehouse#21171$f4a6abc0f81605af78cf1cc232e72d5badb277dd8ee0eb799fac411b8c22e7e12a970a2d385eeb98ad0e92e9be505a86ca0de64d4b1804df17077ca17e3103e2",
+        "21714": "datawarehouse#21714$564b9d539b8560f5cfd9d3706be54166b6ae714ee4d05635fb9061c267ea4933fe1a398f80e6abe1354861bcf3be7aebf32f377de92cb788d0367b7a1e713a3b"
+      },
+      "syncTables": [
+        {"Object":"HOTEL_FOLIOTRANS", "TimeColumn": "LASTUPDATE_DATE", "TimeValue": "1900-01-01"}
+      ],
+      "__syncTokens": {
+        "21907": "datawarehouse#21907$09bbd47cccf0888590533ac9bfc3814b8d847c2fa28d7e636b564c91952f9ee20127c605367aa2aeb202cc76f89e204280a437c2e7f310dca0625fbbd05e58b2"
+      },
+      "__syncTables": [
+        {"Object": "HOTEL","TimeColumn": "LASTUPDATE"},
+        {"Object": "HOTEL_ROOMTYPE","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_ROOM","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_BOARDTYPE","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_BEDTYPE","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "RES_NAME","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_RES","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "COUNTRY","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_GUEST","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "ADDRESS","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "AGENCY","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_SEGMENT","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_SEGMENTGROUP","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_SOURCE","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_RATECODE","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "STDUSER","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_DEPARTMENT","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_REVENUE","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_FOLIOTRANS","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_FOLIOSOURCE","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "RES_SUBSTATE","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_RESMODE","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "STDCURCODE","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_EXTRACHARGES","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_EXTRACHARGES_SKIPRES","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "STDEXCHANGERATES","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "HOTEL_FOLIOTRANS_DYNAMIC","TimeColumn": "CREATION_DATE"},
+        {"Object": "HOTEL_CURRENCYMARKUP","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "CALENDAR","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "RES_DAY","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "RES_DAY_DISCOUNT","TimeColumn": "LASTUPDATE_DATE"},
+        {"Object": "DELETEDRECORDS","TimeColumn": "DELETEUTC"}
+      ],
+      "httpPort": 8080,
+      "tenantColumn": "HOTELID",
+      "tenantTable": "VW_HOTEL",
+      "tenantObject": "HOTEL",
+      "tenantPrimaryKey": "ID",
+      "frameworkDb": "ANGUS_WEBHOTEL",
+      "logFailedRequests": true,
+      "persistCaches": true,
+      "persistCachesPath": "/tmp/elektraweb",
+      "RoleLearningMode": true,
+      "tempFolder": "/tmp/temp",
+      "passwordHashAlgorithm": "sha512",
+      "passwordHashEncoding": "ucs-2",
+      "sqlCacheFolder": "/tmp/elektraweb/sql",
+      "sqlCacheObjects": {
+        "*": 3,
+        "*MIGRATE": -1,
+        "QA_EASYPMS_RESDETAIL": -1,
+        "SP_EASYPOS_PRINTLIST": -1,
+        "SP_EASYPOS_PRINTDONE": -1,
+        "QA_HOTEL_CURRENTSTATUS": 60,
+        "QA_EASYPMS_CURRENTSTATUS_AGES": 60,
+        "QA_EASYPMS_CURRENTSTATUS_REPEATGUESTS": 60,
+        "FN_EASYPMS_TODAYSCREATEDRES": 60,
+        "FN_HOTEL_BOARDSTATE": 60,
+        "FN_EASYPMS_BANQUETDAYS": 60,
+        "FN_EASYPMS_INHOUSEFOLIOTYPE": 60,
+        "FN_EASYPMS_CURRENTSTATUS": 60,
+        "FN_FORECAST": 60,
+        "FN_FORECAST_DATE": 60,
+        "SP_FORECAST_DATE_BASE": 60,
+        "SP_HOTEL_INFO_GRAPHIC": 120,
+        "SP_HOTEL_INFO_GRAPHIC_SUM": 120,
+        "FN_EASYPMS_HOTSPOT_GUESTS": 300,
+        "SP_WEB_PAYMENT": -1,
+        "SP_EASYPMS_GUESTRESERVATIONS_CONSOLIDATED": 30,
+        "SP_EASYPMS_PULLRESCUBE": 120,
+        "SP_EASYPMS_TENANTCHANGED": 30,
+        "SP_AFTERLOGIN": 30,
+        "SP_HOTEL_BOOKINGPARAMS": 60,
+        "EFATURA_INVOICE": -1,
+        "SP_VERIMOR_APISEQUENCE": -1,
+        "SP_3GBILISIMSMS_APISEQUENCE": -1,
+        "QA_EASYPMS_RESNOTETYPE": 999999,
+        "VW_HOTEL": 120,
+        "FN_HOTEL_EXCHANGERATES": 120,
+        "SP_HOTELBOOKING_HOTELLIST": 60,
+        "SP_EASYPMS_OFFLINEBACKUP": 300
+      },
+      "autoFill": {
+        "CREATEDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATE_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATIONDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATION_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATIONTIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATION_TIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "USERID": "((body || {}).UserObject || {}).USERID",
+        "STDUSERID": "((body || {}).UserObject || {}).USERID",
+        "CREATORID": "((body || {}).UserObject || {}).USERID",
+        "STAFF": "((body || {}).UserObject || {}).USERID",
+        "IPADDRESS": "(body || {}).IpAddress || null",
+        "IPCOUNTRY": "(body || {}).IpCountry || null",
+        "xxIPCOUNTRY": "new Promise(r1=>op.GetIp({IpAddress: body.IpAddress},r2=>r1(r2.COUNTRYCODE)))",
+        "DOMAIN": "(body || {}).Referer || null",
+        "PROGDATE": "endpoints[ body.UserObject.SUPERADMIN === true ? (body.Parameters || body.Row || tempBody)['HOTELID'] : body.UserObject.TENNANTVALUE1  ].PROGDATE",
+        "PROGDATE_PLUS1": "endpoints[ body.UserObject.SUPERADMIN === true ? (body.Parameters || body.Row || tempBody)['HOTELID'] : body.UserObject.TENNANTVALUE1  ].PROGDATE_PLUS1",
+        "LOGINTOKEN": "(body || {}).LoginToken",
+        "TAKENBY": "body.UserObject.USERCODE"
+      },
+      "autoUpdate": {
+        "LAST_UPDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "LASTUPDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "LASTUPDATE_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "LASTUPDATED": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "UPDATEDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "UPDATETIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "STAFF": "((body || {}).UserObject || {}).USERID",
+        "UPDATEUSER": "((body || {}).UserObject || {}).USERID",
+        "TAKENBY": "body.UserObject.USERCODE"
+      },
+      "title2FA": "ElektraWeb",
+      "neverUpdate": [
+          "PASSWORD64",
+          "2FAKEY",
+          "2FASTATE",
+          "PORTALID",
+          "CREATORID"
+      ],
+      "mailAutoSend": {
+        "queryFind": "SELECT TOP(1000) E.*,A.SMTP_FROM,A.SMTP_SERVER,A.SMTP_USER,A.SMTP_PASS,A.SMTP_SECURE,A.SMTP_PORT,A.SMTP_TLS,A.SMTP_SENDERFIXED FROM EMAIL_SENT E WITH(NOLOCK)  LEFT JOIN HOTEL_SETTINGS S WITH(NOLOCK) ON S.HOTELID = E.HOTELID  LEFT JOIN HOTEL_SMTPACCOUNTS A WITH(NOLOCK) ON A.ID = ISNULL(E.SMTPACCOUNTID,S.SMTPACCOUNTID) WHERE E.[STATUSID] = 1",
+        "queryMark": "UPDATE TOP(1) EMAIL_SENT SET [STATUSID] = 2, [ERRORMESSAGE]= @ERRORMESSAGE WHERE ID = @ID",
+        "intervalSeconds": 10,
+        "columns": {
+          "primaryKey": "ID",
+          "recipient": "EMAIL",
+          "subject": "SUBJECT",
+          "body": "CONTENT",
+          "cc": "CCTO",
+          "bcc": "BCCTO",
+          "replyTo": "REPLYTO"
+        }
+      },
+      "throttleObjects": [
+          "SP_3CXPUSH",
+          "SP_PHILIPS_IPTV",
+          "SP_KAREL_FIAS",
+          "xxSP_EASYPOS_PRINTLIST",
+          "xxSP_POS_PRINTLIST"
+      ],
+      "skipLogs": [
+          "SP_EASYPOS_PRINTLIST",
+          "SP_ECR_PRINTLIST",
+          "SP_EASYPOS_PRINTLIST_V1",
+          "SP_EASYPOS_PRINTDONE",
+          "SP_READHOTELCONFIG",
+          "SP_EASYPMS_TENANTCHANGED",
+          "SP_AVAILABLE_ROOMS",
+          "*MIGRATE",
+          "SP_ROOMTYPE_AVAILABILITY",
+          "SP_PORTALV4_HOTELCOMPLETERES",
+          "*CONTACTREQUEST",
+          "*RSCONTROL",
+          "FN_RESFIXNOTE",
+          "FN_SUPPORT_TICKET_MESSAGE"
+      ],
+      "maskColumns": [
+          "PASSWORD",
+          "PASSWORD64",
+          "WEBPAGEPASSWORD",
+          "RESCARDDISPLAYPIN",
+          "2FAKEY",
+          "CCNO",
+          "CCCV2",
+          "OLDPIN",
+          "NEWPIN",
+          "SIFRESI",
+          "HOTELPASS",
+          "CHANNELPASS"
+      ],
+      "objectNotifications": {
+        "SP_POS_TAKEOUTORDER_CHANGESTATE": ["POS_CHECK","POS_CHECK_DETAIL","SP_EASYPOS_PRINTLIST"],
+        "SP_POS_CREATEQRORDER": ["POS_CHECK","POS_CHECK_DETAIL","SP_EASYPOS_PRINTLIST"],
+        "POS_CHECK_PRINT": ["SP_EASYPOS_PRINTLIST"],
+        "SP_EASYPMS_ASSIGNROOM": ["HOTEL_JOBS"],
+        "HOTEL_TASKS": ["HOTEL_TASKS","SP_EASYPMS_HOTEL_TASKS"],
+        "HOTEL_RES": ["HOTEL_INTERFACE_CMD","HOTEL_JOBS"],
+        "SP_POS_SAVECHECK": ["SP_EASYPOS_PRINTLIST","POS_CHECK","POS_CHECK_DETAIL","POS_CHECK_PAYMENT","QPOS_CHECK_DETAIL","SP_ECR_PRINTLIST"],
+        "SP_POS_LINEOPS": ["SP_EASYPOS_PRINTLIST","POS_CHECK","POS_CHECK_DETAIL","POS_CHECK_PAYMENT","QPOS_CHECK_DETAIL"],
+        "SP_POS_CLOSEDCHECKOPS": ["SP_EASYPOS_PRINTLIST","POS_CHECK","POS_CHECK_DETAIL","POS_CHECK_PAYMENT"],
+        "HOTEL_INTERFACE_CMD": ["HOTEL_INTERFACE_CMD"],
+        "SP_EASYPMS_CHECKIN": ["HOTEL_INTERFACE_CMD","HOTEL_JOBS"],
+        "SP_EASYPMS_CHECKOUT": ["HOTEL_INTERFACE_CMD","HOTEL_JOBS"],
+        "SP_EASYPMS_READDOORKEYCARD": ["HOTEL_INTERFACE_CMD"],
+        "SP_EASYPMS_DELETEDOORKEYCARD": ["HOTEL_INTERFACE_CMD"],
+        "POS_CHECK": ["SP_EASYPOS_PRINTLIST","POS_CHECK","POS_CHECK_DETAIL","POS_CHECK_PAYMENT"],
+        "POS_CHECK_DETAIL": ["SP_EASYPOS_PRINTLIST","POS_CHECK","POS_CHECK_DETAIL","POS_CHECK_PAYMENT"],
+        "POS_CHECK_PAYMENT": ["POS_CHECK","POS_CHECK_DETAIL","POS_CHECK_PAYMENT"],
+        "PosQRCreateOrder": ["QPOS_TAKEOUTORDER","POS_CHECK"],
+        "SP_EASYPMS_EFATURA_CREATEINVOICE_JSON": ["SP_ECR_PRINTLIST"],
+        "SP_EASYPOS_PRINTLIST": ["SP_EASYPOS_PRINTLIST"]
+      },
+      "mutexEnabled": true,
+      "disableGzip": true,
+      "ipAccessKey": "***",
+      "multiTenantObjects": [
+          "HOTEL_GUEST"
+      ],
+      "apiKeyRoles": [
+          191,
+          204
+      ]
+    }

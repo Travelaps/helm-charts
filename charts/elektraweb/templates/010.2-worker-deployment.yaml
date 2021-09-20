@@ -1,0 +1,60 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: nodejs-worker-elektraweb
+  namespace: default
+  labels:
+    component: nodejs-worker
+    k8s-app: nodejs-worker-elektraweb
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  selector:
+    matchLabels:
+      k8s-app: nodejs-worker-elektraweb
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/010.1-worker-config.yaml") . | sha256sum }}
+      name: nodejs-worker-elektraweb
+      labels:
+        component: nodejs-worker
+        k8s-app: nodejs-worker-elektraweb
+    spec:
+      volumes:
+        - name: worker-configs
+          configMap:
+            name: worker-config
+            defaultMode: 420
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: nodejs-worker-elektraweb
+          image: {{ .Values.worker.image }}
+          args:
+            - '-i'
+            - '1'
+          env:
+            - name: CONFIGPATH
+              value: /configs/config.conf.json
+          volumeMounts:
+            - name: worker-configs
+              mountPath: /configs
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 3
+            timeoutSeconds: 1
+            periodSeconds: 3
+            successThreshold: 1
+            failureThreshold: 10
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 1
+            successThreshold: 1
+            failureThreshold: 120

@@ -1,0 +1,45 @@
+{{ if .Values.dashboardAccess.ingress.enabled }}
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: kubernetes-dashboard-ingress
+  namespace: {{ .Values.dashboard.namespace }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+spec:
+  rules:
+    - host: {{ .Values.dashboardAccess.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: kubernetes-dashboard
+                port:
+                  number: 443
+---
+{{ end }}
+{{ if .Values.dashboardAccess.adminUser.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.dashboardAccess.adminUser.name }}
+  namespace: {{ .Values.dashboard.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Values.dashboardAccess.adminUser.name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.dashboardAccess.adminUser.name }}
+    namespace: {{ .Values.dashboard.namespace }}
+{{ end }}

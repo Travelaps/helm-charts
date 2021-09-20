@@ -1,0 +1,16 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: service-elektraweb
+  namespace: default
+  labels:
+    k8s-app: nodejs-http
+spec:
+  ports:
+    - name: service-port
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    k8s-app: nodejs-worker-elektraweb
+  type: ClusterIP

@@ -1,0 +1,84 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: nodejs-http
+  namespace: default
+  labels:
+    k8s-app: nodejs-http
+spec:
+  selector:
+    matchLabels:
+      k8s-app: nodejs-http
+  template:
+    metadata:
+      name: nodejs-http
+      labels:
+        k8s-app: nodejs-http
+    spec:
+      containers:
+        - name: nodejs-http
+          image: 'ghcr.io/travelaps/nodejs-http:latest'
+          env:
+            - name: AMQP
+              value: 'amqp://guest:guest@rabbit:5672/'
+            - name: HOSTS
+              value: |
+                {
+                  "{{ .Values.worker.host }}": "hotel"
+                }
+      imagePullSecrets:
+        - name: regcred
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: nodejs-http
+  namespace: default
+  labels:
+    k8s-app: nodejs-http
+spec:
+  ports:
+    - name: nodejs-port
+      protocol: TCP
+      port: 80
+      targetPort: 80
+  selector:
+    k8s-app: nodejs-http
+  type: ClusterIP
+  sessionAffinity: None
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: nodejs-http-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
+    nginx.ingress.kubernetes.io/server-snippet: |
+      gunzip on;
+      gzip on;
+      gzip_disable "MSIE [1-6]\.";
+      gzip_vary on;
+      gzip_proxied any;
+      gzip_comp_level 5;
+      gzip_min_length 512;
+      gzip_buffers 16 128k;
+      gzip_types *;
+    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.worker.host }}
+      secretName: nodejs4001-cert
+  rules:
+    - host: {{ .Values.worker.host }}
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: nodejs-http
+                port:
+                  number: 80

@@ -1,0 +1,9 @@
+Elektraweb başarıyla kuruldu!
+{{ if .Values.dashboardAccess.ingress.enabled }}
+Dashboard Adresi: https://{{ .Values.dashboardAccess.ingress.host }}/
+{{ end }}
+{{ if .Values.dashboardAccess.adminUser.enabled }}
+Dashboard Token: kubectl -n {{ .Values.dashboard.namespace }} get secret $(kubectl -n {{ .Values.dashboard.namespace }} get sa/{{ .Values.dashboardAccess.adminUser.name }} -o jsonpath="{.secrets[0].name}") -o go-template="{{ "{{" }}.data.token | base64decode}}"
+{{ end }}
+Nodejs Worker: https://{{ .Values.worker.host }}/
+Angus: https://{{ .Values.angus.host }}/
