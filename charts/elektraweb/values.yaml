@@ -1,0 +1,67 @@
+# Programlarımıza erişim için gerekli GitHub erişim anahtarı
+regcred:
+  enabled: true
+  user: talyabilisim
+  key: REQUIRED-github-access-token
+# NodeJS Web Servis
+worker:
+  host: nodejs4001
+  image: ghcr.io/travelaps/nodejs-worker:v401
+  replicas: 1
+# SQL Server
+sql:
+  install: true
+  pid: Express
+  saPassword: aA!01012000
+  memoryLimit: 16000
+  tcpPort: 1433
+  agentEnabled: true
+  localPath: /elektraweb/sql-data
+  elektraAdminUser:
+    username: elektraweb
+    password: eE!01012000
+# Angus
+angus:
+  install: false
+  image: ghcr.io/travelaps/angus:v170
+  host: elektraweb
+  displayName: ElektraWeb
+  shortName: ewebcloud
+  logo: elektraweb.png
+# Pos
+pos:
+  install: false
+  image: ghcr.io/travelaps/pos-ng11:v38
+  host: elektrawebpos
+# .NET Core FRX Rapor Programı
+reporting:
+  install: false
+  host: elektrawebreport
+  localPath: /elektraweb/fastreport
+# Kanal Yönetimi
+channelManager:
+  install: false
+# Kubernetes Dashboard
+dashboard:
+  install: false
+  namespace: kube-system
+  createNamespace: false
+# Kubernetes Dashboard'a dışarıdan erişim için ingress/user
+dashboardAccess:
+  ingress:
+    enabled: false
+    host: kubernetes.docker.internal
+  adminUser:
+    enabled: false
+    name: admin-user
+# Nginx Ingress
+ingressNginx:
+  install: false
+  class: public
+  namespace: ingress
+  createNamespace: true
+
+
+
+
+

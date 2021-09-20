@@ -1,0 +1,3133 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: sql-create-emds-logs
+  namespace: default
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: initial-creator
+          image: ghcr.io/travelaps/mssql2019fts:v2
+          command:
+            - /opt/mssql-tools/bin/sqlcmd
+          args:
+            - '-S'
+            - sql
+            - '-U'
+            - sa
+            - '-P'
+            - {{ .Values.sql.saPassword }}
+            - '-Q'
+            - |
+              CREATE DATABASE EMDS_LOGS COLLATE TURKISH_CI_AS
+              GO
+              ALTER DATABASE [EMDS_LOGS] SET RECOVERY SIMPLE
+              GO
+              ALTER DATABASE [EMDS_LOGS] SET AUTO_CLOSE OFF WITH NO_WAIT
+              GO
+              ALTER DATABASE [EMDS_LOGS] SET AUTO_CREATE_STATISTICS OFF
+              GO
+              ALTER DATABASE [EMDS_LOGS] SET AUTO_UPDATE_STATISTICS OFF WITH NO_WAIT
+              GO
+              USE [EMDS_LOGS]
+              GO
+              ALTER DATABASE SCOPED CONFIGURATION SET MAXDOP = 1
+              GO
+              ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET MAXDOP = 1
+              GO
+              /****** Object:  Schema [MIGRATION]    Script Date: 17.08.2021 3:24:43 PM ******/
+              CREATE SCHEMA [MIGRATION]
+              GO
+              /****** Object:  Schema [PORTAL]    Script Date: 17.08.2021 3:24:43 PM ******/
+              CREATE SCHEMA [PORTAL]
+              GO
+              /****** Object:  UserDefinedFunction [dbo].[FN_LOGSUMMARY]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              create FUNCTION [dbo].[FN_LOGSUMMARY]()
+              RETURNS @TBL TABLE(
+                  [#] INT PRIMARY KEY IDENTITY(1,1),
+                  HOTELID INT,USERID VARCHAR(100),[OBJECT] VARCHAR(100),[ACTION] VARCHAR(11),[COUNT] INT
+              )
+              BEGIN
+                  INSERT INTO @TBL(HOTELID,USERID,[OBJECT],[ACTION],[COUNT])
+                  SELECT ISNULL(HOTELID,0),ISNULL(USERID,''),ISNULL([OBJECT],''),ISNULL([ACTION],''),COUNT(ID)
+                  FROM [LOG_ELEKTRAWEB] L WITH(NOLOCK,INDEX=IX_LOGTIME)
+                  WHERE L.LOGTIMEUTC BETWEEN DATEADD(DAY,-1,GETUTCDATE()) AND GETUTCDATE()
+                  GROUP BY ISNULL(HOTELID,0),ISNULL(USERID,''),ISNULL([OBJECT],''),ISNULL([ACTION],'')
+
+                  RETURN
+              END
+              GO
+              /****** Object:  Table [dbo].[STDCHANNELMANAGERLOG_2018]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDCHANNELMANAGERLOG_2018](
+                  [ID] [bigint] NOT NULL,
+                  [CHANNELMANAGERID] [int] NULL,
+                  [HOTELID] [int] NULL,
+                  [LOGTIME] [datetime] NULL,
+                  [SPNAME] [varchar](430) NULL,
+                  [RQXML] [nvarchar](max) NULL,
+                  [RSXML] [nvarchar](max) NULL,
+                  [ISERROR] [bit] NULL,
+                  [ISWARNING] [bit] NULL,
+                  [RETRYCOUNT] [smallint] NOT NULL,
+                  [REQUESTID] [uniqueidentifier] NULL,
+               CONSTRAINT [PK__STDCHANN__3214EC272CA9A92E] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  View [dbo].[QA_EASYPMS_CMLOG_2018]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              create VIEW [dbo].[QA_EASYPMS_CMLOG_2018] AS
+              SELECT * FROM EMDS_LOGS..STDCHANNELMANAGERLOG_2018
+              --WHERE HOTELID = 19367
+              --AND ID = 2019072300000036146
+              GO
+              /****** Object:  Table [dbo].[ZARR]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ZARR](
+                  [ZARR_ID] [decimal](30, 0) NOT NULL,
+                  [ZARR_SHORTDESC] [nvarchar](3) NOT NULL,
+                  [ZARR_LONGDESC] [nvarchar](30) NOT NULL,
+                  [ZARR_DISPLORDER] [decimal](3, 0) NULL,
+                  [ZARR_INACTIVE] [decimal](1, 0) NULL,
+                  [ZARR_CENTRAL] [decimal](1, 0) NOT NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ZCAS]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ZCAS](
+                  [ZCAS_ID] [decimal](30, 0) NOT NULL,
+                  [ZCAS_NUMBER] [decimal](30, 0) NOT NULL,
+                  [ZCAS_LONGDESCRIPTION] [nvarchar](30) NOT NULL,
+                  [ZCAS_MAXOPENPERDAY] [decimal](2, 0) NOT NULL,
+                  [ZCAS_OPEN] [decimal](1, 0) NOT NULL,
+                  [ZCAS_ONLYALLOWEXCLOPEN] [decimal](1, 0) NOT NULL,
+                  [ZCAS_IFC] [decimal](1, 0) NULL,
+                  [ZCAS_STOCKRESET] [decimal](1, 0) NULL,
+                  [ZCAS_INACTIVE] [decimal](1, 0) NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ZCUR]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ZCUR](
+                  [ZCUR_ID] [decimal](30, 0) NOT NULL,
+                  [ZCUR_SHORTDESC] [nvarchar](3) NOT NULL,
+                  [ZCUR_LONGDESC] [nvarchar](30) NOT NULL,
+                  [ZCUR_DISPLORDER] [decimal](3, 0) NULL,
+                  [ZCUR_ZDCO_ID] [decimal](30, 0) NULL,
+                  [ZCUR_DECDIGITS] [decimal](1, 0) NULL,
+                  [ZCUR_ACTIVE] [decimal](1, 0) NULL,
+                  [ZCUR_ISO3] [nvarchar](3) NULL,
+                  [ZCUR_MONTHLY] [decimal](1, 0) NOT NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ZDCO]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ZDCO](
+                  [ZDCO_ID] [decimal](30, 0) NOT NULL,
+                  [ZDCO_SHORTDESC] [nvarchar](3) NULL,
+                  [ZDCO_LONGDESC] [nvarchar](30) NOT NULL,
+                  [ZDCO_NUMERICDESC] [decimal](10, 0) NOT NULL,
+                  [ZDCO_DISPLORDER] [decimal](3, 0) NULL,
+                  [ZDCO_CDT] [decimal](1, 0) NOT NULL,
+                  [ZDCO_MANUALPOST] [decimal](1, 0) NULL,
+                  [ZDCO_ZARR_ID] [decimal](30, 0) NULL,
+                  [ZDCO_UNITDESCRIPTION] [nvarchar](10) NULL,
+                  [ZDCO_GOVCODE] [nvarchar](30) NULL,
+                  [ZDCO_CITYLEDGER] [decimal](1, 0) NULL,
+                  [ZDCO_ZDCG_ID] [decimal](30, 0) NULL,
+                  [ZDCO_PAYM_TYPE] [decimal](2, 0) NULL,
+                  [ZDCO_PAIDOUT] [decimal](1, 0) NULL,
+                  [ZDCO_DISABLED_PREARR] [decimal](1, 0) NULL,
+                  [ZDCO_DISABLED_BILLING] [decimal](1, 0) NULL,
+                  [ZDCO_DISABLED_AR] [decimal](1, 0) NULL,
+                  [ZDCO_NONHTLREV] [decimal](1, 0) NULL,
+                  [ZDCO_STATS_TYPE] [decimal](1, 0) NULL,
+                  [ZDCO_BOF_CR_ACC] [decimal](10, 0) NULL,
+                  [ZDCO_BOF_DB_ACC] [decimal](10, 0) NULL,
+                  [ZDCO_BOF_DEP] [decimal](5, 0) NULL,
+                  [ZDCO_FOLIOTEXT] [nvarchar](30) NULL,
+                  [ZDCO_DISABLED_CCM] [decimal](1, 0) NULL,
+                  [ZDCO_DEPOSIT] [decimal](1, 0) NULL,
+                  [ZDCO_BOF_UDEF_NUM_1] [decimal](1, 0) NULL,
+                  [ZDCO_BOF_UDEF_AMNT_1] [decimal](30, 4) NULL,
+                  [ZDCO_BOF_UDEF_CHAR_1] [nvarchar](30) NULL,
+                  [ZDCO_INACTIVE] [decimal](1, 0) NULL,
+                  [ZDCO_UDEF_NUM_1] [decimal](1, 0) NULL,
+                  [ZDCO_UDEF_NUM_2] [decimal](1, 0) NULL,
+                  [ZDCO_UDEF_NUM_3] [decimal](1, 0) NULL,
+                  [ZDCO_UDEF_AMNT_1] [decimal](30, 4) NULL,
+                  [ZDCO_UDEF_AMNT_2] [decimal](30, 4) NULL,
+                  [ZDCO_UDEF_AMNT_3] [decimal](30, 4) NULL,
+                  [ZDCO_UDEF_CHAR_1] [nvarchar](30) NULL,
+                  [ZDCO_UDEF_CHAR_2] [nvarchar](30) NULL,
+                  [ZDCO_UDEF_CHAR_3] [nvarchar](30) NULL,
+                  [ZDCO_DISABLED_PAY_ONLY] [decimal](1, 0) NULL,
+                  [ZDCO_XCHFEETYPE] [decimal](1, 0) NULL,
+                  [ZDCO_XCHFEE] [decimal](30, 4) NULL,
+                  [ZDCO_XCHFEE_ZDCO_ID] [decimal](30, 0) NULL,
+                  [ZDCO_SUBFUNCTION] [decimal](1, 0) NULL,
+                  [ZDCO_ZCRL_ID] [decimal](30, 0) NULL,
+                  [ZDCO_OPEN_CASH_DRAWER] [decimal](1, 0) NULL,
+                  [ZDCO_CERTREDEMPTION] [decimal](1, 0) NULL,
+                  [ZDCO_NOOFCOPIES] [decimal](2, 0) NULL,
+                  [ZDCO_BOF_CR_ACC_DEPOSIT] [decimal](10, 0) NULL,
+                  [ZDCO_BOF_DB_ACC_DEPOSIT] [decimal](10, 0) NULL,
+                  [ZDCO_CITYTAX] [decimal](1, 0) NULL,
+                  [ZDCO_ADJUST_ZDCO_ID] [decimal](30, 0) NULL,
+                  [ZDCO_HOSTESSENABLED] [decimal](1, 0) NULL,
+                  [ZDCO_FISCAL] [decimal](1, 0) NULL,
+                  [ZDCO_FOREIGN_CC_ZCUR_ID] [decimal](30, 0) NULL,
+                  [ZDCO_XCHFEE_MULTIPLYBYCHEQUES] [decimal](1, 0) NULL,
+                  [ZDCO_COMMENTDISABLED] [decimal](1, 0) NULL,
+                  [ZDCO_BANK_DEBITPAYMENT] [decimal](1, 0) NULL,
+                  [ZDCO_DISABLE_FISCALPRINTER] [decimal](1, 0) NULL,
+                  [ZDCO_GENERATETHAIVAT] [decimal](1, 0) NOT NULL,
+                  [ZDCO_ZDSG_ID] [decimal](30, 0) NULL,
+                  [ZDCO_BAVEL_TYPE] [decimal](1, 0) NULL,
+                  [ZDCO_SAFT_PAYMENTMECHANISM] [nvarchar](2) NULL,
+                  [ZDCO_CCCOMMISSION_ZDCO_ID] [decimal](30, 0) NULL,
+                  [ZDCO_CCCOMMISSION_PERCENT] [decimal](4, 2) NULL,
+                  [ZDCO_CENTRAL] [decimal](1, 0) NOT NULL,
+                  [ZDCO_SECURITYDEPOSIT] [decimal](1, 0) NOT NULL,
+                  [ZDCO_SECDEPRETURN_ZDCO_ID] [decimal](30, 0) NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ZPOS]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ZPOS](
+                  [ZPOS_ID] [decimal](30, 0) NOT NULL,
+                  [ZPOS_XCMS_ID] [decimal](30, 0) NOT NULL,
+                  [ZPOS_YRES_ID] [decimal](30, 0) NULL,
+                  [ZPOS_ZFAC_ID] [decimal](30, 0) NULL,
+                  [ZPOS_ZDCO_ID] [decimal](30, 0) NOT NULL,
+                  [ZPOS_ZDC2_ID] [decimal](30, 0) NULL,
+                  [ZPOS_UNITPRICE] [decimal](30, 4) NOT NULL,
+                  [ZPOS_QUANTITY] [decimal](10, 0) NOT NULL,
+                  [ZPOS_DESCRIPT] [nvarchar](30) NOT NULL,
+                  [ZPOS_POSTDATE] [smalldatetime] NOT NULL,
+                  [ZPOS_PCDATE] [smalldatetime] NOT NULL,
+                  [ZPOS_THIRDPARTYDATE] [smalldatetime] NULL,
+                  [ZPOS_ZCUR_ID] [decimal](30, 0) NULL,
+                  [ZPOS_EXCHANGERATE] [decimal](30, 4) NULL,
+                  [ZPOS_FOREIGNPRICE] [decimal](30, 4) NULL,
+                  [ZPOS_ZCAS_ID] [decimal](30, 0) NOT NULL,
+                  [ZPOS_USER_XCMS_ID] [decimal](30, 0) NULL,
+                  [ZPOS_ORIGINATED_XCMS_ID] [decimal](30, 0) NULL,
+                  [ZPOS_ORIGINATED_YRES_ID] [decimal](30, 0) NULL,
+                  [ZPOS_ORIGINATED_ZFAC_ID] [decimal](30, 0) NULL,
+                  [ZPOS_ZARR_ID] [decimal](30, 0) NULL,
+                  [ZPOS_COMMENT] [nvarchar](60) NULL,
+                  [ZPOS_ZART_ID] [decimal](30, 0) NULL,
+                  [ZPOS_COVERS] [decimal](4, 0) NULL,
+                  [ZPOS_TAXLINK_ID] [decimal](30, 0) NOT NULL,
+                  [ZPOS_SUMUPID] [decimal](30, 0) NULL,
+                  [ZPOS_INTERNALSPLIT_ZPOS_ID] [decimal](30, 0) NOT NULL,
+                  [ZPOS_CDT] [decimal](1, 0) NOT NULL,
+                  [ZPOS_PHONENR] [nvarchar](30) NULL,
+                  [ZPOS_MANUALSPLIT_ID] [decimal](30, 0) NULL,
+                  [ZPOS_PAIDOUT] [decimal](1, 0) NULL,
+                  [ZPOS_ZWIN_ID] [decimal](30, 0) NOT NULL,
+                  [ZPOS_ZALL_ID] [decimal](30, 0) NULL,
+                  [ZPOS_IHST_ID] [decimal](30, 0) NULL,
+                  [ZPOS_LEDGERSTATUS] [decimal](1, 0) NOT NULL,
+                  [ZPOS_SUMUPAMOUNT] [decimal](30, 4) NULL,
+                  [ZPOS_PACK_LOSS] [decimal](1, 0) NULL,
+                  [ZPOS_POSCHECK_NR] [nvarchar](20) NULL,
+                  [ZPOS_GROSSUNITPRICE] [decimal](30, 4) NULL,
+                  [ZPOS_GROSSFOREIGNPRICE] [decimal](30, 4) NULL,
+                  [ZPOS_ZCHE_ID] [decimal](30, 0) NULL,
+                  [ZPOS_DEPOSIT] [decimal](1, 0) NULL,
+                  [ZPOS_ORGDATE] [smalldatetime] NULL,
+                  [ZPOS_HIDDEN] [decimal](1, 0) NULL,
+                  [ZPOS_FOREIGNSUMUPAMOUNT] [decimal](30, 4) NULL,
+                  [ZPOS_PROFORMA] [decimal](30, 0) NULL,
+                  [ZPOS_REVERSEEXCHRATE] [decimal](1, 0) NULL,
+                  [ZPOS_ZTCD_ID] [decimal](30, 0) NULL,
+                  [ZPOS_GUEST_XCMS_ID] [decimal](30, 0) NULL,
+                  [ZPOS_INTERNALGROUP_ID] [decimal](30, 0) NULL,
+                  [ZPOS_MANUALPOST] [decimal](2, 0) NULL,
+                  [ZPOS_ZUDD_ID] [decimal](30, 0) NULL,
+                  [ZPOS_NOREPRINT] [decimal](1, 0) NULL,
+                  [ZPOS_INVOICEDATE] [smalldatetime] NULL,
+                  [ZPOS_POSCHECK_UID] [nvarchar](40) NULL,
+                  [ZPOS_XCAC_ID] [decimal](30, 0) NULL,
+                  [ZPOS_DEPOSIT_ZINV_ID] [decimal](30, 0) NULL,
+                  [ZPOS_WPCA_ID] [decimal](30, 0) NULL,
+                  [ZPOS_RESERVATIONDAY] [smalldatetime] NULL,
+                  [ZPOS_FLAG] [decimal](1, 0) NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  View [dbo].[ZFOLYOISL]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE VIEW [dbo].[ZFOLYOISL]
+              AS
+              SELECT   RECID as COUNTER, TARIH, SAAT,
+                FOLYONO,
+                ILKKNO,
+                DEPT,
+                CASE WHEN BORC<0 THEN NULL ELSE '05' END AS GELIRGRUBU,
+                ISNULL(DOVIZKODU,'EUR') AS DOVIZKODU,
+                YETKILI,
+                NOTE,
+                ENO,
+                BORC DOVIZTUTAR,
+                BORC,
+                RECID,
+              CASE WHEN ZDCO_STATS_TYPE=1 THEN 'A' ELSE '1' END KISINO
+              FROM    (SELECT
+                                     ZPOS_POSTDATE AS TARIH,ZPOS_PCDATE AS SAAT,
+                                     ISNULL(ZPOS_YRES_ID,ZPOS_ZFAC_ID*-1) AS FOLYONO,
+                                     ISNULL(ZPOS_ORIGINATED_YRES_ID,ZPOS_ORIGINATED_ZFAC_ID*-1) AS ILKKNO,
+                                     ZDCO_NUMERICDESC AS DEPT,
+                                     ZCUR_SHORTDESC AS DOVIZKODU,
+                                     'SYS' AS YETKILI,
+                                     ZPOS_COMMENT AS NOTE,
+                                     ZPOS_POSCHECK_NR AS ENO,
+                                     CASE WHEN ZPOS_CDT=5 THEN -1 ELSE 1 END*ZPOS_GROSSUNITPRICE*ZPOS_QUANTITY BORC,
+                                     ZPOS_ID RECID,
+                                     ZPOS_XCMS_ID,
+               ZDCO_ID AS DEPTID,  ZDCO_LONGDESC AS DEPTADI,
+              ZPOS_ZCUR_ID AS DOVIZID,  ZPOS_EXCHANGERATE AS DOVIZKURU,ZPOS_ZARR_ID,ZARR_SHORTDESC,ZARR_LONGDESC,
+              ZPOS_ZCAS_ID, ZCAS_LONGDESCRIPTION, ZDCO_STATS_TYPE
+                  FROM ZPOS
+                  LEFT OUTER JOIN ZDCO ON (ZPOS.ZPOS_ZDCO_ID=ZDCO.ZDCO_ID)
+                  LEFT OUTER JOIN ZCUR ON (ZPOS.ZPOS_ZCUR_ID=ZCUR.ZCUR_ID)
+                  LEFT OUTER JOIN ZCAS ON (ZPOS.ZPOS_ZCAS_ID=ZCAS.ZCAS_ID)
+                  LEFT OUTER JOIN ZARR ON (ZPOS.ZPOS_ZARR_ID=ZARR.ZARR_ID)
+                  --WHERE YEAR(ZPOS_POSTDATE)=2020
+                  ) as T
+              GO
+              /****** Object:  Table [dbo].[HOTEL_CHANNEL_DATA]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL_CHANNEL_DATA](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [CMID] [int] NOT NULL,
+                  [RDATE] [date] NOT NULL,
+                  [RATECODEID] [int] NULL,
+                  [ROOMTYPEID] [int] NOT NULL,
+                  [RATETYPEID] [int] NULL,
+                  [BOARDTYPEID] [int] NULL,
+                  [MARKETID] [int] NULL,
+                  [ROOMCOUNT] [int] NULL,
+                  [SNG] [decimal](18, 2) NULL,
+                  [DBL] [decimal](18, 2) NULL,
+                  [EXBED] [decimal](18, 2) NULL,
+                  [CHD] [decimal](18, 2) NULL,
+                  [STOP] [bit] NULL,
+                  [MINLOS] [int] NULL,
+                  [MAXLOS] [int] NULL,
+                  [CTA] [bit] NULL,
+                  [CTD] [bit] NULL,
+                  [CREATEDATE] [datetime] NOT NULL,
+                  [SENTDATE] [datetime] NULL,
+                  [ISSENT] [bit] NULL,
+                  [REQUESTID] [uniqueidentifier] NULL,
+                  [CHD2] [decimal](18, 2) NULL,
+                  [TRP] [float] NULL,
+                  [QUAD] [float] NULL,
+                  [CONTRACTID] [int] NULL,
+               CONSTRAINT [PK__HOTEL_CH__3214EC27751D7756] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = ON, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  UserDefinedFunction [dbo].[FN]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE FUNCTION [dbo].[FN]()
+              RETURNS TABLE RETURN
+              SELECT [HOTELID], [CMID], [RDATE], [RATECODEID], [ROOMTYPEID], [RATETYPEID], [BOARDTYPEID], [MARKETID], [ROOMCOUNT], [SNG], [DBL], [EXBED], [CHD], [STOP], [MINLOS], [MAXLOS], [CTA], [CTD], [CREATEDATE], [SENTDATE], [ISSENT], [REQUESTID], [CHD2], [TRP], [QUAD], [CONTRACTID]
+              FROM HOTEL_CHANNEL_DATA
+              GO
+              /****** Object:  UserDefinedFunction [dbo].[NativeSplit]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE FUNCTION [dbo].[NativeSplit](@s nvarchar(max),@d nchar)
+              RETURNS TABLE
+              RETURN
+              SELECT *
+              FROM string_split(@s,@d)
+              GO
+              /****** Object:  Table [dbo].[724TRANSFER ELLE UPDATE EDILEN EFATURALAR]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[724TRANSFER ELLE UPDATE EDILEN EFATURALAR](
+                  [ID] [int] NOT NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[AKTARIMLOG]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[AKTARIMLOG](
+                  [TABLO] [nvarchar](100) NULL,
+                  [TARIH] [datetime] NOT NULL,
+                  [MSG] [nvarchar](200) NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [TARIH] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[APISEQUENCE_LOGS]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[APISEQUENCE_LOGS](
+                  [ID] [bigint] IDENTITY(1,1) NOT NULL,
+                  [SERVICENAME] [nvarchar](100) NULL,
+                  [REQUEST] [nvarchar](max) NULL,
+                  [RESPONSE] [nvarchar](max) NULL,
+                  [TIMESTAMP] [datetime] NOT NULL,
+                  [TYPE] [nvarchar](100) NULL,
+                  [METHOD] [nvarchar](100) NULL,
+                  [PORTALID] [int] NULL,
+                  [STEPINDEX] [tinyint] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[APPLICATION]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[APPLICATION](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [NAME] [nvarchar](50) NOT NULL,
+               CONSTRAINT [PK_APPLICATION] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[APPLICATION_LOG]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[APPLICATION_LOG](
+                  [APPLICATIONID] [int] NOT NULL,
+                  [LOGTIME] [datetimeoffset](7) NOT NULL,
+                  [LOGDOCUMENT] [nvarchar](max) NOT NULL,
+               CONSTRAINT [PK_APPLICATION_LOG] PRIMARY KEY CLUSTERED
+              (
+                  [APPLICATIONID] ASC,
+                  [LOGTIME] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[BASKET_COMPLETELOG]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[BASKET_COMPLETELOG](
+                  [UID] [uniqueidentifier] NOT NULL,
+                  [DATA] [nvarchar](max) NULL,
+                  [FINISHED] [bit] NOT NULL,
+                  [CREATION_DATE] [datetime] NOT NULL
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[BASKETCOOKIE]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[BASKETCOOKIE](
+                  [UID] [uniqueidentifier] NOT NULL,
+                  [VALUE] [nvarchar](max) NULL,
+                  [CREATETIME] [datetime] NOT NULL,
+                  [LASTUPDATE] [datetime] NOT NULL,
+                  [STATUS] [int] NOT NULL,
+                  [BASKETPROFILEID] [uniqueidentifier] NULL,
+                  [USERID] [int] NULL,
+                  [BASKETNAME] [nvarchar](50) NULL,
+                  [ID] [bigint] IDENTITY(1,1) NOT NULL,
+               CONSTRAINT [PK_BASKETCOOKIE] PRIMARY KEY CLUSTERED
+              (
+                  [UID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[BINLIST]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[BINLIST](
+                  [bin] [nvarchar](4000) NULL,
+                  [type] [nvarchar](4000) NULL,
+                  [scheme] [nvarchar](4000) NULL,
+                  [brand] [nvarchar](4000) NULL,
+                  [bankurl] [nvarchar](4000) NULL,
+                  [bankphone] [nvarchar](4000) NULL,
+                  [bankname] [nvarchar](4000) NULL,
+                  [countrynumeric] [nvarchar](4000) NULL,
+                  [countryalpha2] [nvarchar](4000) NULL,
+                  [countryname] [nvarchar](4000) NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[CHECKARCHIVE]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[CHECKARCHIVE](
+                  [FISCOUNTER] [int] NOT NULL,
+                  [DEPKODU] [nvarchar](15) NULL,
+                  [MASANO] [nvarchar](50) NULL,
+                  [TARIH] [datetime] NULL,
+                  [ASAATI] [datetime] NULL,
+                  [KSAATI] [datetime] NULL,
+                  [FISNO] [int] NULL,
+                  [ODERNO] [nvarchar](50) NULL,
+                  [ADISYONNO] [nvarchar](15) NULL,
+                  [GARSONKODU] [nvarchar](15) NULL,
+                  [YETKILIKODU] [nvarchar](15) NULL,
+                  [TUR] [nvarchar](10) NULL,
+                  [MUSTERIKODU] [nvarchar](30) NULL,
+                  [MUSTERIADI] [nvarchar](50) NULL,
+                  [MUSTERIBAKIYE] [float] NULL,
+                  [INDORAN] [float] NULL,
+                  [INDTOPLAM] [float] NULL,
+                  [SERVISORAN] [float] NULL,
+                  [SERVISTUTAR] [float] NULL,
+                  [TOPLAM] [float] NULL,
+                  [FUNVANI] [nvarchar](50) NULL,
+                  [FADRESI1] [nvarchar](50) NULL,
+                  [FADRESI2] [nvarchar](50) NULL,
+                  [FVD] [nvarchar](25) NULL,
+                  [FVDNO] [nvarchar](25) NULL,
+                  [KDV] [float] NULL,
+                  [MATRAH] [float] NULL,
+                  [ONAKIT] [float] NULL,
+                  [OKK] [float] NULL,
+                  [OTICKET] [float] NULL,
+                  [OACIK] [float] NULL,
+                  [YTOPLAM] [float] NULL,
+                  [ITOPLAM] [float] NULL,
+                  [FYAZIYLA] [nvarchar](80) NULL,
+                  [KISI] [int] NULL,
+                  [MODANO] [nvarchar](15) NULL,
+                  [MKNO] [float] NULL,
+                  [FISLI] [bit] NULL,
+                  [STOPLAM] [float] NULL,
+                  [YAZCOUNT] [int] NULL,
+                  [KKTURU] [nvarchar](50) NULL,
+                  [TICKETTURU] [nvarchar](50) NULL,
+                  [DIRTY] [int] NULL,
+                  [DTURU] [nvarchar](50) NULL,
+                  [DTOPLAM] [float] NULL,
+                  [FKISINO] [nvarchar](50) NULL,
+                  [OTICKET2] [float] NULL,
+                  [OTICKET3] [float] NULL,
+                  [OTICKET4] [float] NULL,
+                  [VPARA] [float] NULL,
+                  [MUSTERIID] [int] NULL,
+                  [MODAADI] [nvarchar](255) NULL,
+                  [DOVIZTOPLAM] [float] NULL,
+                  [DOVIZKURU] [float] NULL,
+                  [KASIYER] [nvarchar](15) NULL,
+                  [SECINDID] [int] NULL,
+                  [INDSEBEP] [nvarchar](50) NULL,
+                  [PBAKIYE] [float] NULL,
+                  [INDTUTAR] [float] NULL,
+                  [MID] [int] NULL,
+                  [SUBEID] [int] NULL,
+                  [AKTARILDI] [int] NULL,
+                  [ACIKLAMA] [nvarchar](50) NULL,
+                  [MUSKARTNO] [nvarchar](50) NULL,
+                  [MARS] [int] NULL,
+                  [MARSSAATI] [datetime] NULL,
+                  [KALANKREDI] [float] NULL,
+                  [ODENMEZTOPLAM] [float] NULL,
+                  [ODERSERINO] [nvarchar](50) NULL,
+                  [MASASTATU] [int] NULL,
+                  [WEBPOSMSG] [nvarchar](255) NULL,
+                  [URUNFIYATTIPI] [nvarchar](20) NULL,
+                  [YAZARKASA_REF_NO] [nvarchar](50) NULL,
+                  [YAZARKASA_DURUM] [bit] NULL,
+                  [EFATURADURUM] [int] NULL,
+                  [EFATURA_PKUTUSU] [nvarchar](50) NULL,
+                  [OTICKET5] [float] NULL,
+                  [OTICKET6] [float] NULL,
+                  [OTICKET7] [float] NULL,
+                  [OTICKET1] [float] NULL,
+                  [BELGETURU] [int] NULL,
+                  [FISTUTAR] [float] NULL,
+                  [FATURATUTAR] [float] NULL,
+                  [IPTALCOUNTER] [int] NULL,
+                  [OMDKI] [bit] NULL,
+                  [BAGISBORCU] [float] NULL,
+                  [AIDATBORCU] [float] NULL,
+                  [OMDINDORAN] [float] NULL,
+                  [MCOUNTER] [int] NULL,
+                  [UYEOLMAKISTIYOR] [bit] NULL,
+                  [ODEMEONAYKODU] [nvarchar](50) NULL,
+                  [PUANONAYKODU] [nvarchar](50) NULL,
+                  [SORGUTURU] [nvarchar](20) NULL,
+                  [SORGUNO] [nvarchar](30) NULL,
+                  [REZKISIID] [int] NULL,
+                  [DIGEROTEL] [bit] NULL,
+                  [FILCE] [nvarchar](50) NULL,
+                  [FSEHIR] [nvarchar](50) NULL,
+                  [FULKE] [nvarchar](50) NULL,
+                  [SEZLONG] [bit] NULL,
+                  [HOTELID] [int] NULL,
+               CONSTRAINT [PK_FISARSIV] PRIMARY KEY CLUSTERED
+              (
+                  [FISCOUNTER] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[CHECKDETAILARCHIVE]    Script Date: 17.08.2021 3:24:43 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[CHECKDETAILARCHIVE](
+                  [COUNTER] [int] IDENTITY(1,1) NOT NULL,
+                  [FISCOUNTER] [int] NULL,
+                  [STOKID] [int] NULL,
+                  [ACIKLAMA] [nvarchar](100) NULL,
+                  [ADET] [float] NULL,
+                  [BIRIMFIYAT] [float] NULL,
+                  [TUTAR] [float] NULL,
+                  [YAZ] [bit] NULL,
+                  [GARSONKODU] [nvarchar](5) NULL,
+                  [BARKOD] [nvarchar](50) NULL,
+                  [H] [int] NULL,
+                  [SIP] [bit] NULL,
+                  [INDORAN] [float] NULL,
+                  [INDID] [nvarchar](200) NULL,
+                  [GGRUP] [nvarchar](5) NULL,
+                  [HHOUR] [bit] NULL,
+                  [ZAYII] [bit] NULL,
+                  [GONDERILDI] [bit] NULL,
+                  [SERVIS] [int] NULL,
+                  [SAAT] [datetime] NULL,
+                  [BEKLET] [int] NULL,
+                  [MALIYET] [float] NULL,
+                  [ILKFISCOUNTER] [int] NULL,
+                  [INDCODE] [nvarchar](50) NULL,
+                  [DIGEROTEL] [bit] NULL,
+                  [FILCE] [nvarchar](50) NULL,
+                  [FSEHIR] [nvarchar](50) NULL,
+                  [FULKE] [nvarchar](50) NULL,
+                  [SEZLONG] [bit] NULL,
+                  [HOTELID] [int] NULL,
+               CONSTRAINT [PK_CHECKDETAILARCHIVE] PRIMARY KEY CLUSTERED
+              (
+                  [COUNTER] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[DEVICENOTIFICATION]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[DEVICENOTIFICATION](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [HOTELID] [int] NULL,
+                  [FROMUSERID] [int] NULL,
+                  [SENDTOUSERID] [int] NULL,
+                  [SENDTODEPID] [int] NULL,
+                  [STATUSID] [tinyint] NOT NULL,
+                  [CREATEDATE] [smalldatetime] NOT NULL,
+                  [LASTUPDATE] [smalldatetime] NOT NULL,
+                  [BODY] [nvarchar](250) NULL,
+                  [TITLE] [nvarchar](50) NULL,
+                  [ICON] [varchar](100) NULL,
+                  [SOUND] [bit] NULL,
+                  [CLICKURL] [varchar](100) NULL,
+                  [REQUEST] [nvarchar](max) NULL,
+                  [RESPONSE] [varchar](30) NULL,
+                  [UID] [uniqueidentifier] NOT NULL,
+                  [FAILDEVICES] [varchar](8000) NULL,
+                  [SENDTOSUBDEPIDS] [varchar](50) NULL,
+               CONSTRAINT [PK__DEVICENO__3214EC275CDE0C79] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ECRTRANSACTION_LOGS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ECRTRANSACTION_LOGS](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [PORTALID] [int] NULL,
+                  [HOTELID] [int] NULL,
+                  [FOLIOTRANSID] [int] NULL,
+                  [RESID] [int] NULL,
+                  [METHODNAME] [nvarchar](50) NULL,
+                  [LOGTEXT] [varchar](max) NULL,
+                  [RECORDDATE] [datetime] NULL,
+                  [PROCEDURENAME] [nvarchar](50) NULL,
+                  [REQCLASS] [nvarchar](100) NULL,
+                  [SOURCE] [nvarchar](50) NULL,
+               CONSTRAINT [PK_ECRTRANSACTION_LOGS] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[EFATURA_XMLLOG]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[EFATURA_XMLLOG](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [PORTALID] [int] NOT NULL,
+                  [INVOICEID] [int] NOT NULL,
+                  [USERID] [int] NULL,
+                  [LOGTIME] [datetime] NOT NULL,
+                  [REQUESTXML] [nvarchar](max) NOT NULL,
+                  [RESPONSEXML] [nvarchar](max) NOT NULL,
+                  [SUCCESSSTATUS] [tinyint] NOT NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[EMAIL_SENT]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[EMAIL_SENT](
+                  [ID] [int] IDENTITY(-2147483648,1) NOT NULL,
+                  [CONTENT] [nvarchar](max) NULL,
+                  [EMAIL] [nvarchar](255) NULL,
+                  [SENTDATE] [datetime] NULL,
+                  [STATUSCHANGEDATE] [datetime] NULL,
+                  [SUBJECT] [nvarchar](max) NULL,
+                  [STATUSID] [int] NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [READ_FIRST] [datetime] NULL,
+                  [READ_LAST] [datetime] NULL,
+                  [READ_COUNT] [int] NOT NULL,
+                  [FROMADDRESS] [varchar](250) NULL,
+                  [PORTALID] [int] NOT NULL,
+                  [REPLYTO] [nvarchar](255) NULL,
+                  [CCTO] [nvarchar](4000) NULL,
+                  [ERRORMESSAGE] [nvarchar](max) NULL,
+                  [RESERVATIONID] [uniqueidentifier] NULL,
+                  [BASKETID] [bigint] NULL,
+                  [SERVERNAME] [nvarchar](30) NULL,
+                  [UID] [uniqueidentifier] NOT NULL,
+                  [SMTPACCOUNTID] [int] NULL,
+                  [BCCTO] [varchar](250) NULL,
+                  [AUTOMAILID] [int] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY],
+              UNIQUE NONCLUSTERED
+              (
+                  [UID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[EMAILSTOPLIST]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[EMAILSTOPLIST](
+                  [EMAIL] [varchar](900) NOT NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [EMAIL] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ENZOKIOSK_LOGS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ENZOKIOSK_LOGS](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [PORTALID] [int] NULL,
+                  [HOTELID] [int] NULL,
+                  [FOLIOTRANSID] [int] NULL,
+                  [RESID] [int] NULL,
+                  [METHODNAME] [nvarchar](50) NULL,
+                  [LOGTEXT] [varchar](max) NULL,
+                  [RECORDDATE] [datetime] NULL,
+                  [PROCEDURENAME] [nvarchar](50) NULL,
+                  [REQCLASS] [nvarchar](100) NULL,
+                  [SOURCE] [nvarchar](50) NULL,
+               CONSTRAINT [PK__ENZOKIOSK___3214EC2764B939EF] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ENZOKIOSK_TEMPTABLE]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ENZOKIOSK_TEMPTABLE](
+                  [RESID] [int] NULL,
+                  [ROOMID] [int] NULL,
+                  [MAXBED] [int] NULL,
+                  [ROOMTYPECODE] [nvarchar](150) NULL,
+                  [ROOMTYPENAME] [nvarchar](300) NULL,
+                  [PROPERTIES] [nvarchar](max) NULL,
+                  [IMAGEURL] [nvarchar](250) NULL,
+                  [ROOMTYPEID] [int] NULL,
+                  [ID] [int] NULL,
+                  [RATECODEID] [int] NULL,
+                  [HOTELID] [int] NULL,
+                  [PORTALID] [int] NULL,
+                  [PRICE] [float] NULL,
+                  [CURRATE] [float] NULL,
+                  [CHECKIN] [date] NULL,
+                  [CHECKOUT] [date] NULL,
+                  [DEPID] [int] NULL,
+                  [REVID] [int] NULL,
+                  [TDATE] [date] NULL,
+                  [SOURCE] [nvarchar](50) NULL,
+                  [KIOSKID] [nvarchar](100) NULL
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[FN_PORTAL_HOTELCOMBPRICES31]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[FN_PORTAL_HOTELCOMBPRICES31](
+                  [HOTELID] [int] NULL,
+                  [CHECKIN] [date] NULL,
+                  [CHECKOUT] [date] NULL,
+                  [ROOM] [int] NULL,
+                  [ADULT] [int] NULL,
+                  [CHILDREN] [varchar](50) NULL,
+                  [LANGUAGECODE] [varchar](2) NULL,
+                  [CURRENCYCODE] [varchar](3) NULL,
+                  [AGENCYID] [int] NULL,
+                  [DEBUGMODE] [bit] NULL,
+                  [MARKETCODE] [nvarchar](50) NULL,
+                  [IPADDRESS] [varchar](20) NULL,
+                  [SESSION] [uniqueidentifier] NULL,
+                  [PORTALID] [int] NULL,
+                  [PORTALSELLERID] [int] NULL,
+                  [ISHOTELPAGEOFFER] [bit] NULL,
+                  [MILLISECONDS] [float] NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[HOTEL_CONTACTREQUEST_LOG]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL_CONTACTREQUEST_LOG](
+                  [UID] [uniqueidentifier] NULL,
+                  [DATA] [nvarchar](max) NULL,
+                  [CREATION_DATE] [datetime] NULL
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[HOTEL_ENDOFDAYREPORT_RESULT]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL_ENDOFDAYREPORT_RESULT](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [REPORTID] [int] NOT NULL,
+                  [REPORTDATE] [datetime] NULL,
+                  [RESULTTEXT] [nvarchar](max) NULL,
+                  [PROGRAMDATE] [datetime] NOT NULL,
+                  [REPORTTAKER] [int] NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [PORTALID] [int] NOT NULL,
+               CONSTRAINT [PK_HOTEL_ENDOFDAYREPORT_RESULT] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[HOTEL_INTERFACE_TCP_LOG]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL_INTERFACE_TCP_LOG](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [CMD] [nvarchar](500) NULL,
+                  [DATE_] [datetime] NOT NULL,
+                  [TYP] [nvarchar](10) NULL,
+                  [HOTELID] [int] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[HOTEL_NIGHTAUDITREPORTS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL_NIGHTAUDITREPORTS](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [REPORTID] [int] NOT NULL,
+                  [PROGDATE] [date] NOT NULL,
+                  [CREATEDATE] [datetime] NOT NULL,
+                  [JSONRESULT] [nvarchar](max) NOT NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = ON, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[HOTEL_RES 21713 BALANCE]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL_RES 21713 BALANCE](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [AGENCYID] [int] NULL,
+                  [RATECODEID] [int] NULL,
+                  [CHECKIN] [datetime] NULL,
+                  [CHECKOUT] [datetime] NULL,
+                  [ROOMCOUNT] [numeric](5, 0) NULL,
+                  [ROOMTYPEID] [int] NULL,
+                  [ADULT] [smallint] NULL,
+                  [CHD1] [smallint] NULL,
+                  [CHD2] [smallint] NULL,
+                  [BABY] [smallint] NULL,
+                  [BOARDTYPEID] [int] NULL,
+                  [EXTRAREQ] [nvarchar](250) NULL,
+                  [PROMOTIONCODE] [nvarchar](50) NULL,
+                  [MANUELRATE] [real] NULL,
+                  [TOTALPRICE] [money] NULL,
+                  [ROOMID] [int] NULL,
+                  [ACCOMTYPEID] [tinyint] NULL,
+                  [MARKETID] [int] NULL,
+                  [SOURCEID] [int] NULL,
+                  [ISDISABLED] [bit] NULL,
+                  [ISDELETED] [bit] NULL,
+                  [CREATION_DATE] [smalldatetime] NULL,
+                  [LASTUPDATE_DATE] [smalldatetime] NULL,
+                  [MANUELRATEENABLED] [bit] NULL,
+                  [NATIONALITY] [int] NULL,
+                  [RESSTATEID] [int] NULL,
+                  [REPGUEST] [smallint] NULL,
+                  [KNO] [int] NULL,
+                  [APPROVE_DATE] [date] NULL,
+                  [SHARENO] [int] NULL,
+                  [FREECHILD] [smallint] NULL,
+                  [PAIDCHILD] [smallint] NULL,
+                  [FOLIOLOCKED] [bit] NULL,
+                  [CURRENCYID] [int] NULL,
+                  [CURRDATE] [date] NULL,
+                  [DISCOUNTCOMBINATIONID] [int] NULL,
+                  [RATETYPEID] [int] NULL,
+                  [RESPASSWORD] [nvarchar](4) NULL,
+                  [SENDERID] [int] NULL,
+                  [PORTALREFERENCEID] [char](6) NULL,
+                  [PORTALREFERENCECOMMISSIONID] [int] NULL,
+                  [PORTALID] [int] NOT NULL,
+                  [BASKET_PROFILEID] [bigint] NULL,
+                  [SENDEMAILNOTIFICATION] [bit] NULL,
+                  [CHANNELMANAGERID] [int] NULL,
+                  [CHANNELMANAGERNOTIFIED] [bit] NULL,
+                  [CHANNELMANAGERLASTSTATE] [varchar](30) NULL,
+                  [PORTALSELLERID] [int] NULL,
+                  [COLORCODE] [nvarchar](7) NULL,
+                  [OPERATIONID] [bigint] NULL,
+                  [UID] [uniqueidentifier] NOT NULL,
+                  [PORTALBRANCHID] [int] NULL,
+                  [XMLLOGID] [bigint] NULL,
+                  [PROMOTIONID] [int] NULL,
+                  [FOLIO_A_TOTAL] [float] NULL,
+                  [FOLIO_R_TOTAL] [float] NULL,
+                  [FOLIO_E_TOTAL] [float] NULL,
+                  [FOLIO_D_TOTAL] [float] NULL,
+                  [FOLIO_P_TOTAL] [float] NULL,
+                  [FOLIO_B_TOTAL] [float] NULL,
+                  [ELEKTRACONFIRMED] [bit] NULL,
+                  [CHANNELMANAGERDATA1] [nvarchar](100) NULL,
+                  [CHANNELMANAGERDATA2] [nvarchar](100) NULL,
+                  [CHANNELMANAGERDATA3] [nvarchar](100) NULL,
+                  [CHANNELMANAGERDATA4] [nvarchar](100) NULL,
+                  [CHANNELMANAGERDATA5] [nvarchar](100) NULL,
+                  [PORTALSELLERCOST] [real] NULL,
+                  [PORTALSELLERCOSTCURRENCYID] [int] NULL,
+                  [REGIONID] [int] NULL,
+                  [TOTALPAIDAMOUNT] [float] NULL,
+                  [TOTALPORTALMONEY] [float] NULL,
+                  [TOTALPORTALSELLERMONEY] [float] NULL,
+                  [TOTALHOTELIERMONEY] [float] NULL,
+                  [PORTALSTATEID] [tinyint] NULL,
+                  [TOTALREMAININGAMOUNT] [float] NULL,
+                  [HOTELACTIONID] [tinyint] NOT NULL,
+                  [GUESTACTIONID] [tinyint] NOT NULL,
+                  [CREATORID] [int] NULL,
+                  [RESPRICE_FIRST] [float] NOT NULL,
+                  [RESPRICE_LAST] [float] NOT NULL,
+                  [COST_AGENTCOMMISSION] [float] NOT NULL,
+                  [COST_EMPLOYEECOMMISSION] [float] NOT NULL,
+                  [COST_BUYINGFIRST] [float] NOT NULL,
+                  [COST_BUYINGLAST] [float] NOT NULL,
+                  [GUESTID] [int] NULL,
+                  [FIRSTGUESTNAME] [nvarchar](50) NULL,
+                  [COST_SERVICEPROVIDERCOMMISSION] [float] NOT NULL,
+                  [PAYATSERVICE] [float] NOT NULL,
+                  [SALEFROMGUARANTEE] [bit] NOT NULL,
+                  [GECICI] [int] NOT NULL,
+                  [ISPAYMENTWARNINGMAILSENDED] [bit] NOT NULL,
+                  [NIGHT] [numeric](16, 0) NULL,
+                  [PAX] [int] NULL,
+                  [INVOICE_RECEIVED] [tinyint] NOT NULL,
+                  [COST_BUYINGDUE] [float] NOT NULL,
+                  [INVOICE_NO] [varchar](30) NULL,
+                  [CALCSTATE] [int] NOT NULL,
+                  [CURRENCYRATE] [float] NULL,
+                  [LOCAL_RESPRICE_FIRST] [float] NULL,
+                  [LOCAL_RESPRICE_LAST] [float] NULL,
+                  [LOCAL_COST_AGENTCOMMISSION] [float] NULL,
+                  [LOCAL_COST_EMPLOYEECOMMISSION] [float] NULL,
+                  [LOCAL_COST_BUYINGFIRST] [float] NULL,
+                  [LOCAL_COST_BUYINGLAST] [float] NULL,
+                  [LOCAL_COST_SERVICEPROVIDERCOMMISSION] [float] NULL,
+                  [LOCAL_PAYATSERVICE] [float] NULL,
+                  [LOCAL_COST_BUYINGDUE] [float] NULL,
+                  [XMLNAME] [varchar](25) NULL,
+                  [HM2] [float] NULL,
+                  [HM3] [nvarchar](200) NULL,
+                  [TRANSFER_FEE] [float] NULL,
+                  [FLIGHT_DEPARTURE] [nvarchar](150) NULL,
+                  [FLIGHT_ARRIVAL] [nvarchar](150) NULL,
+                  [INVOICETIME] [smalldatetime] NULL,
+                  [ISSENT] [bit] NULL,
+                  [REQUESTID] [uniqueidentifier] NULL,
+                  [PMSCODE] [varchar](10) NULL,
+                  [PAIDAMOUNT] [float] NOT NULL,
+                  [HOTEL] [nvarchar](50) NULL,
+                  [BOARDTYPE] [nvarchar](50) NULL,
+                  [ROOMTYPE] [nvarchar](50) NULL,
+                  [RATETYPE] [nvarchar](50) NULL,
+                  [AGENCY] [nvarchar](50) NULL,
+                  [FINANCEACTIONID] [tinyint] NOT NULL,
+                  [PAYMENTINFO] [nvarchar](255) NULL,
+                  [LOGINGUESTID] [int] NULL,
+                  [EXTRASERVICESTOTAL] [float] NULL,
+                  [CHILDAGES] [varchar](20) NULL,
+                  [GIVENROOMTYPEID] [int] NULL,
+                  [HOTELIERPAYSTATUS] [tinyint] NULL,
+                  [BASKETITEMINDEX] [tinyint] NULL,
+                  [BSRM_SENTDATE] [smalldatetime] NULL,
+                  [BASKETGROUPINDEX] [tinyint] NULL,
+                  [PAYNOWPERCENT] [float] NULL,
+                  [PAYNOWAMOUNT] [float] NULL,
+                  [BASKETSUMMARY] [nvarchar](250) NULL,
+                  [CANCEL_DATE] [smalldatetime] NULL,
+                  [EARNEDBONUS] [real] NULL,
+                  [SPENTBONUS] [real] NULL,
+                  [CONTACTPHONE] [varchar](20) NULL,
+                  [CONTACTEMAIL] [varchar](100) NULL,
+                  [INVOICETOHOTEL_NO] [varchar](10) NULL,
+                  [INVOICETOHOTEL_PAYMENTRECEIVED] [bit] NULL,
+                  [INVOICE_AMOUNT] [real] NULL,
+                  [INVOICE_PAID] [bit] NULL,
+                  [ISONLINESALE] [bit] NULL,
+                  [CHECKINREMINDERSENT] [bit] NOT NULL,
+                  [EINVOICEID] [int] NULL,
+                  [LANGUAGE] [char](2) NULL,
+                  [TOTALPORTALINCOME] [float] NULL,
+                  [TOTALPORTALINCOMEPERCENT] [float] NULL,
+                  [EXTRASERVICESTOTALPAID] [float] NULL,
+                  [XMLLOGIDCANCEL] [bigint] NULL,
+                  [XMLLOGIDDELETE] [bigint] NULL,
+                  [SOURCERESID] [int] NULL,
+                  [AVERAGENIGHTPRICE] [money] NULL,
+                  [CIN_MESSAGE] [nvarchar](255) NULL,
+                  [COUT_MESSAGE] [nvarchar](255) NULL,
+                  [VIPTYPEID] [int] NULL,
+                  [REPRICE] [bit] NULL,
+                  [SALESPROJECTID] [int] NULL,
+                  [QTIME] [smalldatetime] NULL,
+                  [LATECHECKOUTTIME] [time](0) NULL,
+                  [PAIDBY] [tinyint] NOT NULL,
+                  [PAYMENTTYPE] [tinyint] NOT NULL,
+                  [ARRIVALTIME] [smalldatetime] NULL,
+                  [DEPARTURETIME] [smalldatetime] NULL,
+                  [HOTELIERNOTIFIED] [bit] NULL,
+                  [POSLIMIT] [real] NULL,
+                  [RESDAYSUMMARY] [varchar](255) NULL,
+                  [BEDTYPEID] [int] NULL,
+                  [GUESTNAMES] [nvarchar](255) NULL,
+                  [VOUCHERNO] [nvarchar](150) NULL,
+                  [PAXIMUMAGENCYID] [nvarchar](50) NULL,
+                  [TASKSALL] [tinyint] NULL,
+                  [TASKSCOMPLETED] [tinyint] NULL,
+                  [OVERNIGHT] [varchar](20) NULL,
+                  [ALFANUMERICID] [varchar](20) NULL,
+                  [ATTACHMENTS] [tinyint] NULL,
+                  [UPDATEUSER] [int] NULL,
+                  [SENDERRESID] [varchar](36) NULL,
+                  [ESYNC_TIMESTAMP] [smalldatetime] NULL,
+                  [XMLLOGIDUPDATE] [bigint] NULL,
+                  [HASBIRTHDAY] [bit] NULL,
+                  [AGENCY_COMMISSION_PERCENT] [decimal](19, 2) NULL,
+                  [AGENCY_COMMISSION_AMOUNT] [decimal](19, 2) NULL,
+                  [AGENCY_COMMISSION_PAID] [decimal](19, 2) NULL,
+                  [AGENCY_COMMISSION_INVOICENO] [varchar](10) NULL,
+                  [AGENCY_COMMISSION_INVOICEDATE] [date] NULL,
+                  [AGENCY_COMMISSION_CURRENCY] [varchar](3) NULL,
+                  [SEGMENTID] [int] NULL,
+                  [LOS] [varchar](5) NULL,
+                  [MANUALDISCOUNTS] [varchar](100) NULL,
+                  [SALEDATE] [smalldatetime] NULL,
+                  [MIGRATEID] [varchar](36) NULL,
+                  [MCTOTALPRICE] [float] NULL,
+                  [CANCELUSERID] [int] NULL,
+                  [CANCEL_MESSAGE] [nvarchar](50) NULL,
+                  [CHD1AGE] [tinyint] NULL,
+                  [CHD2AGE] [tinyint] NULL,
+                  [CHD3AGE] [tinyint] NULL,
+                  [CHD4AGE] [tinyint] NULL,
+                  [ROOMCOUNTTYPE] [tinyint] NULL,
+                  [COMPANYID] [int] NULL,
+                  [ROOMFIXED] [bit] NULL,
+                  [ROOM_MESSAGE] [nvarchar](255) NULL,
+                  [RESMODEID] [int] NULL,
+                  [USEVIRTUALROOM] [bit] NULL,
+                  [ISSHARED] [bit] NULL,
+                  [TAXDISABLED] [bit] NULL,
+                  [TAXASSIGNTYPE] [tinyint] NULL,
+                  [TAXINCLUDED] [bit] NULL,
+                  [POSDISCOUNTGROUPID] [int] NULL,
+                  [RESSUBSTATEID] [int] NULL,
+                  [HASROUTING] [bit] NOT NULL,
+                  [NOTECOUNT] [tinyint] NULL,
+                  [CONTACTPERSON] [nvarchar](70) NULL,
+                  [AUTOPOST_ATNIGHT] [bit] NOT NULL,
+                  [LOCKED] [bit] NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[HOTEL_RES_ANALYSIS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL_RES_ANALYSIS](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [HOTELID] [int] NULL,
+                  [CREATEDATE] [date] NULL,
+                  [SALEDATE] [date] NULL,
+                  [STAYDATE] [date] NULL,
+                  [CANCELDATE] [date] NULL,
+                  [CACHETIME] [datetime] NULL,
+                  [CURRENCYDATE] [date] NULL,
+                  [SEGMENTID] [int] NULL,
+                  [AGENCYID] [int] NULL,
+                  [AGENCYGROUPID] [int] NULL,
+                  [NATIONALITYID] [int] NULL,
+                  [SOURCEID] [int] NULL,
+                  [ACCOMTYPEID] [int] NULL,
+                  [ROOMTYPEID] [int] NULL,
+                  [RATETYPEID] [int] NULL,
+                  [BOARDTYPEID] [int] NULL,
+                  [MARKETID] [int] NULL,
+                  [ROOM] [int] NULL,
+                  [ADULT] [int] NULL,
+                  [CHILD] [int] NULL,
+                  [ELDERCHILD] [int] NULL,
+                  [YOUNGERCHILD] [int] NULL,
+                  [BABY] [int] NULL,
+                  [ROOMREVENUE] [decimal](19, 2) NULL,
+                  [EXTRAREVENUE] [decimal](19, 2) NULL,
+                  [FREECHILD] [int] NULL,
+                  [PAIDCHILD] [int] NULL,
+                  [COMING_ROOM] [int] NULL,
+                  [COMING_ADULT] [int] NULL,
+                  [COMING_CHILD] [int] NULL,
+                  [COMING_FREECHILD] [int] NULL,
+                  [COMING_PAIDCHILD] [int] NULL,
+                  [NETROOMREVENUE] [decimal](19, 2) NULL,
+                  [NETEXTRAREVENUE] [decimal](19, 2) NULL,
+                  [ROOMCOUNTTYPE] [tinyint] NULL,
+                  [RESSTATEID] [tinyint] NULL,
+               CONSTRAINT [PK__HOTEL_RE__3214EC2646F0A863] PRIMARY KEY NONCLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Index [CIX_ID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE UNIQUE CLUSTERED INDEX [CIX_ID] ON [dbo].[HOTEL_RES_ANALYSIS]
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[HOTEL_RES_EVENTS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[HOTEL_RES_EVENTS](
+                  [ID] [bigint] IDENTITY(1,1) NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [RESID] [int] NOT NULL,
+                  [EVENTID] [tinyint] NOT NULL,
+                  [UTCTIME] [smalldatetime] NOT NULL,
+                  [OLDROOMID] [int] NULL,
+                  [NEWROOMID] [int] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[KAYIPREZCEKMEYENHOTELLER]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[KAYIPREZCEKMEYENHOTELLER](
+                  [HOTELID] [int] NOT NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[LOG_ELEKTRAWEB]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[LOG_ELEKTRAWEB](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [ACTION] [varchar](11) NULL,
+                  [OBJECT] [varchar](100) NULL,
+                  [LOGTIMEUTC] [datetime] NOT NULL,
+                  [IPADDRESS] [varchar](20) NULL,
+                  [BODY] [nvarchar](max) NULL,
+                  [ROWID] [varchar](100) NULL,
+                  [HOTELID] [int] NULL,
+                  [DURATION] [int] NULL,
+                  [HTTPCODE] [smallint] NULL,
+                  [USERID] [varchar](100) NULL,
+                  [REQUESTOBJECT]  AS (case when [ACTION]='Execute' AND isjson([BODY])=(1) then isnull(json_value([BODY],'$."$Procedure"'),[OBJECT]) else [OBJECT] end),
+                  [MIGRATEID] [int] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[MEDISOFTPAYMENT_LOGS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[MEDISOFTPAYMENT_LOGS](
+                  [ID] [bigint] IDENTITY(1,1) NOT NULL,
+                  [TENANTID] [int] NULL,
+                  [PAYMENTGATEID] [int] NULL,
+                  [TRANSACTIONID] [int] NULL,
+                  [METHODNAME] [nvarchar](100) NULL,
+                  [LOGTEXT] [nvarchar](max) NULL,
+                  [RECORDDATE] [datetimeoffset](7) NULL,
+                  [PROCESSINGTIME] [datetimeoffset](7) NULL,
+                  [ERRORMESSAGE] [nvarchar](300) NULL,
+               CONSTRAINT [PK_MEDISOFTPAYMENT_LOGS] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[MIGRATE_HOTELFOLIO]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[MIGRATE_HOTELFOLIO](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [EMDSID] [int] NULL,
+                  [ROWID] [nvarchar](50) NULL,
+                  [RESNO] [nvarchar](50) NULL,
+                  [FIRSTRESNO] [int] NULL,
+                  [TDATE] [datetime] NULL,
+                  [RECTYPE] [int] NULL,
+                  [DEPNAME] [nvarchar](50) NULL,
+                  [REVNAME] [nvarchar](50) NULL,
+                  [NOTE] [nvarchar](255) NULL,
+                  [DOCNO] [nvarchar](255) NULL,
+                  [CURCODE] [nvarchar](3) NULL,
+                  [CURRATE] [float] NULL,
+                  [CURTOTAL] [decimal](19, 2) NULL,
+                  [TOTAL] [decimal](19, 2) NULL,
+                  [ASSIGNTYPE] [int] NULL,
+                  [TRANSFERNOTE] [nvarchar](255) NULL,
+                  [SLIPNO] [nvarchar](20) NULL,
+                  [INVOICEID] [tinyint] NULL,
+                  [PAYINGDEPNAME] [nvarchar](50) NULL,
+                  [WEBDEPID] [int] NULL,
+                  [WEBREVID] [int] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[MIGRATE_HOTELGUEST]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[MIGRATE_HOTELGUEST](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [EMDSID] [int] NULL,
+                  [ELEKTRAID] [nvarchar](100) NULL,
+                  [NAME] [nvarchar](30) NULL,
+                  [LNAME] [nvarchar](30) NULL,
+                  [EMAIL] [nvarchar](50) NULL,
+                  [PHONE] [nvarchar](100) NULL,
+                  [ADDRESS] [nvarchar](4000) NULL,
+                  [CITY] [nvarchar](50) NULL,
+                  [COUNTRY] [nvarchar](100) NULL,
+                  [BIRTHDATE] [datetime] NULL,
+                  [BIRTHPLACE] [nvarchar](50) NULL,
+                  [FATHERSNAME] [nvarchar](50) NULL,
+                  [MOTHERSNAME] [nvarchar](50) NULL,
+                  [IDTYPE] [nvarchar](1) NULL,
+                  [SERIALNO] [nvarchar](50) NULL,
+                  [NATIONALIDNO] [nvarchar](20) NULL,
+                  [PASSPORTNO] [nvarchar](50) NULL,
+                  [IDREGPLACE1] [nvarchar](50) NULL,
+                  [IDREGNO1] [nvarchar](10) NULL,
+                  [IDISSUEDATE] [datetime] NULL,
+                  [IDISSUEPLACE] [nvarchar](50) NULL,
+                  [IDISSUEREASON] [nvarchar](50) NULL,
+                  [OCCUPATION] [nvarchar](50) NULL,
+                  [SPOUSENAME] [nvarchar](50) NULL,
+                  [KIDSNAME] [nvarchar](50) NULL,
+                  [VEHICLEPLATE] [nvarchar](50) NULL,
+                  [IDVOLUMENO] [nvarchar](20) NULL,
+                  [IDFAMILYNO] [nvarchar](20) NULL,
+                  [IDQUEUENO] [nvarchar](20) NULL,
+                  [GENDER] [nvarchar](1) NULL,
+                  [MARRIED] [bit] NULL,
+                  [MARRYDATE] [datetime] NULL,
+                  [BLACKLISTREASON] [nvarchar](250) NULL,
+                  [BLACKLIST] [bit] NULL,
+                  [NATIONALITY] [nvarchar](20) NULL,
+                  [TAXCOMPANY] [nvarchar](100) NULL,
+                  [TAXNUMBER] [nvarchar](100) NULL,
+                  [DEFAULTCURRENCY] [nvarchar](20) NULL,
+                  [UNIVERSITY] [nvarchar](50) NULL,
+                  [PORTALID] [int] NULL,
+                  [REPEATGUEST] [int] NULL,
+                  [DEPARTMENT] [nvarchar](50) NULL,
+                  [TAXCITY] [nvarchar](50) NULL,
+                  [TAXCOUNTRY] [nvarchar](50) NULL,
+                  [TAXZIPCODE] [nvarchar](50) NULL,
+                  [CONTACTCONFIRMEDEMAIL] [bit] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[MIGRATE_HOTELINVOICE]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[MIGRATE_HOTELINVOICE](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [HOTELID] [int] NULL,
+                  [ROWID] [int] NULL,
+                  [EMDSID] [int] NULL,
+                  [UUID] [nvarchar](50) NULL,
+                  [IssueDate] [date] NULL,
+                  [IssueTime] [time](7) NULL,
+                  [DocumentCurrencyCode] [nvarchar](5) NULL,
+                  [Customer_schemeID] [nvarchar](50) NULL,
+                  [Customer_Value] [nvarchar](50) NULL,
+                  [Customer_Room] [nvarchar](50) NULL,
+                  [Customer_District] [nvarchar](50) NULL,
+                  [Customer_StreetName] [nvarchar](50) NULL,
+                  [Customer_CountryName] [nvarchar](50) NULL,
+                  [Customer_CityName] [nvarchar](50) NULL,
+                  [Customer_CitySubdivisionName] [nvarchar](50) NULL,
+                  [Customer_ElectronicMail] [nvarchar](50) NULL,
+                  [Payment_Note] [nvarchar](255) NULL,
+                  [Payment_PaymentDueDate] [date] NULL,
+                  [TaxAmount_Value] [decimal](19, 2) NULL,
+                  [LineExtensionAmount_Value] [decimal](19, 2) NULL,
+                  [TaxExclusiveAmount] [decimal](19, 2) NULL,
+                  [TaxInclusiveAmount] [decimal](19, 2) NULL,
+                  [Customer_TaxName] [nvarchar](100) NULL,
+                  [Customer_TaxPlace] [nvarchar](100) NULL,
+                  [Customer_Phone] [nvarchar](50) NULL,
+                  [Customer_Fax] [nvarchar](50) NULL,
+                  [Customer_WebsiteURI] [nvarchar](100) NULL,
+                  [OID] [nvarchar](50) NULL,
+                  [NOTES] [nvarchar](255) NULL,
+                  [CURRENCYRATE] [float] NULL,
+                  [KNO] [nvarchar](30) NULL,
+                  [InvoiceId] [varchar](20) NULL,
+                  [PASSPORTNO] [nvarchar](20) NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[MIGRATE_HOTELINVOICELINE]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[MIGRATE_HOTELINVOICELINE](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [ELEKTRA_INVOICEID] [int] NULL,
+                  [LineExtensionAmount_currencyID] [nvarchar](10) NULL,
+                  [LineExtensionAmount_Value] [decimal](19, 2) NULL,
+                  [TaxPercent] [decimal](19, 2) NULL,
+                  [TaxAmount] [decimal](19, 2) NULL,
+                  [ItemName] [nvarchar](100) NULL,
+                  [ELEKTRADEP] [nvarchar](100) NULL,
+                  [ELEKTRAREV] [nvarchar](100) NULL,
+                  [KNO] [nvarchar](30) NULL,
+                  [TaxExemptionReasonCode] [nvarchar](5) NULL,
+                  [EMDSID] [int] NULL,
+                  [ROWID] [int] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[MIGRATE_HOTELRES]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[MIGRATE_HOTELRES](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [EMDSID] [int] NULL,
+                  [RESID] [nvarchar](50) NULL,
+                  [ROOMNO] [nvarchar](50) NULL,
+                  [AGENCY] [nvarchar](50) NULL,
+                  [NATIONALITY] [nvarchar](3) NULL,
+                  [CHECKIN] [datetime] NULL,
+                  [CHECKOUT] [datetime] NULL,
+                  [ADULT] [int] NULL,
+                  [ECHD] [int] NULL,
+                  [YCHD] [int] NULL,
+                  [BABY] [int] NULL,
+                  [VOUCHERNO] [nvarchar](255) NULL,
+                  [ROOMTYPE] [nvarchar](50) NULL,
+                  [BOARDTYPE] [nvarchar](50) NULL,
+                  [RESSTATE] [nvarchar](50) NULL,
+                  [MARKET] [nvarchar](50) NULL,
+                  [SOURCE] [nvarchar](50) NULL,
+                  [RATECODE] [nvarchar](50) NULL,
+                  [RATETYPE] [nvarchar](100) NULL,
+                  [TOTALPRICE] [decimal](19, 2) NULL,
+                  [CURRENCYCODE] [char](3) NULL,
+                  [ROOMCOUNT] [int] NULL,
+                  [CIN_MESSAGE] [nvarchar](255) NULL,
+                  [EXTRAREQ] [nvarchar](255) NULL,
+                  [FIRSTNAME] [nvarchar](50) NULL,
+                  [LASTNAME] [nvarchar](50) NULL,
+                  [NATIONALIDNO] [nvarchar](50) NULL,
+                  [PASSPORTNO] [nvarchar](50) NULL,
+                  [CONTACTPHONE] [nvarchar](50) NULL,
+                  [CONTACTEMAIL] [nvarchar](50) NULL,
+                  [FIRSTNAME2] [nvarchar](50) NULL,
+                  [LASTNAME2] [nvarchar](50) NULL,
+                  [ROOMPRICE] [decimal](19, 2) NULL,
+                  [PAIDBY] [int] NULL,
+                  [PAYMENTTYPE] [int] NULL,
+                  [SKIPRESNAME] [bit] NULL,
+                  [ACCOMTYPE] [int] NULL,
+                  [GUESTID] [nvarchar](50) NULL,
+                  [USEVIRTUALROOM] [bit] NOT NULL,
+                  [SALEDATE] [datetime] NULL,
+                  [GIVENROOMTYPE] [nvarchar](50) NULL,
+                  [SEGMENT] [nvarchar](255) NULL,
+                  [COMPANY] [nvarchar](50) NULL,
+                  [SENDERRESID] [nvarchar](50) NULL,
+                  [CREATION_DATE] [datetime] NULL,
+                  [CANCELDATE] [datetime] NULL,
+                  [SALEPROJECTID] [int] NULL,
+                  [AGENCYNAME] [nvarchar](150) NULL,
+                  [COMPANYNAME] [nvarchar](150) NULL,
+               CONSTRAINT [PK__MIGRATE___3214EC273779301F] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[MIGRATE_RESNAME]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[MIGRATE_RESNAME](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [EMDSID] [int] NULL,
+                  [RESID] [nvarchar](50) NULL,
+                  [NAME] [nvarchar](50) NULL,
+                  [LNAME] [nvarchar](50) NULL,
+                  [CARDNO] [nvarchar](50) NULL,
+                  [AGE] [int] NULL,
+                  [GUESTID] [int] NULL,
+                  [PORTALID] [int] NULL,
+                  [SORTORDER] [int] NULL,
+                  [BIRTHDATE] [datetime] NULL,
+                  [NATIONALIDNO] [nvarchar](50) NULL,
+                  [PHONE] [nvarchar](50) NULL,
+                  [EMAIL] [nvarchar](50) NULL,
+                  [ARRIVAL] [datetime] NULL,
+                  [DEPARTURE] [datetime] NULL,
+                  [ROWID] [nvarchar](50) NULL,
+                  [NATIONALITY] [nvarchar](50) NULL,
+                  [GENDER] [tinyint] NULL,
+                  [NATIONALITYNAME] [nvarchar](50) NULL,
+                  [PASSPORTNO] [nvarchar](50) NULL,
+                  [PASSPORTEXPIREDATE] [date] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[NETGSMCRM]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[NETGSMCRM](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [CREATETIME] [datetime] NULL,
+                  [DATA] [nvarchar](max) NULL,
+                  [IPADDRESS] [varchar](15) NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ONURAIR_PRICEDETAIL_CACHE]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ONURAIR_PRICEDETAIL_CACHE](
+                  [PRICEDETAILID] [nvarchar](200) NOT NULL,
+                  [DATA] [nvarchar](max) NOT NULL,
+                  [EXPIRYTIME] [datetimeoffset](7) NULL,
+               CONSTRAINT [PK_ONURAIR_PRICEDETAIL_CACHE] PRIMARY KEY CLUSTERED
+              (
+                  [PRICEDETAILID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[OUTERSYNCLOGS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[OUTERSYNCLOGS](
+                  [ID] [bigint] IDENTITY(2000010100000000000,1) NOT NULL,
+                  [LOGTIME] [datetime] NOT NULL,
+                  [REQUEST] [nvarchar](max) NULL,
+                  [RESPONSE] [nvarchar](max) NULL,
+                  [HOTELID] [int] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[OUTERSYNCLOGS3]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[OUTERSYNCLOGS3](
+                  [LOGTIME] [datetime] NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [REQUEST] [nvarchar](max) NOT NULL,
+                  [RESPONSE] [nvarchar](max) NOT NULL
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[PORTAL_CALLLOGS_POST]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[PORTAL_CALLLOGS_POST](
+                  [OBJECTID] [int] NULL,
+                  [URL] [nvarchar](4000) NULL,
+                  [PARAMS] [nvarchar](4000) NULL,
+                  [STATUS] [int] NULL,
+                  [RESPONSE] [varchar](8000) NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[SENTMAILS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[SENTMAILS](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [REFERENCEID] [uniqueidentifier] NULL,
+                  [FROMMAIL] [nvarchar](250) NULL,
+                  [TOMAIL] [nvarchar](250) NULL,
+                  [SUBJECT] [ntext] NULL,
+                  [CC] [nvarchar](250) NULL,
+                  [MESSAGE] [ntext] NULL,
+                  [SENDTIME] [datetime] NULL,
+                  [HOST] [nvarchar](250) NULL,
+                  [PORT] [int] NULL,
+                  [USERNAME] [nvarchar](150) NULL,
+                  [PASSWORD] [nvarchar](150) NULL,
+                  [USESSL] [bit] NULL,
+                  [DISPLAYNAME] [nvarchar](150) NULL,
+               CONSTRAINT [PK_SENTMAILS] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[SMS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[SMS](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [PHONE] [bigint] NOT NULL,
+                  [CONTENT] [nvarchar](255) NULL,
+                  [REFERENCEID] [nvarchar](50) NULL,
+                  [ISSENT] [bit] NOT NULL,
+                  [ISRECEIVED] [bit] NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [PORTALID] [int] NOT NULL,
+                  [CREATETIME] [datetime] NOT NULL,
+                  [RECEIVERNAME] [nvarchar](50) NULL,
+                  [GUESTID] [int] NULL,
+                  [RESENTDATE] [datetime] NULL,
+                  [CONTENT_EN]  AS (left(replace(replace((replace((replace((replace((replace((replace((replace((replace((replace((replace((replace((replace(([CONTENT]) collate TURKISH_CS_AS,N'ı','i')) collate TURKISH_CS_AS,N'ğ','g')) collate TURKISH_CS_AS,N'ü','u')) collate TURKISH_CS_AS,N'ş','s')) collate TURKISH_CS_AS,N'ö','o')) collate TURKISH_CS_AS,N'ç','c')) collate TURKISH_CS_AS,N'İ','I')) collate TURKISH_CS_AS,N'Ğ','G')) collate TURKISH_CS_AS,N'Ü','U')) collate TURKISH_CS_AS,N'Ş','S')) collate TURKISH_CS_AS,N'Ö','O')) collate TURKISH_CS_AS,N'Ç','C'),'''','`'),(255))) PERSISTED,
+                  [COUNTRYCODE] [smallint] NOT NULL,
+                  [FULLPHONE] [varchar](20) NULL,
+                  [REQUESTSTART] [datetime] NULL,
+                  [REQUESTFINISH] [datetime] NULL,
+                  [RESID] [int] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = ON, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[SQLPROFILERLOG]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[SQLPROFILERLOG](
+                  [RowNumber] [int] IDENTITY(0,1) NOT NULL,
+                  [EventClass] [int] NULL,
+                  [TextData] [ntext] NULL,
+                  [ApplicationName] [nvarchar](128) NULL,
+                  [NTUserName] [nvarchar](128) NULL,
+                  [LoginName] [nvarchar](128) NULL,
+                  [CPU] [int] NULL,
+                  [Reads] [bigint] NULL,
+                  [Writes] [bigint] NULL,
+                  [Duration] [bigint] NULL,
+                  [ClientProcessID] [int] NULL,
+                  [SPID] [int] NULL,
+                  [StartTime] [datetime] NULL,
+                  [EndTime] [datetime] NULL,
+                  [BinaryData] [image] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [RowNumber] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[SQLPROFILERLOG_OLD]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[SQLPROFILERLOG_OLD](
+                  [RowNumber] [int] IDENTITY(0,1) NOT NULL,
+                  [EventClass] [int] NULL,
+                  [TextData] [ntext] NULL,
+                  [ApplicationName] [nvarchar](128) NULL,
+                  [NTUserName] [nvarchar](128) NULL,
+                  [LoginName] [nvarchar](128) NULL,
+                  [CPU] [int] NULL,
+                  [Reads] [bigint] NULL,
+                  [Writes] [bigint] NULL,
+                  [Duration] [bigint] NULL,
+                  [ClientProcessID] [int] NULL,
+                  [SPID] [int] NULL,
+                  [StartTime] [datetime] NULL,
+                  [EndTime] [datetime] NULL,
+                  [BinaryData] [image] NULL,
+               CONSTRAINT [UQ_StartTime_EndTime_RowNumber] UNIQUE NONCLUSTERED
+              (
+                  [StartTime] ASC,
+                  [EndTime] ASC,
+                  [RowNumber] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STAYOFFER_MSIGV72]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STAYOFFER_MSIGV72](
+                  [RESID] [int] NOT NULL,
+                  [ROOMID] [int] NOT NULL,
+                  [MAXBED] [int] NULL,
+                  [ROOMTYPECODE] [nvarchar](15) NULL,
+                  [ROOMTYPENAME] [nvarchar](50) NULL,
+                  [PROPERTIES] [nvarchar](max) NULL,
+                  [IMAGEURL] [nvarchar](250) NULL,
+                  [ROOMTYPEID] [int] NOT NULL,
+                  [ID] [int] NOT NULL,
+                  [RATECODEID] [int] NOT NULL,
+                  [HOTELID] [int] NOT NULL,
+                  [PORTALID] [int] NOT NULL,
+                  [PRICE] [real] NULL,
+                  [BUYRATE] [float] NULL,
+                  [CHECKIN] [smalldatetime] NULL,
+                  [CHECKOUT] [smalldatetime] NULL,
+                  [DEPID] [int] NOT NULL,
+                  [REVID] [int] NOT NULL,
+                  [TDATE] [varchar](10) NOT NULL,
+                  [SOURCE] [varchar](9) NOT NULL
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STDCHANNELMANAGERLOG]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDCHANNELMANAGERLOG](
+                  [ID] [bigint] IDENTITY(-9223372036848626487,1) NOT NULL,
+                  [CHANNELMANAGERID] [int] NULL,
+                  [HOTELID] [int] NULL,
+                  [LOGTIME] [datetime] NULL,
+                  [SPNAME] [varchar](100) NULL,
+                  [RQXML] [nvarchar](max) NULL,
+                  [RSXML] [nvarchar](max) NULL,
+                  [ISERROR] [bit] NULL,
+                  [ISWARNING] [bit] NULL,
+                  [RETRYCOUNT] [smallint] NOT NULL,
+                  [REQUESTID] [uniqueidentifier] NULL,
+               CONSTRAINT [PK_STDCHANNELMANAGERLOG] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = ON, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STDCHANNELMANAGERLOG_MASKEDID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDCHANNELMANAGERLOG_MASKEDID](
+                  [ID] [bigint] NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STDCHANNELMANAGERLOG_PUSHRAW]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDCHANNELMANAGERLOG_PUSHRAW](
+                  [UID] [uniqueidentifier] NOT NULL,
+                  [STARTED] [datetime] NOT NULL,
+                  [FINISHED] [datetime] NULL,
+                  [SP] [nvarchar](100) NULL,
+                  [DATA] [nvarchar](max) NULL,
+                  [IP] [nvarchar](20) NULL,
+                  [AUTH] [nvarchar](100) NULL,
+                  [RESPONSE] [nvarchar](max) NULL,
+              UNIQUE NONCLUSTERED
+              (
+                  [UID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STDLOGATTEMPT]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDLOGATTEMPT](
+                  [ID] [int] IDENTITY(20000000,1) NOT NULL,
+                  [ACTION] [nvarchar](50) NULL,
+                  [MODELNAME] [nvarchar](250) NULL,
+                  [BEFOREDATA] [nvarchar](max) NULL,
+                  [AFTERDATA] [nvarchar](max) NULL,
+                  [LOGOWNERID] [int] NULL,
+                  [RECOWNERID] [int] NULL,
+                  [RECID] [nvarchar](50) NULL,
+                  [ISATTEMPT] [bit] NULL,
+                  [ACTIONTIME] [datetime] NULL,
+                  [ATTEMPTVERIFYDATE] [datetime] NULL,
+                  [IPADDRESS] [nvarchar](20) NULL,
+                  [MULTITENANTID] [nvarchar](50) NULL,
+                  [BEFOREAFTERDATA] [xml] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STDPAYMENT_LOGS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDPAYMENT_LOGS](
+                  [ID] [bigint] IDENTITY(1,1) NOT NULL,
+                  [PORTALID] [int] NULL,
+                  [HOTELID] [int] NULL,
+                  [PAYMENTGATEID] [int] NULL,
+                  [TRANSACTIONID] [int] NULL,
+                  [METHODNAME] [nvarchar](100) NULL,
+                  [LOGTEXT] [nvarchar](max) NULL,
+                  [RECORDDATE] [datetimeoffset](7) NULL,
+                  [PROCESSINGTIME] [datetimeoffset](7) NULL,
+                  [ERRORMESSAGE] [nvarchar](300) NULL,
+               CONSTRAINT [PK_STDPAYMENT_LOGS] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STDPORTALV3_LOGS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDPORTALV3_LOGS](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [URL] [nvarchar](500) NULL,
+                  [CLIENT_IP] [nvarchar](15) NULL,
+                  [REQUEST_FORM] [nvarchar](max) NULL,
+                  [REQUEST_QUERYSTRING] [nvarchar](max) NULL,
+                  [CREATION_DATE] [datetimeoffset](7) NULL,
+                  [ERRORMESSAGE] [nvarchar](max) NULL,
+                  [REQUEST_TYPE] [nvarchar](10) NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STDUSER_LOGIN]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDUSER_LOGIN](
+                  [LOGINTIME] [datetime] NULL,
+                  [LOGINID] [int] NULL,
+                  [HOTELID] [int] NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[STDXMLSERVICE_LOG]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[STDXMLSERVICE_LOG](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [WEBSERVICEID] [int] NOT NULL,
+                  [PORTALID] [int] NOT NULL,
+                  [WEBCLIENTMETHOD] [nvarchar](100) NOT NULL,
+                  [RECORDTIME] [datetimeoffset](7) NOT NULL,
+                  [REQUEST] [nvarchar](max) NULL,
+                  [RESPONSE] [nvarchar](max) NULL,
+                  [MESSAGE] [nvarchar](max) NULL,
+                  [TIMEREQUESTSENT] [datetimeoffset](7) NULL,
+                  [TIMERESPONSERECEIVED] [datetimeoffset](7) NULL,
+                  [PROCESSINGTIME] [int] NULL,
+                  [DONOTDELETE] [bit] NOT NULL,
+                  [ERSREQUEST] [nvarchar](max) NOT NULL,
+                  [ERSRESPONSE] [nvarchar](max) NULL,
+                  [TIMEERSREQUESTRECEIVED] [datetimeoffset](7) NOT NULL,
+                  [TIMEERSRESPONSESENT] [datetimeoffset](7) NULL,
+                  [ENDPOINT] [nvarchar](2000) NULL,
+               CONSTRAINT [PK_STDXMLSERVICE_LOG] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[TELEMETRY4001]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[TELEMETRY4001](
+                  [id] [bigint] IDENTITY(1,1) NOT NULL,
+                  [requestId] [varchar](100) NULL,
+                  [name] [varchar](100) NULL,
+                  [duration] [real] NULL,
+                  [timestamp] [datetime] NULL,
+                  [perfAvg] [real] NULL,
+                  [sql] [nvarchar](max) NULL,
+                  [recordCount] [int] NULL,
+                  [body] [nvarchar](max) NULL,
+                  [headers] [nvarchar](max) NULL,
+                  [target] [varchar](10) NULL,
+                  [error] [nvarchar](max) NULL,
+                  [serverIp] [varchar](50) NULL,
+                  [sqlDuration] [int] NULL,
+                  [sqlNormalizationDuration] [int] NULL,
+                  [tcpFlushDuration] [int] NULL,
+                  [waitModeDuration] [int] NULL,
+                  [gzipDuration] [int] NULL,
+                  [lockWaitTime] [int] NULL,
+                  [processDuration] [int] NULL,
+                  [requestDuration] [int] NULL,
+                  [httpCode] [int] NULL,
+                  [closeEventName] [varchar](100) NULL,
+                  [perfCount] [int] NULL,
+                  [perfTime] [real] NULL,
+                  [bestPossible] [real] NULL,
+                  [httpPort] [smallint] NULL,
+                  [httpsPort] [smallint] NULL,
+                  [action] [varchar](100) NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [id] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[TEST]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[TEST](
+                  [DATA] [nvarchar](max) NULL,
+                  [DT] [datetime] NOT NULL
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[TRIPADVISOR_LOG]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[TRIPADVISOR_LOG](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [REQTIME] [datetime] NULL,
+                  [QUERYKEY] [nvarchar](max) NULL,
+                  [POSTDATA] [nvarchar](max) NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[URL_HASH]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[URL_HASH](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [IMAGEURL] [nvarchar](250) NULL,
+                  [HASHSTR] [nvarchar](50) NULL,
+                  [HOTELID] [int] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[VECTRON_LOGS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[VECTRON_LOGS](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [PORTALID] [int] NULL,
+                  [HOTELID] [int] NULL,
+                  [FOLIOTRANSID] [int] NULL,
+                  [RESID] [int] NULL,
+                  [METHODNAME] [nvarchar](50) NULL,
+                  [LOGTEXT] [nvarchar](max) NULL,
+                  [RECORDDATE] [datetime] NULL,
+                  [PROCEDURENAME] [nvarchar](50) NULL,
+                  [REQCLASS] [nvarchar](100) NULL,
+               CONSTRAINT [PK__VECTRON___3214EC2764B939EF] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[WEBSERVICE_SESSIONS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[WEBSERVICE_SESSIONS](
+                  [KEYID] [int] IDENTITY(1,1) NOT NULL,
+                  [ID] [uniqueidentifier] NOT NULL,
+                  [SERVICECODE] [nvarchar](3) NOT NULL,
+                  [SESSIONID] [nvarchar](500) NOT NULL,
+                  [EXPIRE] [datetime] NOT NULL,
+                  [ISSIGNEDOFF] [bit] NULL,
+                  [RESULT] [ntext] NULL,
+                  [PRICERESULT] [ntext] NULL,
+                  [PORTALID] [int] NOT NULL,
+                  [SEARCHPARAMS] [nvarchar](2000) NULL,
+               CONSTRAINT [PK_WEBSERVICE_SESSIONS] PRIMARY KEY CLUSTERED
+              (
+                  [KEYID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ZDEPT]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ZDEPT](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [FDEPT] [nvarchar](50) NULL,
+                  [FDEPNAME] [nvarchar](250) NULL,
+                  [WEBDEPID] [int] NULL,
+                  [WEBNAME] [nvarchar](250) NULL,
+                  [WEBREVID] [int] NULL,
+                  [WEBREVNAME] [nvarchar](250) NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ZFAC]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ZFAC](
+                  [ZFAC_ID] [decimal](30, 0) NOT NULL,
+                  [ZFAC_XCMS_ID] [decimal](30, 0) NULL,
+                  [ZFAC_LONGDESC] [nvarchar](30) NULL,
+                  [ZFAC_EXPVALIDFROM] [smalldatetime] NULL,
+                  [ZFAC_EXPVALIDUNTIL] [smalldatetime] NULL,
+                  [ZFAC_XCMA_ID] [decimal](30, 0) NULL,
+                  [ZFAC_ZFAN_ID] [decimal](30, 0) NULL,
+                  [ZFAC_ACTVALIDFROM] [smalldatetime] NULL,
+                  [ZFAC_ACTVALIDUNTIL] [smalldatetime] NULL,
+                  [ZFAC_ZFAG_ID] [decimal](30, 0) NULL,
+                  [ZFAC_AUTONUMBER] [decimal](30, 0) NULL,
+                  [ZFAC_ACTVALIDFROMNULL] [decimal](1, 0) NULL,
+                  [ZFAC_ACTVALIDUNTILNULL] [decimal](1, 0) NULL,
+                  [ZFAC_YBOM_ID] [decimal](30, 0) NULL,
+                  [ZFAC_REINSTATED] [decimal](1, 0) NULL,
+                  [ZFAC_ZTRA_ID] [decimal](30, 0) NULL,
+                  [ZFAC_ZCRL_ID] [decimal](30, 0) NULL,
+                  [ZFAC_YPRT_ID] [decimal](30, 0) NULL,
+                  [ZFAC_CREDITLIMIT] [decimal](30, 4) NULL,
+                  [ZFAC_NOPOST] [decimal](1, 0) NULL,
+                  [ZFAC_CHECKOUTTIME] [smalldatetime] NULL,
+                  [ZFAC_SOURCE_YRAS_ID] [decimal](30, 0) NULL,
+                  [ZFAC_CHANNEL_YRAS_ID] [decimal](30, 0) NULL,
+                  [ZFAC_CURRENT_PTIK_ID] [decimal](30, 0) NULL,
+                  [ZFAC_ZTXX_ID] [decimal](30, 0) NULL,
+                  [ZFAC_CONTRACT_ZCUR_ID] [decimal](30, 0) NULL,
+                  [ZFAC_FREETEXT1] [nvarchar](100) NULL,
+                  [ZFAC_FREETEXT2] [nvarchar](100) NULL,
+                  [ZFAC_NOBONUSPOINT] [decimal](1, 0) NOT NULL,
+                  [ZFAC_STATUS] [decimal](1, 0) NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ZFAG]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ZFAG](
+                  [ZFAG_ID] [decimal](30, 0) NOT NULL,
+                  [ZFAG_SHORTDESC] [nvarchar](3) NOT NULL,
+                  [ZFAG_LONGDESC] [nvarchar](30) NOT NULL,
+                  [ZFAG_DEFAULT] [decimal](1, 0) NOT NULL,
+                  [ZFAG_TYPE] [decimal](2, 0) NULL,
+                  [ZFAG_AUTONUMBER] [decimal](1, 0) NULL,
+                  [ZFAG_SEND_IFC] [decimal](1, 0) NULL,
+                  [ZFAG_DEFAULT_ZFST_ID] [decimal](30, 0) NULL,
+                  [ZFAG_INACTIVE] [decimal](1, 0) NULL,
+                  [ZFAG_SHOWINROOMPLAN] [decimal](1, 0) NULL,
+                  [ZFAG_WCOL_ID] [decimal](30, 0) NULL,
+                  [ZFAG_YCAD_ID] [decimal](30, 0) NULL,
+                  [ZFAG_AUTOWINDOWS] [decimal](1, 0) NULL,
+                  [ZFAG_AUTOCHECKOUT] [decimal](1, 0) NULL,
+                  [ZFAG_AUTOCHECKOUT_ZDCO_ID] [decimal](30, 4) NULL,
+                  [ZFAG_DEPDATETYPE] [decimal](1, 0) NULL,
+                  [ZFAG_IGNOREFISCAL] [decimal](1, 0) NULL,
+                  [ZFAG_DEFAULT_NOPOST] [decimal](1, 0) NULL,
+                  [ZFAG_KEYIFC_ICFG_ID] [decimal](30, 0) NULL,
+                  [ZFAG_IGNOREINVOICE] [decimal](1, 0) NULL,
+                  [ZFAG_DEPDATE_DAY] [decimal](2, 0) NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ZFAN]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ZFAN](
+                  [ZFAN_ID] [decimal](30, 0) NOT NULL,
+                  [ZFAN_LONGDESC] [nvarchar](30) NOT NULL,
+                  [ZFAN_ZFAG_ID] [decimal](30, 0) NOT NULL,
+                  [ZFAN_DESCRIPTION] [nvarchar](30) NULL,
+                  [ZFAN_DISPLORDER] [decimal](4, 0) NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [dbo].[ZFOLYO_RESSIZ]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ZFOLYO_RESSIZ](
+                  [RESNO] [nvarchar](50) NULL
+              ) ON [PRIMARY]
+              GO
+              /****** Object:  Table [MIGRATION].[HOTEL_GUEST]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [MIGRATION].[HOTEL_GUEST](
+                  [ID] [int] IDENTITY(1,1) NOT NULL,
+                  [TITLEID] [int] NULL,
+                  [NAME] [nvarchar](30) NULL,
+                  [LNAME] [nvarchar](30) NULL,
+                  [EMAIL] [nvarchar](50) NULL,
+                  [PASSWORD] [nvarchar](50) NULL,
+                  [PHONE] [nvarchar](100) NULL,
+                  [WEB] [nvarchar](250) NULL,
+                  [ADDRESS] [nvarchar](4000) NULL,
+                  [CITYID] [int] NULL,
+                  [COUNTRYID] [int] NULL,
+                  [BIRTHDATE] [datetime] NULL,
+                  [BIRTHPLACE] [nvarchar](50) NULL,
+                  [FATHERSNAME] [nvarchar](50) NULL,
+                  [MOTHERSNAME] [nvarchar](50) NULL,
+                  [SERIALNO] [nvarchar](50) NULL,
+                  [NATIONALIDNO] [nvarchar](20) NULL,
+                  [PASSPORTNO] [nvarchar](50) NULL,
+                  [IDREGPLACE1] [nvarchar](50) NULL,
+                  [IDREGPLACE2] [nvarchar](50) NULL,
+                  [IDREGPLACE3] [nvarchar](50) NULL,
+                  [IDREGNO1] [nvarchar](10) NULL,
+                  [IDREGNO2] [nvarchar](10) NULL,
+                  [IDREGNO3] [nvarchar](10) NULL,
+                  [IDISSUEDATE] [datetime] NULL,
+                  [IDISSUEPLACE] [nvarchar](50) NULL,
+                  [IDISSUEREASON] [nvarchar](50) NULL,
+                  [IDISSUENO] [nvarchar](50) NULL,
+                  [VIPTYPEID] [int] NULL,
+                  [OCCUPATIONID] [int] NULL,
+                  [SPOUSENAME] [nvarchar](50) NULL,
+                  [KIDSNAME] [nvarchar](50) NULL,
+                  [VEHICLEPLATE] [nvarchar](50) NULL,
+                  [HOTELID] [int] NULL,
+                  [ISDISABLED] [bit] NULL,
+                  [ISDELETED] [bit] NULL,
+                  [CREATION_DATE] [datetime] NULL,
+                  [LASTUPDATE_DATE] [datetime] NULL,
+                  [IDVOLUMENO] [nvarchar](20) NULL,
+                  [IDFAMILYNO] [nvarchar](20) NULL,
+                  [IDQUEUENO] [nvarchar](20) NULL,
+                  [GENDER] [varchar](1) NULL,
+                  [MARRIED] [bit] NULL,
+                  [MARRYDATE] [date] NULL,
+                  [BLACKLISTREASON] [nvarchar](250) NULL,
+                  [PROBLEMMATIC] [bit] NULL,
+                  [PROBLEMMATICREASON] [nvarchar](250) NULL,
+                  [BLACKLIST] [bit] NULL,
+                  [NATIONALITY] [int] NULL,
+                  [TAXCOMPANY] [nvarchar](100) NULL,
+                  [TAXNUMBER] [nvarchar](100) NULL,
+                  [TAXOFFICE] [nvarchar](100) NULL,
+                  [TAXADDRESS] [nvarchar](4000) NULL,
+                  [TAXRECEIVETYPE] [nvarchar](100) NULL,
+                  [WANTSCONTACTBACK] [bit] NULL,
+                  [PORTALREFERENCEID] [char](6) NOT NULL,
+                  [SYNCGUID] [uniqueidentifier] NULL,
+                  [PORTALID] [int] NOT NULL,
+                  [BASKETPROFILEID] [bigint] NULL,
+                  [UID] [uniqueidentifier] NOT NULL,
+                  [PORTALBRANCHID] [int] NULL,
+                  [PORTALSELLERID] [int] NULL,
+                  [FILEURL] [varchar](4000) NULL,
+                  [CHANNELMANAGERGUESTID] [nvarchar](max) NULL,
+                  [CHANNELMANAGERID] [int] NULL,
+                  [PASSPORTDUE] [date] NULL,
+                  [PASSENGERTYPE] [nvarchar](50) NULL,
+                  [GUESTTYPE] [nvarchar](50) NULL,
+                  [IDTYPE] [nvarchar](1) NULL,
+                  [OPENACCOUNTCARD] [bit] NOT NULL,
+                  [ROUTEDACCOUNTID] [uniqueidentifier] NULL,
+                  [GLACCOUNTID] [int] NULL,
+                  [RULE_MAXHOTELCATEGORY] [int] NULL,
+                  [RULE_MAXFLIGHTCATEGORY] [int] NULL,
+                  [RULE_MAXHOTELPRICE] [float] NULL,
+                  [RULE_MAXFLIGHTPRICE] [float] NULL,
+                  [RULE_HOTELPREVENTTYPE] [int] NULL,
+                  [RULE_FLIGHTPREVENTTYPE] [int] NULL,
+                  [ACCCODE] [nvarchar](150) NULL,
+                  [DEFAULTCURRENCYID] [int] NOT NULL,
+                  [DEBIT] [float] NOT NULL,
+                  [CREDIT] [float] NOT NULL,
+                  [CORP_TITLEID] [int] NULL,
+                  [CORP_DEPARTID] [int] NULL,
+                  [ISEMPLOYEE] [bit] NOT NULL,
+                  [PASSPORT_ISSUING_BY] [nvarchar](200) NULL,
+                  [CORPCOSTCENTERID] [int] NULL,
+                  [ACCESSFAILEDCOUNT] [int] NOT NULL,
+                  [EMAILCONFIRMED] [bit] NOT NULL,
+                  [LOCKOUTENABLED] [bit] NOT NULL,
+                  [LOCKOUTENDDATEUTC] [datetime] NULL,
+                  [PHONENUMBERCONFIRMED] [bit] NOT NULL,
+                  [SECURITYSTAMP] [nvarchar](250) NULL,
+                  [TWOFACTORENABLED] [bit] NOT NULL,
+                  [USERNAME] [nvarchar](256) NULL,
+                  [USERID] [nvarchar](128) NOT NULL,
+                  [PHONECONFIRMED] [bit] NOT NULL,
+                  [PHONE_CALCULATED] [bigint] NOT NULL,
+                  [PASSTYPE] [tinyint] NULL,
+                  [PASSSTATUS] [tinyint] NULL,
+                  [VISASTATUS] [tinyint] NULL,
+                  [CRMCODE] [nvarchar](100) NULL,
+                  [GUEST_ORDER] [int] NOT NULL,
+                  [SURNAME]  AS ([LNAME]),
+                  [FULLNAME]  AS ((isnull([NAME],'')+' ')+isnull([LNAME],'')),
+                  [EMAIL2] [nvarchar](50) NULL,
+                  [BONUSPERCENT] [float] NULL,
+                  [SAVEDTRAVELLERS] [nvarchar](max) NULL,
+                  [LOGINAUTHENTICATION_PROVIDER] [nvarchar](50) NULL,
+                  [UNIVERSITY] [nvarchar](50) NULL,
+                  [FACULTY] [nvarchar](50) NULL,
+                  [DEPARTMENT] [nvarchar](50) NULL,
+                  [CASHSALEAVAILABLE] [bit] NULL,
+                  [SUBACCCODE] [nvarchar](150) NULL,
+                  [ELEKTRAID] [int] NULL,
+                  [NAME_ID_BIRTH]  AS ((((isnull([NAME],'')+' ')+isnull([LNAME],''))+isnull(' '+isnull([NATIONALIDNO],[PASSPORTNO]),''))+isnull(' '+CONVERT([nvarchar](10),[BIRTHDATE],(104)),'')) PERSISTED NOT NULL,
+                  [TAXCITYSUB] [nvarchar](50) NULL,
+                  [TAXCITY] [nvarchar](50) NULL,
+                  [TAXZIPCODE] [nvarchar](50) NULL,
+                  [TAXCOUNTRY] [nvarchar](50) NULL,
+               CONSTRAINT [PK_HOTEL_GUEST] PRIMARY KEY CLUSTERED
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY],
+               CONSTRAINT [IX_HOTEL_GUEST] UNIQUE NONCLUSTERED
+              (
+                  [USERID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY],
+              UNIQUE NONCLUSTERED
+              (
+                  [UID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_PORTALID_SERVICENAME]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_PORTALID_SERVICENAME] ON [dbo].[APISEQUENCE_LOGS]
+              (
+                  [PORTALID] ASC,
+                  [SERVICENAME] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_APPLICATION_NAME]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE UNIQUE NONCLUSTERED INDEX [IX_APPLICATION_NAME] ON [dbo].[APPLICATION]
+              (
+                  [NAME] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_PORTALV3]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_PORTALV3] ON [dbo].[BASKET_COMPLETELOG]
+              (
+                  [FINISHED] ASC,
+                  [CREATION_DATE] ASC
+              )
+              WHERE ([DATA] IS NOT NULL)
+              WITH (STATISTICS_NORECOMPUTE = ON, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_UID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE UNIQUE NONCLUSTERED INDEX [IX_UID] ON [dbo].[BASKET_COMPLETELOG]
+              (
+                  [UID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = ON, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_BASKETID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_BASKETID] ON [dbo].[BASKETCOOKIE]
+              (
+                  [BASKETPROFILEID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_USERID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_USERID] ON [dbo].[BASKETCOOKIE]
+              (
+                  [USERID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_STATUSID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_STATUSID] ON [dbo].[DEVICENOTIFICATION]
+              (
+                  [STATUSID] ASC
+              )
+              INCLUDE([ID],[HOTELID],[FROMUSERID],[SENDTOUSERID],[SENDTODEPID],[CREATEDATE],[LASTUPDATE],[BODY],[TITLE],[ICON],[SOUND],[CLICKURL],[REQUEST],[RESPONSE],[UID],[FAILDEVICES],[SENDTOSUBDEPIDS])
+              WHERE ([STATUSID]=(1) AND [REQUEST]>'')
+              WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_UID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_UID] ON [dbo].[DEVICENOTIFICATION]
+              (
+                  [UID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = ON, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_INVOICEID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_INVOICEID] ON [dbo].[EFATURA_XMLLOG]
+              (
+                  [INVOICEID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = ON, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX UNSENT EMAIL]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX UNSENT EMAIL] ON [dbo].[EMAIL_SENT]
+              (
+                  [STATUSID] ASC
+              )
+              INCLUDE([PORTALID],[EMAIL])
+              WHERE ([STATUSID]=(1))
+              WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_AUTOMAILID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_AUTOMAILID] ON [dbo].[EMAIL_SENT]
+              (
+                  [AUTOMAILID] ASC
+              )
+              WHERE ([AUTOMAILID] IS NOT NULL)
+              WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_EMAIL]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_EMAIL] ON [dbo].[EMAIL_SENT]
+              (
+                  [EMAIL] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_HOTELID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_HOTELID] ON [dbo].[EMAIL_SENT]
+              (
+                  [HOTELID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_PORTALID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_PORTALID] ON [dbo].[EMAIL_SENT]
+              (
+                  [PORTALID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_DEFAULT]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_DEFAULT] ON [dbo].[HOTEL_CHANNEL_DATA]
+              (
+                  [HOTELID] ASC,
+                  [CMID] ASC,
+                  [RDATE] ASC,
+                  [ROOMTYPEID] ASC,
+                  [RATETYPEID] ASC,
+                  [BOARDTYPEID] ASC,
+                  [ISSENT] ASC
+              )
+              INCLUDE([ID]) WITH (STATISTICS_NORECOMPUTE = ON, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_EXISTANCE]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_EXISTANCE] ON [dbo].[HOTEL_CHANNEL_DATA]
+              (
+                  [HOTELID] ASC,
+                  [CMID] ASC
+              )
+              INCLUDE([RDATE])
+              WHERE ([ISSENT]=(0))
+              WITH (STATISTICS_NORECOMPUTE = ON, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_REQUESTID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_REQUESTID] ON [dbo].[HOTEL_CHANNEL_DATA]
+              (
+                  [REQUESTID] ASC
+              )
+              INCLUDE([ID],[ISSENT]) WITH (STATISTICS_NORECOMPUTE = ON, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_HOTELID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_HOTELID] ON [dbo].[HOTEL_ENDOFDAYREPORT_RESULT]
+              (
+                  [HOTELID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = ON, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_HOTELID_REPORTID_PROGDATE]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_HOTELID_REPORTID_PROGDATE] ON [dbo].[HOTEL_NIGHTAUDITREPORTS]
+              (
+                  [HOTELID] ASC,
+                  [REPORTID] ASC,
+                  [PROGDATE] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_HOTELID_DATE]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_HOTELID_DATE] ON [dbo].[HOTEL_RES_ANALYSIS]
+              (
+                  [HOTELID] ASC,
+                  [STAYDATE] ASC
+              )
+              INCLUDE([CACHETIME]) WITH (STATISTICS_NORECOMPUTE = ON, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_HOTELID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_HOTELID] ON [dbo].[LOG_ELEKTRAWEB]
+              (
+                  [HOTELID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_LOG]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_LOG] ON [dbo].[LOG_ELEKTRAWEB]
+              (
+                  [OBJECT] ASC,
+                  [ROWID] ASC
+              )
+              INCLUDE([HTTPCODE],[ACTION]) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_LOGTIME]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_LOGTIME] ON [dbo].[LOG_ELEKTRAWEB]
+              (
+                  [LOGTIMEUTC] ASC
+              )WITH (STATISTICS_NORECOMPUTE = ON, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_LOGTIME SELECT/FUNCTION]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_LOGTIME SELECT/FUNCTION] ON [dbo].[LOG_ELEKTRAWEB]
+              (
+                  [LOGTIMEUTC] ASC
+              )
+              WHERE ([ACTION] IN ('Select', 'Function'))
+              WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_MIGRATEID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_MIGRATEID] ON [dbo].[LOG_ELEKTRAWEB]
+              (
+                  [MIGRATEID] ASC
+              )
+              WHERE ([MIGRATEID] IS NOT NULL)
+              WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_HOTELID_EMDSID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_HOTELID_EMDSID] ON [dbo].[MIGRATE_HOTELFOLIO]
+              (
+                  [EMDSID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_HOTELID_ROWID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_HOTELID_ROWID] ON [dbo].[MIGRATE_HOTELFOLIO]
+              (
+                  [HOTELID] ASC,
+                  [ROWID] ASC
+              )
+              INCLUDE([ID]) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_SENTMAILS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_SENTMAILS] ON [dbo].[SENTMAILS]
+              (
+                  [REFERENCEID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_SENTMAILS_1]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_SENTMAILS_1] ON [dbo].[SENTMAILS]
+              (
+                  [SENDTIME] DESC,
+                  [REFERENCEID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ISSENT]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_ISSENT] ON [dbo].[SMS]
+              (
+                  [ISSENT] ASC
+              )
+              INCLUDE([ID],[PORTALID]) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_PORTALID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_PORTALID] ON [dbo].[SMS]
+              (
+                  [PORTALID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = ON, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_STDCHANNELMANAGERLOG_HOTEL_CHANNELMANAGER_SP]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_STDCHANNELMANAGERLOG_HOTEL_CHANNELMANAGER_SP] ON [dbo].[STDCHANNELMANAGERLOG]
+              (
+                  [HOTELID] ASC,
+                  [CHANNELMANAGERID] ASC,
+                  [SPNAME] ASC,
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = ON, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_LOGTIME]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_LOGTIME] ON [dbo].[STDCHANNELMANAGERLOG_2018]
+              (
+                  [LOGTIME] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_STDPAYMENT_LOGS_HOTEL]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_STDPAYMENT_LOGS_HOTEL] ON [dbo].[STDPAYMENT_LOGS]
+              (
+                  [HOTELID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_STDPAYMENT_LOGS_PAYMENTGATE]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_STDPAYMENT_LOGS_PAYMENTGATE] ON [dbo].[STDPAYMENT_LOGS]
+              (
+                  [PAYMENTGATEID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_STDPAYMENT_LOGS_PORTAL]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_STDPAYMENT_LOGS_PORTAL] ON [dbo].[STDPAYMENT_LOGS]
+              (
+                  [PORTALID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_STDPAYMENT_LOGS_RECORDDATE]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_STDPAYMENT_LOGS_RECORDDATE] ON [dbo].[STDPAYMENT_LOGS]
+              (
+                  [RECORDDATE] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_STDPAYMENT_LOGS_TRANSACTION]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_STDPAYMENT_LOGS_TRANSACTION] ON [dbo].[STDPAYMENT_LOGS]
+              (
+                  [TRANSACTIONID] ASC,
+                  [METHODNAME] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_BANKRESPONSE]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_BANKRESPONSE] ON [dbo].[STDPORTALV3_LOGS]
+              (
+                  [CREATION_DATE] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_ID]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_ID] ON [dbo].[STDXMLSERVICE_LOG]
+              (
+                  [ID] ASC
+              )
+              INCLUDE([DONOTDELETE]) WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_STDXMLSERVICE_LOG_RECORDTIME]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_STDXMLSERVICE_LOG_RECORDTIME] ON [dbo].[STDXMLSERVICE_LOG]
+              (
+                  [RECORDTIME] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              SET ANSI_PADDING ON
+              GO
+              /****** Object:  Index [IX_requestId]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_requestId] ON [dbo].[TELEMETRY4001]
+              (
+                  [requestId] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_WEBSERVICE_SESSIONS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_WEBSERVICE_SESSIONS] ON [dbo].[WEBSERVICE_SESSIONS]
+              (
+                  [EXPIRE] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_WEBSERVICE_SESSIONS_1]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_WEBSERVICE_SESSIONS_1] ON [dbo].[WEBSERVICE_SESSIONS]
+              (
+                  [EXPIRE] DESC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_WEBSERVICE_SESSIONS_2]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_WEBSERVICE_SESSIONS_2] ON [dbo].[WEBSERVICE_SESSIONS]
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              /****** Object:  Index [IX_WEBSERVICE_SESSIONS_3]    Script Date: 17.08.2021 3:24:44 PM ******/
+              CREATE NONCLUSTERED INDEX [IX_WEBSERVICE_SESSIONS_3] ON [dbo].[WEBSERVICE_SESSIONS]
+              (
+                  [ID] ASC
+              )WITH (STATISTICS_NORECOMPUTE = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+              GO
+              ALTER TABLE [dbo].[APISEQUENCE_LOGS] ADD  DEFAULT (getdate()) FOR [TIMESTAMP]
+              GO
+              ALTER TABLE [dbo].[BASKET_COMPLETELOG] ADD  DEFAULT ((0)) FOR [FINISHED]
+              GO
+              ALTER TABLE [dbo].[BASKET_COMPLETELOG] ADD  DEFAULT (getdate()) FOR [CREATION_DATE]
+              GO
+              ALTER TABLE [dbo].[BASKETCOOKIE] ADD  CONSTRAINT [DF_BASKETCOOKIE_UID]  DEFAULT (newid()) FOR [UID]
+              GO
+              ALTER TABLE [dbo].[BASKETCOOKIE] ADD  CONSTRAINT [DF_BASKETCOOKIE_CREATETIME]  DEFAULT (getdate()) FOR [CREATETIME]
+              GO
+              ALTER TABLE [dbo].[BASKETCOOKIE] ADD  CONSTRAINT [DF_BASKETCOOKIE_LASTUPDATE]  DEFAULT (getdate()) FOR [LASTUPDATE]
+              GO
+              ALTER TABLE [dbo].[BASKETCOOKIE] ADD  CONSTRAINT [DF__BASKETCOO__STATU__6A5C7A29]  DEFAULT ((0)) FOR [STATUS]
+              GO
+              ALTER TABLE [dbo].[DEVICENOTIFICATION] ADD  CONSTRAINT [DF__DEVICENOT__STATU__3F3159AB]  DEFAULT ((1)) FOR [STATUSID]
+              GO
+              ALTER TABLE [dbo].[DEVICENOTIFICATION] ADD  CONSTRAINT [DF__DEVICENOT__CREAT__40257DE4]  DEFAULT (getutcdate()) FOR [CREATEDATE]
+              GO
+              ALTER TABLE [dbo].[DEVICENOTIFICATION] ADD  CONSTRAINT [DF__DEVICENOT__LASTU__4119A21D]  DEFAULT (getutcdate()) FOR [LASTUPDATE]
+              GO
+              ALTER TABLE [dbo].[DEVICENOTIFICATION] ADD  CONSTRAINT [DF__DEVICENOTIF__UID__4301EA8F]  DEFAULT (newid()) FOR [UID]
+              GO
+              ALTER TABLE [dbo].[EFATURA_XMLLOG] ADD  DEFAULT (getutcdate()) FOR [LOGTIME]
+              GO
+              ALTER TABLE [dbo].[EMAIL_SENT] ADD  DEFAULT (getutcdate()) FOR [SENTDATE]
+              GO
+              ALTER TABLE [dbo].[EMAIL_SENT] ADD  DEFAULT ((1)) FOR [STATUSID]
+              GO
+              ALTER TABLE [dbo].[EMAIL_SENT] ADD  DEFAULT ((0)) FOR [HOTELID]
+              GO
+              ALTER TABLE [dbo].[EMAIL_SENT] ADD  DEFAULT ((0)) FOR [READ_COUNT]
+              GO
+              ALTER TABLE [dbo].[EMAIL_SENT] ADD  DEFAULT ((1)) FOR [PORTALID]
+              GO
+              ALTER TABLE [dbo].[EMAIL_SENT] ADD  DEFAULT (newid()) FOR [UID]
+              GO
+              ALTER TABLE [dbo].[HOTEL_CHANNEL_DATA] ADD  CONSTRAINT [DF__HOTEL_CHA__HOTEL__2334397B]  DEFAULT ((0)) FOR [HOTELID]
+              GO
+              ALTER TABLE [dbo].[HOTEL_CHANNEL_DATA] ADD  CONSTRAINT [DF__HOTEL_CHA__CREAT__24285DB4]  DEFAULT (getutcdate()) FOR [CREATEDATE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_ENDOFDAYREPORT_RESULT] ADD  CONSTRAINT [DF_A8213CA8_3958_4932_867C_4B7C669042A6]  DEFAULT ((0)) FOR [HOTELID]
+              GO
+              ALTER TABLE [dbo].[HOTEL_ENDOFDAYREPORT_RESULT] ADD  DEFAULT ((1)) FOR [PORTALID]
+              GO
+              ALTER TABLE [dbo].[HOTEL_INTERFACE_TCP_LOG] ADD  DEFAULT (getdate()) FOR [DATE_]
+              GO
+              ALTER TABLE [dbo].[HOTEL_NIGHTAUDITREPORTS] ADD  DEFAULT (getdate()) FOR [CREATEDATE]
+              GO
+              ALTER TABLE [dbo].[HOTEL_RES_EVENTS] ADD  DEFAULT (getutcdate()) FOR [UTCTIME]
+              GO
+              ALTER TABLE [dbo].[LOG_ELEKTRAWEB] ADD  DEFAULT (getutcdate()) FOR [LOGTIMEUTC]
+              GO
+              ALTER TABLE [dbo].[MIGRATE_HOTELRES] ADD  DEFAULT ((0)) FOR [USEVIRTUALROOM]
+              GO
+              ALTER TABLE [dbo].[OUTERSYNCLOGS] ADD  DEFAULT (getutcdate()) FOR [LOGTIME]
+              GO
+              ALTER TABLE [dbo].[OUTERSYNCLOGS3] ADD  DEFAULT (getutcdate()) FOR [LOGTIME]
+              GO
+              ALTER TABLE [dbo].[SMS] ADD  DEFAULT ((0)) FOR [ISSENT]
+              GO
+              ALTER TABLE [dbo].[SMS] ADD  DEFAULT ((0)) FOR [ISRECEIVED]
+              GO
+              ALTER TABLE [dbo].[SMS] ADD  DEFAULT ((0)) FOR [HOTELID]
+              GO
+              ALTER TABLE [dbo].[SMS] ADD  DEFAULT ((1)) FOR [PORTALID]
+              GO
+              ALTER TABLE [dbo].[SMS] ADD  DEFAULT (getutcdate()) FOR [CREATETIME]
+              GO
+              ALTER TABLE [dbo].[SMS] ADD  DEFAULT ((90)) FOR [COUNTRYCODE]
+              GO
+              ALTER TABLE [dbo].[STDCHANNELMANAGERLOG] ADD  CONSTRAINT [DF_STDCHANNELMANAGERLOG_RETRYCOUNT]  DEFAULT ((0)) FOR [RETRYCOUNT]
+              GO
+              ALTER TABLE [dbo].[STDCHANNELMANAGERLOG_PUSHRAW] ADD  DEFAULT (getutcdate()) FOR [STARTED]
+              GO
+              ALTER TABLE [dbo].[STDXMLSERVICE_LOG] ADD  CONSTRAINT [DF_STDXMLSERVICE_LOG_RECORDTIME]  DEFAULT (sysdatetimeoffset()) FOR [RECORDTIME]
+              GO
+              ALTER TABLE [dbo].[STDXMLSERVICE_LOG] ADD  CONSTRAINT [DF_STDXMLSERVICE_LOG_DONOTDELETE]  DEFAULT ((0)) FOR [DONOTDELETE]
+              GO
+              ALTER TABLE [dbo].[TEST] ADD  DEFAULT (getutcdate()) FOR [DT]
+              GO
+              ALTER TABLE [dbo].[WEBSERVICE_SESSIONS] ADD  CONSTRAINT [DF_WEBSERVICE_SESSIONS_ISSIGNEDOFF]  DEFAULT ((0)) FOR [ISSIGNEDOFF]
+              GO
+              ALTER TABLE [dbo].[WEBSERVICE_SESSIONS] ADD  CONSTRAINT [DF_WEBSERVICE_SESSIONS_PORTALID]  DEFAULT ((126)) FOR [PORTALID]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  CONSTRAINT [DF_2522DC5D_4F85_416C_B829_BD2F432D34EF]  DEFAULT ((0)) FOR [HOTELID]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  CONSTRAINT [DF_CREATIONDATE]  DEFAULT (getdate()) FOR [CREATION_DATE]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  CONSTRAINT [DF_REFERENCEID]  DEFAULT ('') FOR [PORTALREFERENCEID]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((1)) FOR [PORTALID]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT (newid()) FOR [UID]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((0)) FOR [OPENACCOUNTCARD]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((142)) FOR [DEFAULTCURRENCYID]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((0)) FOR [DEBIT]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((0)) FOR [CREDIT]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((0)) FOR [ISEMPLOYEE]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((0)) FOR [ACCESSFAILEDCOUNT]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((0)) FOR [EMAILCONFIRMED]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((0)) FOR [LOCKOUTENABLED]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((0)) FOR [PHONENUMBERCONFIRMED]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((0)) FOR [TWOFACTORENABLED]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT (newid()) FOR [USERID]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((0)) FOR [PHONECONFIRMED]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((0)) FOR [PHONE_CALCULATED]
+              GO
+              ALTER TABLE [MIGRATION].[HOTEL_GUEST] ADD  DEFAULT ((1)) FOR [GUEST_ORDER]
+              GO
+              ALTER TABLE [dbo].[APPLICATION_LOG]  WITH CHECK ADD  CONSTRAINT [FK_APPLICATION_LOG_APPLICATION] FOREIGN KEY([APPLICATIONID])
+              REFERENCES [dbo].[APPLICATION] ([ID])
+              GO
+              ALTER TABLE [dbo].[APPLICATION_LOG] CHECK CONSTRAINT [FK_APPLICATION_LOG_APPLICATION]
+              GO
+              /****** Object:  StoredProcedure [dbo].[LIST_TOPN_LATESTLOGS]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              -- =============================================
+              -- Author:		<Author,,Name>
+              -- Create date: <Create Date,,>
+              -- Description:	<Description,,>
+              -- =============================================
+              CREATE PROCEDURE [dbo].[LIST_TOPN_LATESTLOGS]
+                  -- Add the parameters for the stored procedure here
+                  @TOPN			INT = 20,
+                  @PORTALID		INT	= NULL,
+                  @WEBSERVICEID	INT	= NULL,
+                  @KEY			NVARCHAR(50) = NULL,
+                  @MINRECORDTIME	DATETIMEOFFSET(7) = NULL,
+                  @MAXRECORDTIME	DATETIMEOFFSET(7) = NULL
+              AS
+              BEGIN
+                  -- SET NOCOUNT ON added to prevent extra result sets from
+                  -- interfering with SELECT statements.
+                  SET NOCOUNT ON;
+
+                  -- Insert statements for procedure here
+                  SELECT TOP (@TOPN) *
+                  FROM [dbo].[STDXMLSERVICE_LOG] WITH(NOLOCK)
+                  WHERE (@PORTALID IS NULL OR PORTALID = @PORTALID)
+                  AND (@WEBSERVICEID IS NULL OR WEBSERVICEID = @WEBSERVICEID)
+                  AND (@KEY IS NULL OR WEBCLIENTMETHOD LIKE '%' + ISNULL(@KEY, '') + '%')
+                  AND (RECORDTIME BETWEEN ISNULL(@MINRECORDTIME, RECORDTIME) AND ISNULL(@MAXRECORDTIME, RECORDTIME))
+                  ORDER BY ID DESC
+              END
+              GO
+              /****** Object:  StoredProcedure [dbo].[SP_CLEAN_ELEKTRAWEBLOG]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE PROC [dbo].[SP_CLEAN_ELEKTRAWEBLOG]
+              AS
+
+              SET QUOTED_IDENTIFIER ON;
+              SET ANSI_WARNINGS ON;
+
+              DECLARE @STARTED DATETIME = GETUTCDATE();
+              DECLARE @ID BIGINT = 0,@DELETECOUNT INT = 0
+              DECLARE @LOGTIMEUTC DATETIME,@OBJECT NVARCHAR(100),@HOTELID INT,@ACTION VARCHAR(11)
+
+              WHILE @ID IS NOT NULL AND DATEDIFF(HOUR,@STARTED,GETUTCDATE()) < 23
+              BEGIN
+                  SET NOCOUNT ON;
+
+                  SET @ID = (SELECT MIN(ID) FROM [LOG_ELEKTRAWEB] WHERE ID > @ID)
+
+                  SELECT TOP(1)
+                      @LOGTIMEUTC = LOGTIMEUTC,@OBJECT = [OBJECT],@HOTELID = HOTELID,@ACTION = [ACTION]
+                  FROM [LOG_ELEKTRAWEB]
+                  WHERE ID = @ID
+
+                  IF (
+                      @LOGTIMEUTC < DATEADD(DAY,-366,GETUTCDATE())
+                      AND
+                      ISNULL(@OBJECT,'') NOT IN('HOTEL_RES','HOTEL_FOLIOTRANS')
+                  )
+                  OR (
+                       @ACTION IN('Select','Function')
+                       AND
+                       @LOGTIMEUTC < DATEADD(HOUR,-48,GETUTCDATE())
+                  )
+                  OR @ACTION = 'ApiSequence'
+                  OR @OBJECT IN(
+                      'SP_PORTALV4_INSERT_HOTEL_CONTACTREQUEST',
+                      'SP_PORTALV4_SAVECONTACTREQUEST',
+                      'SP_PORTALV4_UPDATE_CONTACTREQUEST_STATUS',
+                      'SP_PORTALV4_HOTELCOMPLETERES' ,
+                      'SP_SAVECONTACTREQUEST',
+                      'SP_UPDATECONTACTREQUEST'
+                  )
+                  BEGIN
+                      DELETE TOP(1) FROM [LOG_ELEKTRAWEB]
+                      WHERE ID = @ID
+
+                      SET @DELETECOUNT += 1
+                  END
+
+
+              END
+              GO
+              /****** Object:  StoredProcedure [dbo].[SP_CLEAN_STDXMLSERVICE_LOG]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              -- =============================================
+              -- Author:		ALİ GÜRSEL
+              -- Create date: 2016-08-31
+              -- Description:	STDXMLSERVICE_LOG TABLOSUNDAN 1 AYDAN ESKİ SİLİNEBİLECEK LOGRARI SİLER. DONOTDELETE ALANI TRUE OLANLARI SİLMEZ.
+              -- =============================================
+              CREATE PROCEDURE [dbo].[SP_CLEAN_STDXMLSERVICE_LOG]
+                  -- Add the parameters for the stored procedure here
+
+              AS
+              BEGIN
+                  -- SET NOCOUNT ON added to prevent extra result sets from
+                  -- interfering with SELECT statements.
+                  SET NOCOUNT ON;
+
+                  -- Insert statements for procedure here
+                  --DELETE
+                  ----SELECT COUNT(1)
+                  --FROM STDXMLSERVICE_LOG
+                  --WHERE RECORDTIME < DATEADD(MONTH,-1,SYSDATETIMEOFFSET())
+                  --  AND RECORDTIME > '1900-01-01'
+                  --  AND DONOTDELETE = 0
+
+                  DECLARE @ID INT = 0,
+                          @RECTIME DATETIMEOFFSET,
+                          @DONTDELETE BIT
+
+                  DECLARE @CUTOFFDATE DATETIMEOFFSET = DATEADD(MONTH,-1,SYSDATETIMEOFFSET())
+
+                  WHILE 1=1
+                  BEGIN TRY
+                      --SIRADAKI KAYDA BAK
+                      SELECT TOP(1)
+                          @ID = L.ID,
+                          @RECTIME = L.RECORDTIME,
+                          @DONTDELETE = L.DONOTDELETE
+                      FROM EMDS_LOGS.dbo.STDXMLSERVICE_LOG L WITH(NOLOCK)
+                      WHERE L.ID > @ID
+                        AND L.DONOTDELETE = 0
+                      ORDER BY L.ID ASC
+
+                      --KAYIT BULUNAMADIYSA DUR
+                      IF @@ROWCOUNT = 0 OR @RECTIME >= @CUTOFFDATE/*integer'lar aratarak gittigine gore ilerki kayitlarda baska bisey bulamayiz demektir*/
+                          BREAK
+
+                      --SILINMESI GEREKIYORSA SIL
+                      IF @DONTDELETE = 0 AND @RECTIME < @CUTOFFDATE
+                          DELETE TOP(1) EMDS_LOGS.dbo.STDXMLSERVICE_LOG
+                          WHERE ID = @ID
+                  END TRY
+                  BEGIN CATCH
+                      PRINT ERROR_MESSAGE()
+                  END CATCH
+
+              END
+              GO
+              /****** Object:  StoredProcedure [dbo].[SP_SQLPROFILERLOG]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE PROCEDURE [dbo].[SP_SQLPROFILERLOG]
+              AS
+
+              --2018-02-07:oguz:
+              --SQL PROFILER'IN LOGLADIGI ONEMLI SATIRLARI
+              --BIZIM LOG TABLOMUZA TASIYAN PROSEDUR
+              SET IDENTITY_INSERT [SQLPROFILERLOG_OLD] ON;
+
+              MERGE EMDS_LOGS..[SQLPROFILERLOG_OLD] AS T
+              USING (
+                  SELECT *
+                  FROM EMDS_LOGS..[SQLPROFILERLOG] S WITH(NOLOCK)
+                  WHERE DATEDIFF(MILLISECOND,S.StartTime,S.EndTime)>1000
+                    AND S.StartTime > DATEADD(MINUTE,-3,GETUTCDATE())
+                    AND S.StartTime IS NOT NULL
+                    AND S.EndTime IS NOT NULL
+                    AND S.TextData IS NOT NULL
+                    AND CAST(S.TextData AS NVARCHAR(24))<>'exec sp_reset_connection'
+              ) AS S
+              ON (T.StartTime = S.StartTime AND T.EndTime = S.EndTime AND T.RowNumber = S.RowNumber)
+              WHEN NOT MATCHED THEN INSERT ([RowNumber],[EventClass],[TextData],[ApplicationName],[NTUserName],[LoginName],[CPU],[Reads],[Writes],[Duration],[ClientProcessID],[SPID],[StartTime],[EndTime],[BinaryData])
+                                     VALUES([RowNumber],[EventClass],[TextData],[ApplicationName],[NTUserName],[LoginName],[CPU],[Reads],[Writes],[Duration],[ClientProcessID],[SPID],[StartTime],[EndTime],[BinaryData]);
+
+              GO
+              /****** Object:  Trigger [dbo].[TRG_DEVICENOTIFICATION]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE trigger [dbo].[TRG_DEVICENOTIFICATION]
+              ON [dbo].[DEVICENOTIFICATION] AFTER INSERT
+              AS
+
+              UPDATE D0
+              SET REQUEST = (
+                  SELECT TOP(1)
+                      [tokens] = '{{ "{{" }}TOKEN}}',
+                      --[topic] = '',
+                      --[condition] = 'condition here',
+
+                      [data] = JSON_QUERY((
+                          SELECT
+                              [uid] = D.UID,
+                              [click_action] = D.[CLICKURL]
+                          FOR JSON PATH,WITHOUT_ARRAY_WRAPPER
+                      )),
+
+                      [notification]=JSON_QUERY((
+                          SELECT
+                              [title] = D.[TITLE],
+                              [body] = D.[BODY]
+                              --[icon] = D.[ICON],
+                              --,
+                              --[sound] = D.[SOUND],
+                              --[click_action] = D.[CLICKURL]
+                          FOR JSON PATH,WITHOUT_ARRAY_WRAPPER
+                      ))--,
+
+                      --[webpush] = JSON_QUERY((
+                      --	SELECT
+                      --		[data] = JSON_QUERY((
+                      --			SELECT
+                      --				[icon] = D.[ICON],
+                      --				[click_action] = D.[CLICKURL]
+                      --			FOR JSON PATH,WITHOUT_ARRAY_WRAPPER
+                      --		))
+                      --	FOR JSON PATH,WITHOUT_ARRAY_WRAPPER
+                      --))
+                  FROM inserted D
+                  WHERE D.[ID] = D0.ID
+                  ORDER BY D.[ID] ASC
+                  FOR JSON AUTO,WITHOUT_ARRAY_WRAPPER
+              )
+              FROM DEVICENOTIFICATION D0
+              WHERE ID IN(
+                  SELECT ID
+                  FROM inserted
+                  WHERE REQUEST IS NULL
+              )
+              GO
+              ALTER TABLE [dbo].[DEVICENOTIFICATION] ENABLE TRIGGER [TRG_DEVICENOTIFICATION]
+              GO
+              /****** Object:  Trigger [dbo].[TRG_EMAIL_TRACKINGPIXEL]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TRIGGER [dbo].[TRG_EMAIL_TRACKINGPIXEL]
+              ON [dbo].[EMAIL_SENT] AFTER INSERT
+              AS
+
+              --2018-01-22:OGUZ:EMAIL TAKIBI
+              UPDATE EMAIL_SENT
+              SET CONTENT = CONTENT + '<img src="https://4001.hoteladvisor.net/apisequence/mailread?i='+convert(nvarchar(50),[UID])+'" height="1" width="1">'
+              WHERE ID IN(
+                  SELECT ID FROM inserted
+              )
+              GO
+              ALTER TABLE [dbo].[EMAIL_SENT] ENABLE TRIGGER [TRG_EMAIL_TRACKINGPIXEL]
+              GO
+              /****** Object:  Trigger [dbo].[TRG_LOG_HOTELID2]    Script Date: 17.08.2021 3:24:44 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+
+
+              CREATE TRIGGER [dbo].[TRG_LOG_HOTELID2]
+              ON [dbo].[LOG_ELEKTRAWEB] AFTER INSERT
+              AS
+              BEGIN
+                  IF object_id('tempdb..#LOGMIGRATION') is null
+                  begin
+                      --2019-08-15:OGUZ
+                      UPDATE [LOG]
+                      SET [HOTELID] =
+                          CASE
+                              WHEN [ACTION] = 'Select' THEN (SELECT TOP(1) [Value] FROM OPENJSON([BODY],'$.Where')WITH([Column] nvarchar(max),[Value] nvarchar(max))WHERE [Column] = 'HOTELID' AND ISNUMERIC([Value])=1)
+                              WHEN [OBJECT] = 'HOTEL'  THEN [ROWID]
+                              WHEN [ACTION] = 'Delete' THEN (SELECT TOP(1) [L2].[HOTELID] FROM LOG_ELEKTRAWEB L2 WITH(NOLOCK) WHERE L2.[OBJECT] = [LOG].[OBJECT] AND L2.[ROWID] = [LOG].[ROWID] AND [L2].[HOTELID] IS NOT NULL)
+                              WHEN ISJSON([BODY]) = 1  THEN TRY_PARSE(JSON_VALUE([BODY],'$.HOTELID') AS INT)
+                          END
+                      FROM LOG_ELEKTRAWEB AS [LOG]
+                      WHERE ID IN(
+                          SELECT ID
+                          FROM inserted
+                          WHERE [HOTELID] IS NULL
+                      )
+                  end
+              END
+              GO
+              ALTER TABLE [dbo].[LOG_ELEKTRAWEB] ENABLE TRIGGER [TRG_LOG_HOTELID2]
+              GO
+              /****** Object:  Trigger [dbo].[TRG_OUTERSYNCLOGS_RESEED]    Script Date: 17.08.2021 3:24:45 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TRIGGER [dbo].[TRG_OUTERSYNCLOGS_RESEED]
+              ON [dbo].[OUTERSYNCLOGS] AFTER INSERT
+              AS
+
+              --2018-07-17:OGUZ:INDEX'IN KENDINEN TARIHLI OLMASININ SAGLANMASI
+              DECLARE @TODAY NVARCHAR(50) = FORMAT(GETUTCDATE(),'yyyyMMdd')+'00000000000'
+              DECLARE @TODAYMIN BIGINT = @TODAY
+
+              IF ( SELECT MAX([ID]) FROM inserted ) < @TODAYMIN
+              BEGIN
+                  DBCC CHECKIDENT('OUTERSYNCLOGS',RESEED,@TODAYMIN)
+              END
+              GO
+              ALTER TABLE [dbo].[OUTERSYNCLOGS] ENABLE TRIGGER [TRG_OUTERSYNCLOGS_RESEED]
+              GO
+              /****** Object:  Trigger [dbo].[TRG_AUTODELETESMS]    Script Date: 17.08.2021 3:24:45 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+
+
+              CREATE TRIGGER [dbo].[TRG_AUTODELETESMS]
+              ON [dbo].[SMS] AFTER INSERT
+              AS
+
+              DECLARE @IDS TABLE(ID INT)
+              INSERT INTO @IDS
+              SELECT [ID]
+              FROM inserted
+              WHERE
+                 CONTENT IS NULL
+              OR CONTENT = ''
+              OR PHONE = 5555555555
+              OR PHONE = 5554443322
+
+              --2017-07-31:OGUZ:INSERT ETMESINE KIZMA AMA SIL TABLODAN
+              IF EXISTS(SELECT TOP(1) 1 FROM @IDS)
+                  DELETE FROM SMS
+                  WHERE ID IN(SELECT ID FROM @IDS)
+              GO
+              ALTER TABLE [dbo].[SMS] ENABLE TRIGGER [TRG_AUTODELETESMS]
+              GO
+              /****** Object:  Trigger [dbo].[TRG_CHANNELLOGS_RESEED]    Script Date: 17.08.2021 3:24:45 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+
+              CREATE TRIGGER [dbo].[TRG_CHANNELLOGS_RESEED]
+              ON [dbo].[STDCHANNELMANAGERLOG] AFTER INSERT
+              AS
+
+              --2018-07-17:OGUZ:INDEX'IN KENDINEN TARIHLI OLMASININ SAGLANMASI
+              DECLARE @TODAY NVARCHAR(50) = FORMAT(GETUTCDATE(),'yyyyMMdd')+'00000000000'
+              DECLARE @TODAYMIN BIGINT = @TODAY
+
+              IF ( SELECT MAX([ID]) FROM inserted ) < @TODAYMIN
+              BEGIN
+                  DBCC CHECKIDENT('STDCHANNELMANAGERLOG',RESEED,@TODAYMIN)
+              END
+              GO
+              ALTER TABLE [dbo].[STDCHANNELMANAGERLOG] ENABLE TRIGGER [TRG_CHANNELLOGS_RESEED]
+              GO

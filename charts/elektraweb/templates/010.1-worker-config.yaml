@@ -1,0 +1,204 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: worker-config
+  namespace: default
+data:
+  config.conf.json: |
+    {
+      "dbConfig": {
+        "user": "sa",
+        "password": "aA!01012000",
+        "server": "sql",
+        "database": "EMDS",
+        "options": {
+          "appName": "NodeJS:WebHotelLive",
+          "encrypt": false
+        },
+        "pool": {
+          "min": 20,
+          "max": 300
+        },
+        "requestTimeout": 900000,
+        "normalTimeout": 90000
+      },
+      "redis": {
+        "host": "redis"
+      },
+      "amqp": "amqp://guest:guest@rabbit:5672/hotel",
+      "applicationUpdatePin": "uU!01012000",
+      "applicationUpdateURL": "https://4001.hoteladvisor.net",
+      "_syncTokens": {},
+      "_syncTables": [],
+      "httpPort": 8080,
+      "tenantColumn": "HOTELID",
+      "tenantTable": "VW_HOTEL",
+      "tenantObject": "HOTEL",
+      "tenantPrimaryKey": "ID",
+      "frameworkDb": "ANGUS_WEBHOTEL",
+      "logFailedRequests": true,
+      "persistCaches": true,
+      "persistCachesPath": "/tmp/elektraweb",
+      "RoleLearningMode": true,
+      "tempFolder": "/tmp/temp",
+      "passwordHashAlgorithm": "sha512",
+      "passwordHashEncoding": "ucs-2",
+      "sqlCacheFolder": "/tmp/elektraweb/sql",
+      "sqlCacheObjects": {
+        "*": 3,
+        "*MIGRATE": -1,
+        "QA_EASYPMS_RESDETAIL": -1,
+        "SP_EASYPOS_PRINTLIST": -1,
+        "SP_EASYPOS_PRINTDONE": -1,
+        "QA_HOTEL_CURRENTSTATUS": 60,
+        "QA_EASYPMS_CURRENTSTATUS_AGES": 60,
+        "QA_EASYPMS_CURRENTSTATUS_REPEATGUESTS": 60,
+        "FN_EASYPMS_TODAYSCREATEDRES": 60,
+        "FN_HOTEL_BOARDSTATE": 60,
+        "FN_EASYPMS_BANQUETDAYS": 60,
+        "FN_EASYPMS_INHOUSEFOLIOTYPE": 60,
+        "FN_EASYPMS_CURRENTSTATUS": 60,
+        "FN_FORECAST": 60,
+        "FN_FORECAST_DATE": 60,
+        "SP_FORECAST_DATE_BASE": 60,
+        "SP_HOTEL_INFO_GRAPHIC": 120,
+        "SP_HOTEL_INFO_GRAPHIC_SUM": 120,
+        "FN_EASYPMS_HOTSPOT_GUESTS": 300,
+        "SP_WEB_PAYMENT": -1,
+        "SP_EASYPMS_GUESTRESERVATIONS_CONSOLIDATED": 30,
+        "SP_EASYPMS_PULLRESCUBE": 120,
+        "SP_EASYPMS_TENANTCHANGED": 30,
+        "SP_AFTERLOGIN": 30,
+        "SP_HOTEL_BOOKINGPARAMS": 60,
+        "EFATURA_INVOICE": -1,
+        "SP_VERIMOR_APISEQUENCE": -1,
+        "SP_3GBILISIMSMS_APISEQUENCE": -1,
+        "QA_EASYPMS_RESNOTETYPE": 999999,
+        "VW_HOTEL": 120,
+        "FN_HOTEL_EXCHANGERATES": 120,
+        "SP_HOTELBOOKING_HOTELLIST": 60,
+        "SP_EASYPMS_OFFLINEBACKUP": 300
+      },
+      "autoFill": {
+        "CREATEDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATE_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATIONDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATION_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATIONTIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATION_TIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "USERID": "((body || {}).UserObject || {}).USERID",
+        "STDUSERID": "((body || {}).UserObject || {}).USERID",
+        "CREATORID": "((body || {}).UserObject || {}).USERID",
+        "STAFF": "((body || {}).UserObject || {}).USERID",
+        "IPADDRESS": "(body || {}).IpAddress || null",
+        "IPCOUNTRY": "(body || {}).IpCountry || null",
+        "xxIPCOUNTRY": "new Promise(r1=>op.GetIp({IpAddress: body.IpAddress},r2=>r1(r2.COUNTRYCODE)))",
+        "DOMAIN": "(body || {}).Referer || null",
+        "PROGDATE": "endpoints[ body.UserObject.SUPERADMIN === true ? (body.Parameters || body.Row || tempBody)['HOTELID'] : body.UserObject.TENNANTVALUE1  ].PROGDATE",
+        "PROGDATE_PLUS1": "endpoints[ body.UserObject.SUPERADMIN === true ? (body.Parameters || body.Row || tempBody)['HOTELID'] : body.UserObject.TENNANTVALUE1  ].PROGDATE_PLUS1",
+        "LOGINTOKEN": "(body || {}).LoginToken",
+        "TAKENBY": "body.UserObject.USERCODE"
+      },
+      "autoUpdate": {
+        "LAST_UPDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "LASTUPDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "LASTUPDATE_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "LASTUPDATED": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "UPDATEDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "UPDATETIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "STAFF": "((body || {}).UserObject || {}).USERID",
+        "UPDATEUSER": "((body || {}).UserObject || {}).USERID",
+        "TAKENBY": "body.UserObject.USERCODE"
+      },
+      "title2FA": "ElektraWeb",
+      "neverUpdate": [
+          "PASSWORD64",
+          "2FAKEY",
+          "2FASTATE",
+          "PORTALID",
+          "CREATORID"
+      ],
+      "mailAutoSend": {
+        "queryFind": "SELECT TOP(1000) E.*,A.SMTP_FROM,A.SMTP_SERVER,A.SMTP_USER,A.SMTP_PASS,A.SMTP_SECURE,A.SMTP_PORT,A.SMTP_TLS,A.SMTP_SENDERFIXED FROM EMAIL_SENT E WITH(NOLOCK)  LEFT JOIN HOTEL_SETTINGS S WITH(NOLOCK) ON S.HOTELID = E.HOTELID  LEFT JOIN HOTEL_SMTPACCOUNTS A WITH(NOLOCK) ON A.ID = ISNULL(E.SMTPACCOUNTID,S.SMTPACCOUNTID) WHERE E.[STATUSID] = 1",
+        "queryMark": "UPDATE TOP(1) EMAIL_SENT SET [STATUSID] = 2, [ERRORMESSAGE]= @ERRORMESSAGE WHERE ID = @ID",
+        "intervalSeconds": 10,
+        "columns": {
+          "primaryKey": "ID",
+          "recipient": "EMAIL",
+          "subject": "SUBJECT",
+          "body": "CONTENT",
+          "cc": "CCTO",
+          "bcc": "BCCTO",
+          "replyTo": "REPLYTO"
+        }
+      },
+      "throttleObjects": [
+          "SP_3CXPUSH",
+          "SP_PHILIPS_IPTV",
+          "SP_KAREL_FIAS",
+          "xxSP_EASYPOS_PRINTLIST",
+          "xxSP_POS_PRINTLIST"
+      ],
+      "skipLogs": [
+          "SP_EASYPOS_PRINTLIST",
+          "SP_ECR_PRINTLIST",
+          "SP_EASYPOS_PRINTLIST_V1",
+          "SP_EASYPOS_PRINTDONE",
+          "SP_READHOTELCONFIG",
+          "SP_EASYPMS_TENANTCHANGED",
+          "SP_AVAILABLE_ROOMS",
+          "*MIGRATE",
+          "SP_ROOMTYPE_AVAILABILITY",
+          "SP_PORTALV4_HOTELCOMPLETERES",
+          "*CONTACTREQUEST",
+          "*RSCONTROL",
+          "FN_RESFIXNOTE",
+          "FN_SUPPORT_TICKET_MESSAGE"
+      ],
+      "maskColumns": [
+          "PASSWORD",
+          "PASSWORD64",
+          "WEBPAGEPASSWORD",
+          "RESCARDDISPLAYPIN",
+          "2FAKEY",
+          "CCNO",
+          "CCCV2",
+          "OLDPIN",
+          "NEWPIN",
+          "SIFRESI",
+          "HOTELPASS",
+          "CHANNELPASS"
+      ],
+      "objectNotifications": {
+        "SP_POS_TAKEOUTORDER_CHANGESTATE": ["POS_CHECK","POS_CHECK_DETAIL","SP_EASYPOS_PRINTLIST"],
+        "SP_POS_CREATEQRORDER": ["POS_CHECK","POS_CHECK_DETAIL","SP_EASYPOS_PRINTLIST"],
+        "POS_CHECK_PRINT": ["SP_EASYPOS_PRINTLIST"],
+        "SP_EASYPMS_ASSIGNROOM": ["HOTEL_JOBS"],
+        "HOTEL_TASKS": ["HOTEL_TASKS","SP_EASYPMS_HOTEL_TASKS"],
+        "HOTEL_RES": ["HOTEL_INTERFACE_CMD","HOTEL_JOBS"],
+        "SP_POS_SAVECHECK": ["SP_EASYPOS_PRINTLIST","POS_CHECK","POS_CHECK_DETAIL","POS_CHECK_PAYMENT","QPOS_CHECK_DETAIL","SP_ECR_PRINTLIST"],
+        "SP_POS_LINEOPS": ["SP_EASYPOS_PRINTLIST","POS_CHECK","POS_CHECK_DETAIL","POS_CHECK_PAYMENT","QPOS_CHECK_DETAIL"],
+        "SP_POS_CLOSEDCHECKOPS": ["SP_EASYPOS_PRINTLIST","POS_CHECK","POS_CHECK_DETAIL","POS_CHECK_PAYMENT"],
+        "HOTEL_INTERFACE_CMD": ["HOTEL_INTERFACE_CMD"],
+        "SP_EASYPMS_CHECKIN": ["HOTEL_INTERFACE_CMD","HOTEL_JOBS"],
+        "SP_EASYPMS_CHECKOUT": ["HOTEL_INTERFACE_CMD","HOTEL_JOBS"],
+        "SP_EASYPMS_READDOORKEYCARD": ["HOTEL_INTERFACE_CMD"],
+        "SP_EASYPMS_DELETEDOORKEYCARD": ["HOTEL_INTERFACE_CMD"],
+        "POS_CHECK": ["SP_EASYPOS_PRINTLIST","POS_CHECK","POS_CHECK_DETAIL","POS_CHECK_PAYMENT"],
+        "POS_CHECK_DETAIL": ["SP_EASYPOS_PRINTLIST","POS_CHECK","POS_CHECK_DETAIL","POS_CHECK_PAYMENT"],
+        "POS_CHECK_PAYMENT": ["POS_CHECK","POS_CHECK_DETAIL","POS_CHECK_PAYMENT"],
+        "PosQRCreateOrder": ["QPOS_TAKEOUTORDER","POS_CHECK"],
+        "SP_EASYPMS_EFATURA_CREATEINVOICE_JSON": ["SP_ECR_PRINTLIST"],
+        "SP_EASYPOS_PRINTLIST": ["SP_EASYPOS_PRINTLIST"]
+      },
+      "mutexEnabled": true,
+      "disableGzip": true,
+      "ipAccessKey": "***",
+      "multiTenantObjects": [
+          "HOTEL_GUEST"
+      ],
+      "apiKeyRoles": [
+          191,
+          204
+      ]
+    }

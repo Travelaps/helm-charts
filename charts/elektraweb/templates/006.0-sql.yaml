@@ -1,0 +1,68 @@
+{{ if .Values.sql.install }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: sql
+  namespace: default
+  labels:
+    k8s-app: sql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: sql
+  template:
+    metadata:
+      name: sql
+      labels:
+        k8s-app: sql
+    spec:
+      {{ if .Values.sql.localPath }}
+      volumes:
+        - name: mssql-data
+          hostPath:
+              path: {{ .Values.sql.localPath }}
+              type: DirectoryOrCreate
+      {{ end }}
+      containers:
+        - name: sql
+          image: ghcr.io/travelaps/mssql2019fts:v2
+          env:
+            - name: ACCEPT_EULA
+              value: 'Y'
+            - name: SA_PASSWORD
+              value: {{ .Values.sql.saPassword | quote }}
+            - name: MSSQL_PID
+              value: {{ .Values.sql.pid }}
+            - name: MSSQL_AGENT_ENABLED
+              value: {{ .Values.sql.agentEnabled | quote }}
+            - name: MSSQL_TCP_PORT
+              value: {{ .Values.sql.tcpPort | quote }}
+            - name: MSSQL_MEMORY_LIMIT_MB
+              value: {{ .Values.sql.memoryLimit | quote }}
+          {{ if .Values.sql.localPath }}
+          volumeMounts:
+            - name: mssql-data
+              mountPath: /var/opt/mssql/data
+          {{ end }}
+      imagePullSecrets:
+        - name: regcred
+      hostname: mssqlinst
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: sql
+  namespace: default
+  labels:
+    k8s-app: sql
+spec:
+  ports:
+    - name: sql-port
+      protocol: TCP
+      port: 1433
+      targetPort: 1433
+  selector:
+    k8s-app: sql
+  type: ClusterIP
+  {{ end }}

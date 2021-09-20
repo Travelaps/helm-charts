@@ -1,0 +1,32 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: sql-create-ersdeveloper-user
+  namespace: default
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: initial-creator
+          image: ghcr.io/travelaps/mssql2019fts:v2
+          command:
+            - /opt/mssql-tools/bin/sqlcmd
+          args:
+            - '-S'
+            - sql
+            - '-U'
+            - sa
+            - '-P'
+            - {{ .Values.sql.saPassword }}
+            - '-Q'
+            - |
+              INSERT INTO ERSDEVELOPER..ANGUSDEVELOPER(USERCODE,[PASSWORD],[EASYPMSTENANT],[ROLEID],[ROLENAME],[ADMINLEVEL],[LOGINTIME])
+              VALUES('{{ .Values.sql.elektraAdminUser.username }}','{{ .Values.sql.elektraAdminUser.password }}',1,12,'HotelOwner',255,GETDATE())

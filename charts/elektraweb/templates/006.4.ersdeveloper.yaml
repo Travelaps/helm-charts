@@ -1,0 +1,226 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: sql-create-ersdeveloper
+  namespace: default
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-3"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: initial-creator
+          image: ghcr.io/travelaps/mssql2019fts:v2
+          command:
+            - /opt/mssql-tools/bin/sqlcmd
+          args:
+            - '-S'
+            - sql
+            - '-U'
+            - sa
+            - '-P'
+            - {{ .Values.sql.saPassword }}
+            - '-Q'
+            - |
+              CREATE DATABASE ERSDEVELOPER COLLATE TURKISH_CI_AS
+              GO
+              ALTER DATABASE [ERSDEVELOPER] SET RECOVERY SIMPLE
+              GO
+              ALTER DATABASE [ERSDEVELOPER] SET AUTO_CLOSE OFF WITH NO_WAIT
+              GO
+              ALTER DATABASE [ERSDEVELOPER] SET AUTO_CREATE_STATISTICS OFF
+              GO
+              ALTER DATABASE [ERSDEVELOPER] SET AUTO_UPDATE_STATISTICS OFF WITH NO_WAIT
+              GO
+              USE [ERSDEVELOPER]
+              GO
+              ALTER DATABASE SCOPED CONFIGURATION SET MAXDOP = 1
+              GO
+              ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET MAXDOP = 1
+              GO
+              USE [ERSDEVELOPER]
+              GO
+              /****** Object:  UserDefinedFunction [dbo].[MultiSplit]    Script Date: 17.08.2021 4:46:05 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+
+
+
+              CREATE FUNCTION [dbo].[MultiSplit](@DATA NVARCHAR(MAX),@DELIMITER NVARCHAR(MAX))
+              RETURNS TABLE
+              RETURN
+              	SELECT
+              		cast(row_number()over(order by [value]+null) as smallint) as OccurenceId,
+              		cast([value] COLLATE TURKISH_CI_aS as nvarchar(max)) as SplitValue
+              	FROM string_split(
+              		CASE WHEN LEN(@DELIMITER)=1 THEN @DATA              ELSE REPLACE(@DATA,@DELIMITER,N'☭') END,
+              		CASE WHEN LEN(@DELIMITER)=1 THEN LEFT(@DELIMITER,1) ELSE N'☭'                           END)
+              	WHERE @DATA IS NOT NULL
+              	  AND @DATA <> ''
+              GO
+              /****** Object:  Table [dbo].[ANGUSDEVELOPER]    Script Date: 17.08.2021 4:46:06 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TABLE [dbo].[ANGUSDEVELOPER](
+              	[ID] [int] IDENTITY(-1,-1) NOT NULL,
+              	[USERCODE] [nvarchar](50) NULL,
+              	[PASSWORD] [nvarchar](50) NULL,
+              	[ELEKTRAWEBTENANT] [int] NULL,
+              	[EASYPMSTENANT] [int] NULL,
+              	[PORTALTENANT] [int] NULL,
+              	[ETSTENANT] [int] NULL,
+              	[MEDISOFTTENANT] [int] NULL,
+              	[SPATENANT] [int] NULL,
+              	[ROLEID] [int] NULL,
+              	[ROLENAME] [nvarchar](50) NULL,
+              	[EMAIL] [nvarchar](100) NULL,
+              	[ROLELEARNERMODE] [bit] NOT NULL,
+              	[2FAKEY] [varchar](50) NULL,
+              	[2FASTATE] [tinyint] NOT NULL,
+              	[PASSWORD64] [binary](64) NULL,
+              	[ADMINLEVEL] [tinyint] NOT NULL,
+              	[BLOCKSETCONFIG] [bit] NULL,
+              	[BLOCKTRANSLATE] [bit] NULL,
+              	[ALLOWCONFIGS] [varchar](1000) NULL,
+              	[BLOCKCONFIGS] [varchar](1000) NULL,
+              	[HIDEMENUS] [nvarchar](1000) NULL,
+              	[IPADDRESS] [varchar](1000) NULL,
+              	[LOGOUTTIME] [datetime] NULL,
+              	[PHONE] [varchar](20) NULL,
+              	[LOGINTIME] [datetime] NULL,
+              	[DEPARTMENT] [nvarchar](30) NULL,
+              	[SKYPEID] [nvarchar](50) NULL,
+              	[USERFULLNAME] [nvarchar](50) NULL,
+              	[IMAGEURL] [nvarchar](255) NULL,
+              	[SHIFT] [char](1) NULL,
+              	[REFCODE] [varchar](10) NULL,
+              	[NOTIFYDELAYS] [bit] NULL,
+              	[DEPARTMENTCHEF] [bit] NULL,
+              PRIMARY KEY CLUSTERED
+              (
+              	[ID] ASC
+              )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+              ) ON [PRIMARY]
+              GO
+              ALTER TABLE [dbo].[ANGUSDEVELOPER] ADD  DEFAULT ((1)) FOR [ELEKTRAWEBTENANT]
+              GO
+              ALTER TABLE [dbo].[ANGUSDEVELOPER] ADD  CONSTRAINT [DF__ANGUSDEVE__EASYP__38996AB5]  DEFAULT ((18892)) FOR [EASYPMSTENANT]
+              GO
+              ALTER TABLE [dbo].[ANGUSDEVELOPER] ADD  DEFAULT ((1)) FOR [PORTALTENANT]
+              GO
+              ALTER TABLE [dbo].[ANGUSDEVELOPER] ADD  CONSTRAINT [DF__ANGUSDEVE__ETSTE__3B75D760]  DEFAULT ((1)) FOR [ETSTENANT]
+              GO
+              ALTER TABLE [dbo].[ANGUSDEVELOPER] ADD  DEFAULT ((1)) FOR [MEDISOFTTENANT]
+              GO
+              ALTER TABLE [dbo].[ANGUSDEVELOPER] ADD  DEFAULT ((1)) FOR [SPATENANT]
+              GO
+              ALTER TABLE [dbo].[ANGUSDEVELOPER] ADD  DEFAULT ((0)) FOR [ROLELEARNERMODE]
+              GO
+              ALTER TABLE [dbo].[ANGUSDEVELOPER] ADD  DEFAULT ((0)) FOR [2FASTATE]
+              GO
+              ALTER TABLE [dbo].[ANGUSDEVELOPER] ADD  DEFAULT ((99)) FOR [ADMINLEVEL]
+              GO
+              /****** Object:  Trigger [dbo].[TRG_KULLANICI_EMDSye_KOPYALA]    Script Date: 17.08.2021 4:46:06 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TRIGGER [dbo].[TRG_KULLANICI_EMDSye_KOPYALA]
+              ON [dbo].[ANGUSDEVELOPER] AFTER INSERT,UPDATE
+              AS
+
+              --2019-04-12:OGUZ
+              DECLARE @ID INT,
+              		@USERCODE NVARCHAR(50)
+
+              DECLARE C CURSOR LOCAL STATIC FOR
+              SELECT ID,USERCODE FROM inserted
+
+              OPEN C
+              WHILE 1=1
+              BEGIN
+              	FETCH NEXT FROM C INTO @ID,@USERCODE
+              	IF @@FETCH_STATUS <> 0
+              		BREAK
+
+              	exec EMDS..sp_executesql N'
+              		SET IDENTITY_INSERT STDUSER ON;
+              		BEGIN TRY
+              			INSERT INTO STDUSER(ID,[USERCODE])
+              			SELECT @ID,@USERCODE
+              			WHERE @ID NOT IN(SELECT ID FROM STDUSER)
+              		END TRY
+              		BEGIN CATCH
+              			PRINT ERROR_MESSAGE()
+              		END CATCH
+              		SET IDENTITY_INSERT STDUSER OFF;
+              	',
+              	N'@ID INT,@USERCODE NVARCHAR(50)',
+              	@ID,@USERCODE
+              END
+              CLOSE C
+              DEALLOCATE C
+
+
+              GO
+              ALTER TABLE [dbo].[ANGUSDEVELOPER] ENABLE TRIGGER [TRG_KULLANICI_EMDSye_KOPYALA]
+              GO
+              /****** Object:  Trigger [dbo].[TRG_PWDHASH]    Script Date: 17.08.2021 4:46:07 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+              CREATE TRIGGER [dbo].[TRG_PWDHASH] ON [dbo].[ANGUSDEVELOPER]
+              AFTER INSERT,UPDATE
+              AS
+              --ARTIK SUPER USER TABLOSUNDA SIFRELER ACIKTA DURMAYACAK
+              --SIFFRELER GUNCELLENDIGINDE PASSWORD64 KOLONUNA HASHLENEREK GECECEK
+              --SONRA DA TEXT PASSWORDLER NULLANACAK..
+              IF UPDATE([PASSWORD])
+              BEGIN
+              	UPDATE ANGUSDEVELOPER
+              	SET [PASSWORD64] = HASHBYTES('SHA2_512',[PASSWORD]),
+              		[PASSWORD]   = NULL
+              	WHERE ID IN(SELECT ID FROM inserted)
+              	  AND [PASSWORD] IS NOT NULL
+              END
+              GO
+              ALTER TABLE [dbo].[ANGUSDEVELOPER] ENABLE TRIGGER [TRG_PWDHASH]
+              GO
+              /****** Object:  DdlTrigger [TRG_OGUZ_SCHEMALOG]    Script Date: 17.08.2021 4:46:08 PM ******/
+              SET ANSI_NULLS ON
+              GO
+              SET QUOTED_IDENTIFIER ON
+              GO
+
+              	CREATE TRIGGER [TRG_OGUZ_SCHEMALOG]
+              	ON DATABASE FOR
+              		DDL_DATABASE_LEVEL_EVENTS
+              	AS
+
+              	SET NOCOUNT ON
+
+              	DECLARE @XML XML = EventData()
+
+              	IF DB_ID('DDLEVENTS') IS NOT NULL AND @XML.value('/EVENT_INSTANCE[1]/SchemaName[1]','nvarchar(max)') <> 'TEMP'
+              		INSERT INTO DDLEVENTS.DBO.DDLHISTORY( [WHEN],DBUSER,DBNAME,COMMAND )
+              		SELECT
+              			 GETUTCDATE(),
+              			 @XML.value('/EVENT_INSTANCE[1]/LoginName[1]','nvarchar(max)'),
+              			 @XML.value('/EVENT_INSTANCE[1]/DatabaseName[1]','nvarchar(max)'),
+              			 @XML.value('/EVENT_INSTANCE[1]/TSQLCommand[1]/CommandText[1]','nvarchar(max)')
+
+              	SET NOCOUNT OFF
+              GO
+              ENABLE TRIGGER [TRG_OGUZ_SCHEMALOG] ON DATABASE
+              GO
