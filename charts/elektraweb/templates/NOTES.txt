@@ -6,4 +6,6 @@ Dashboard Adresi: https://{{ .Values.dashboardAccess.ingress.host }}/
 Dashboard Token: kubectl -n {{ .Values.dashboard.namespace }} get secret $(kubectl -n {{ .Values.dashboard.namespace }} get sa/{{ .Values.dashboardAccess.adminUser.name }} -o jsonpath="{.secrets[0].name}") -o go-template="{{ "{{" }}.data.token | base64decode}}"
 {{ end }}
 Nodejs Worker: https://{{ .Values.worker.host }}/
+{{ if .Values.angus.install }}
 Angus: https://{{ .Values.angus.host }}/
+{{ end }}
