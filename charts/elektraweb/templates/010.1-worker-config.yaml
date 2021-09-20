@@ -8,7 +8,7 @@ data:
     {
       "dbConfig": {
         "user": "sa",
-        "password": "aA!01012000",
+        "password": "{{ .Values.sql.saPassword }}",
         "server": "sql",
         "database": "EMDS",
         "options": {
