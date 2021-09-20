@@ -14,6 +14,18 @@
 
 - Sıfır kurulum:
     ```bash
+    # Öncelikle microk8s, kubectl ve helm kurulu olduğundan emin ol:
+    sudo snap install microk8s --classic
+    sudo snap install kubectl --classic
+    sudo snap install helm --classic
+    
+    # Oluşan kubernetes erişim config dosyasını kubectl'nin görebileceği yere dump et
+    mkdir .kube
+    sudo microk8s config > ~/.kube/config
+    
+    # Kubernetes çalıştığını doğrula
+    kubectl cluster-info
+    
     # Travelaps kaynağını tanımla
     helm repo add travelaps https://travelaps.github.io/helm-charts/
 
