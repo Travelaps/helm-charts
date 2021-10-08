@@ -6,7 +6,7 @@ regcred:
 # NodeJS Web Servis
 worker:
   host: nodejs4001
-  image: ghcr.io/travelaps/nodejs-worker:v401
+  image: ghcr.io/travelaps/nodejs-worker:v425
   replicas: 1
 # SQL Server
 sql:
