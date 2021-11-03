@@ -1275,6 +1275,9 @@ spec:
               	@IPADDRESS NVARCHAR(50)
               AS
 
+              IF (SELECT COUNT(*) FROM EMDS..HOTEL ) < 5
+				        RETURN
+
               --LOGGED IN USER DETAILS
               DECLARE @WHITELIST NVARCHAR(MAX),
               		@2FASTATE TINYINT,
