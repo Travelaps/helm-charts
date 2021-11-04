@@ -1297,7 +1297,7 @@ spec:
               AS
 
               IF (SELECT COUNT(*) FROM EMDS..HOTEL ) < 5
-				        RETURN
+                RETURN
 
               --LOGGED IN USER DETAILS
               DECLARE @WHITELIST NVARCHAR(MAX),
