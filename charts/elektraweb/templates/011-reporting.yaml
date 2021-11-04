@@ -16,14 +16,11 @@ spec:
       labels:
         k8s-app: reportingcore
     spec:
-      volumes:
-        - name: reportdir
-          hostPath:
-              path: {{ .Values.reporting.localPath }}
-              type: Directory
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: reportingcore
-          image: ghcr.io/travelaps/reportingcore:latest
+          image: ghcr.io/travelaps/reportingfull:latest
           env:
             - name: DS_server
               value: sql
@@ -31,9 +28,6 @@ spec:
               value: sa
             - name: DS_password
               value: {{ .Values.sql.saPassword }}
-          volumeMounts:
-            - name: reportdir
-              mountPath: /usr/reportingcore/wwwroot/Reports
 ---
 kind: Service
 apiVersion: v1
@@ -58,7 +52,7 @@ metadata:
   name: reportingcore-ingress
   namespace: default
   annotations:
-    kubernetes.io/ingress.class: nginx
+    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
     nginx.ingress.kubernetes.io/affinity: cookie
     nginx.ingress.kubernetes.io/server-snippet: |
       gunzip on;
