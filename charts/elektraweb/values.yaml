@@ -31,7 +31,7 @@ angus:
 # Pos
 pos:
   install: false
-  image: ghcr.io/travelaps/pos-ng11:v38
+  image: ghcr.io/travelaps/pos-ng11:v72
   host: elektrawebpos
 # .NET Core FRX Rapor Programı
 reporting:
