@@ -820,449 +820,470 @@ spec:
 
 
               CREATE PROCEDURE [dbo].[SP_AFTERLOGIN]
-                  @USERID    NVARCHAR(50),
-                  @TENANTID  NVARCHAR(50),
-              	@IPADDRESS VARCHAR(45) = NULL,
-              	@USERAGENT VARCHAR(150) = NULL
-              AS
-
-
-              DECLARE @YEDEK30 BIT = CASE WHEN @@SERVERNAME = 'WIN-9K0D3H2Q085' THEN 1 ELSE 0 END
-              DECLARE @EMDS_LASTRESTORE NVARCHAR(50)
-
-              IF @YEDEK30 = 1
-              BEGIN
-              	DECLARE @OFFSET INT,@OFFSETSTR NVARCHAR(50)
-              	SELECT @OFFSET = HOUROFFSET,@OFFSETSTR = Z.[NAME]
-              	FROM EMDS..HOTEL H WITH(NOLOCK)
-              	INNER JOIN EMDS..STDTIMEZONE Z WITH(NOLOCK) ON Z.ID = ISNULL(H.TIMEZONEID,16)
-              	WHERE H.ID = @TENANTID
-
-              	SELECT  @EMDS_LASTRESTORE = FORMAT(MAX(DATEADD(HOUR,@OFFSET,[bs].[backup_finish_date])),'dd MMMM HH:mm') + @OFFSETSTR
-              	FROM    msdb..restorehistory rs
-              			INNER JOIN msdb..backupset bs ON [rs].[backup_set_id] = [bs].[backup_set_id]
-              			INNER JOIN msdb..backupmediafamily bmf ON [bs].[media_set_id] = [bmf].[media_set_id]
-              	WHERE rs.[destination_database_name]='EMDS'
-
-              END
-
-              --2020-07-10 13:42 UTC'DE OGUZ KAPATTI
-              --INSERT INTO STDUSER_LOGIN(LOGINTIME,LOGINID,HOTELID)VALUES(DATEADD(HOUR,3,GETUTCDATE()),@USERID,@TENANTID )
-
-              DECLARE @TAWKTOAPIKEY varchar(MAX) = '41b70f59f97ed3aab3302ea9562ad53234188f9a'
-              DECLARE @USERINTID INT = TRY_PARSE(@USERID AS INT)
-              DECLARE @ADMINDEFAULTTENANT INT
-              DECLARE @HOTELADMINLEVEL INT = (SELECT TOP(1) ADMINLEVEL FROM EMDS.dbo.VW_HOTEL WHERE HOTELID = @TENANTID)
-              DECLARE @USERADMINLEVEL  INT
-
-              IF @USERINTID < 0
-              BEGIN
-              	DECLARE @REFCODE VARCHAR(10)
-
-              	SELECT TOP(1)
-              		@USERADMINLEVEL=ADMINLEVEL ,
-              		@ADMINDEFAULTTENANT = EASYPMSTENANT,
-              		@REFCODE = REFCODE
-              	FROM ERSDEVELOPER..ANGUSDEVELOPER WITH(NOLOCK)
-              	WHERE ID = @USERINTID
-
-              	--2021-06-30:OGUZ:BAYILER ICIN "KENDI OTELI MI ??" KONTROLU..
-              	IF LEN(@REFCODE)>0 AND @USERADMINLEVEL = 99
-              	BEGIN
-              		IF NOT EXISTS(SELECT TOP(1) 1 FROM EMDS..HOTEL WITH(NOLOCK) WHERE ID = @TENANTID AND REFCODE = @REFCODE AND ADMINLEVEL <= @USERADMINLEVEL)
-              			THROW 51000,'You are not allowed to connect to this hotel',1
-              	END
-              END
-
-              IF @USERINTID < 0 AND @HOTELADMINLEVEL > @USERADMINLEVEL AND @TENANTID <> @ADMINDEFAULTTENANT
-                THROW 51000,'Your admin level is not suitable to impersonate this hotel, please consult Can Temizkan',1
-
-              --2019-03-21:OGUZ:LOGIN OLMUS OTELIN PORTALID'SI OTOMATIK DOLMALI ISTEKLERDE !!!
-              SELECT TOP(1)
-              	@REFCODE AS [REFCODE],
-              	'https://report.hoteladvisor.net/Print'
-              	--'https://reportingkk.hoteladvisor.net/Print'
-              	AS REPORTURL,
-
-              	--CASE WHEN @TENANTID IN ('18892','20854 ') OR RIGHT(@TENANTID,1) IN ('0','1','2','3') THEN 'wss://4001std-v3.azurewebsites.net/' END
-              	CASE
-              	    WHEN H.ID =  21878 THEN 'https://4001kk.hoteladvisor.net/'
-              		WHEN @USERINTID < 0 THEN NULL--2021-04-06:OGUZ:ADMINLER HEP DUZ POST ILE CALISSIN
-              		WHEN (H.ID in (21907,21878,22225,21192,20846,21713 ) ) THEN NULL --AKRONES DENEME
-              		WHEN H.ID IN(20292,21392,21713,22191) AND NOT EXISTS(SELECT TOP(1) 1 FROM [ENDPOINT] E WITH(NOLOCK) WHERE E.TENANTID = @TENANTID AND E.[URL]>'') THEN 'wss://4001.hoteladvisor.net'--'wss://4001docker.azurewebsites.net'
-              		WHEN CHARINDEX('Windows NT 6.1',@USERAGENT) > 0 THEN 'wss://4001.hoteladvisor.net'--2021-03-04:OGUZ/TOLGA:WINDOWS 7'LER WEBSOCKET KULLANSIN, CUNKU ONLAR PAKET YOLLAYIP CANCEL EDEMEYEBILIYOR
-              		ELSE NULL
-              	END AS WEBSOCKETURL,
-              	(SELECT MAX(ID) FROM CONFIG_PUBLISH WITH(NOLOCK)) AS CONFIGVERSION,
-              	CONVERT(NVARCHAR(200),HASHBYTES('MD5',CAST(PINCODE AS VARCHAR(4))),2) AS PINHASH,
-              	CASE WHEN @USERINTID < 0 AND @USERINTID <> -15/*KORAL*/ THEN 15 ELSE 999999 END AS IDLELOGOUTMINUTES,
-              	H.GENDARMEDEFAULTID,
-              	H.SUBDOMAIN,
-                  H.INTERNALCHATENABLED,--2019-06-17:OGUZ/TOLGA
-                  U.INTERNALCHATUSERNAME,--2019-06-17:OGUZ/TOLGA
-                  U.INTERNALCHATPASSWORD,--2019-06-17:OGUZ/TOLGA
-              	U.STDUSERDEPID,
-              	U.CHIEFOFSTOREID ,
-                  U.NEEDAPPROVALFORPURCHASE,
-              	U.MAIDCHEF,
-              	U.USERCODE,
-              	U.NATIONALIDNO,
-              	H.DOORKEYCARDMODE,
-                  H.EMAIL AS TENANTEMAIL,
-                  H.[PHONE] AS TENANTPHONE,
-                  H.[NAME] AS TENANTNAME,
-                  H.LOGOURL AS TENANTLOGOURL,
-              	H.[ADDRESS] AS TENANTADDRESS,
-              	H.WEB AS [TENANTWEB],
-                  H.DEFAULTCASHDEPARTMENTID AS DEFAULTCASHDEPARTMENTID,
-                  DEPT.[DEPARTMENTNAME] DEFAULTCASHDEPARTMENT,
-                  C.ID AS [DEFAULTCURRENCYID],
-                  C.CODE3 AS [DEFAULTCURRENCY],
-              	PC.ID AS [POSCURRENCYID],
-                  PC.CODE3 AS [POSCURRENCY],
-
-              	--2020-01-10:OGUZ:RATEMANAGER ICIN
-              	OC.ID AS [RATECURRENCYID],
-              	OC.CODE3 AS [RATECURRENCYCODE],
-
-                  H.[PORTALID],/*CAST(H.PROGDATE AS DATE)*/convert(nvarchar(10),H.PROGDATE,121) AS PROGDATE,
-                  --master.[sys].[fn_varbintohexstr](HASHBYTES('SHA2_256', cast(@USERID as nvarchar)/*U.USERCODE*/ + @TAWKTOAPIKEY)) AS [TAWKTOUSERCODE]
-
-                  REPLACE(master.[sys].[fn_varbintohexstr]( dbo.HMAC('SHA2_256',@TAWKTOAPIKEY, H.[EMAIL] )),'0x','') AS [TAWKTOUSERCODE],
-
-                  CONVERT(NVARCHAR(5),ISNULL(H.CHECKINTIME,'14:00'),114) AS CHECKINTIME,
-                  CONVERT(NVARCHAR(5),ISNULL(H.CHECKOUTTIME,'11:00'),114) AS CHECKOUTTIME,
-
-                  ISNULL(R.ROLENAME,'')+ISNULL((
-                                                   SELECT ','+R.ROLENAME+ISNULL(','+R.ROLECODE,'')
-                                                   FROM EMDS..STDUSER_ROLES UR WITH(NOLOCK)
-                                                            INNER JOIN EMDS..STDROLE  R WITh(NOLOCK) ON R.ID = UR.ROLEID
-                                                   WHERE UR.USERID = U.ID
-                                                         FOR XML PATH('')
-                                               ),'') AS [ALLROLES],
-
-                  'SP_EASYPMS_TENANTCHANGED' AS TENANTCHANGEDSP,
-
-              	CASE WHEN 1=ISNULL(SUBS.MODULE_POS,0)THEN 'EASYPOS' ELSE 'QUICKPOS' END AS [POSMODE],
-
-              	ISNULL(STUFF((
-              		SELECT ','+S.CODE2
-              		FROM EMDS..PORTAL_LANGUAGES L WITH(NOLOCK)
-              		INNER JOIN EMDS..[LANGUAGE] S WITH(NOLOCK) ON S.[LANGUAGEID] = L.LANGUAGEID
-               		WHERE L.HOTELID = H.ID
-              		  AND L.ISACTIVE = 1
-              		FOR XML PATH('')
-              	),1,1,''),'') AS LANGUAGES,
-
-              	STUFF((SELECT ','+CAST(BRANCHID AS NVARCHAR(14)) FROM EMDS..STDUSER_BRANCH B WITH(NOLOCK) WHERE B.USERID = @USERID FOR XML PATH('') ),1,1,'') AS BRANCHIDS,
-              	ISNULL(UB.BRANCHID,AB.ID) AS DEFAULTBRANCHID,
-              	UBN.NAME AS DEFAULTBRANCH,
-
-              	--2021-05-18:TEOMAN, KULLANICILARA DEPO SINIRLAMALARI GETIRDIK
-              	STUFF((SELECT ','+CAST(STOREID AS NVARCHAR(14)) FROM EMDS..STDUSER_STORE S WITH(NOLOCK) WHERE S.USERID = @USERID FOR XML PATH('') ),1,1,'') AS STOREIDS,
-              	US.STOREID  AS DEFAULTSTOREID,
-              	USTORE.NAME AS DEFAULTSTORE,
-
-              	H.DEFAULTLANGUAGE,
-              	'webhotel'AS ONLYAPPLICATION,--STDROLE BICILEBILSIN DIYE
-
-              	H.KBSMODE,
-              	H.KBSCODE,
-              	H.KBSPASSWORD,
-              	H.KBSAUTO,
-
-              	OCC.CODE3 AS ONLINECURRENCYCODE,
-              	H.ONLINECURRENCYID,
-              	H.ONLINEAGENCYID,
-              	A.RATECODEID AS ONLINERATECODEID,
-              	A.AGENCYCODE AS ONLINEAGENCYCODE,
-              	A.RATETYPEID AS DEFAULTRATETYPEID,
-              	A.BOARDID AS DEFAULTBOARDTYPEID,
-              	BT.BOARDTYPE AS DEFAULTBOARDTYPE,
-              	RT.CODE AS DEFAULTRATETYPE,
-              	RC.RATECODE AS ONLINERATECODE,
-
-              	CONVERT(NVARCHAR(MAX),(
-              		SELECT *
-              		FROM(
-              			--SELECT /*@TENANTID*/U0.HOTELID AS TENANTID,NULL AS APIURL,H0.[NAME] AS DISPLAYNAME,'Default' as [key] ,H0.[NAME] as [displayField],-1 AS DISPLAYORDER
-              			--FROM EMDS..STDUSER U0 WITH(NOLOCK)
-              			--INNER JOIN EMDS..HOTEL H0 WITH(NOLOCK) ON H0.ID = U0.HOTELID
-              			--WHERE U0.ID = @USERID
-              			SELECT /*@TENANTID*/U0.HOTELID AS TENANTID,NULL AS APIURL,H0.[NAME] AS DISPLAYNAME,'Default' as [key] ,H0.[NAME] as [displayField],-1 AS DISPLAYORDER
-              			FROM EMDS..STDUSER U0 WITH(NOLOCK)
-              			LEFT  JOIN EMDS..STDUSER_HOTELS CHILD WITH(NOLOCK) ON CHILD.SUBUSERID = @USERID
-              			LEFT  JOIN EMDS..STDUSER PARENT WITH(NOLOCK) ON PARENT.ID = CHILD.STDUSERID
-              			INNER JOIN EMDS..HOTEL H0 WITH(NOLOCK) ON H0.ID = ISNULL(PARENT.HOTELID,U0.HOTELID)
-              			WHERE U0.ID = @USERID
-
-              			UNION ALL
-
-              			--DOGRUDAN BENIM COCUKLARIM
-              			select
-              				AU.TENANTID,
-              				AU.APIURL,
-              				AU.DISPLAYNAME,
-              				AU.DISPLAYNAME AS [key],
-              				AU.DISPLAYNAME AS [displayField],
-              				cast(AU.DISPLAYORDER as smallint)
-              			FROM EMDS..[STDUSER_HOTELS] AU WITH(NOLOCK)
-              			WHERE AU.STDUSERID = @USERID
-
-              			UNION ALL
-
-              			--DOGRUDAN KARDESLERIM
-              			select
-              				SB.TENANTID,
-              				SB.APIURL,
-              				SB.DISPLAYNAME,
-              				SB.DISPLAYNAME AS [key],
-              				SB.DISPLAYNAME AS [displayField],
-              				cast(SB.DISPLAYORDER as smallint)
-              			FROM EMDS..[STDUSER_HOTELS] AU WITH(NOLOCK)
-              			INNER JOIN EMDS..[STDUSER_HOTELS] SB WITH(NOLOCK) ON SB.STDUSERID = AU.STDUSERID
-              			WHERE AU.SUBUSERID = @USERID
-              		)AS TBL
-              		ORDER BY TBL.DISPLAYORDER ASC
-              		FOR JSON AUTO
-              	)) AS APIKEYS,
-
-              	--2019-12-18:OGUZ/KEMAL:HESAPLARIN ODEMELERINI HIZLICA ALABILMEK ICIN
-              	H.ACCOUNTID_MAINSAFE,
-              	V1.NAME AS ACCOUNT_MAINSAFE,
-              	H.ACCOUNTID_CREDITCARD,
-              	V2.NAME AS ACCOUNT_CREDITCARD,
-              	H.[ACCOUNTID_BANK],
-              	V3.NAME AS[ACCOUNT_BANK],
-
-              	CAST(case when EXISTS(SELECT TOP(1) 1 FROM EMDS..EFATURA_SUPPLIER S WITH(NOLOCK) WHERE S.HOTELID = @TENANTID AND S.TaxNumber LIKE '%[0-9]%') THEN 1 ELSE 0 END AS BIT) AS EINVOICEENABLED,
-
-                U.USEREMINDER,
-                --2020-03-04:OGUZ
-                (SELECT COUNT(H2.ID) FROM EMDS..HOTEL H2 WITH(NOLOCK) WHERE H2.ID = H.ID OR H2.GROUPID = H.GROUPID) AS GROUPHOTELCOUNT,
-
-                --2020-06-12:OGUZ
-                H.POSVERSION,
-
-                SUBS.MODULE_PMSMINI,
-                SUBS.MODULE_PMSMODE,
-
-                SUBS.STOP_IF_OVERDUEPAYMENT,
-
-                CASE
-              	WHEN @YEDEK30 = 1
-              	THEN '<div style="width: 100%; background-color: #f44336; color: rgba(255,255,255,.84); text-align: center;padding: 5px;display: flex;justify-content: center;align-items: center;">'+
-              		 '<mat-icon class="material-icons">warning</mat-icon>'+
-              		 'Elektraweb Backup '+@EMDS_LASTRESTORE+
-              		 '</div>'
-
-              	--WHEN @TENANTID <> '18892' THEN NULL
-              	WHEN SUBS.OVERDUEPAYMENT > 0 OR SUBS.DISPLAYMESSAGE > '' OR SUBS.DEMOMODE = 1
-              	THEN '<div style="width: 100%; background-color: #f44336; color: rgba(255,255,255,.84); text-align: center;padding: 5px;display: flex;justify-content: center;align-items: center;">'+
-              	     '<mat-icon class="material-icons">warning</mat-icon>'+
-
-               		 ISNULL(NULLIF(SUBS.DISPLAYMESSAGE,'')+' ','')+
-              		 CASE WHEN SUBS.OVERDUEPAYMENT > 0  OR SUBS.DEMOMODE = 1
-              		 THEN
-              			 '<a  style="margin: 0 10px;color: rgba(255,255,255,.87);" href="javascript:((()=>{ angus.ngZone.run(()=>{ var l = angus.loadingService.showLoadingOverlay(); angus.router.navigate([''/app/hotel/payment'']).then(()=>l.destroy()) }) })())" >'+
-              				CASE WHEN ISNULL(SUBS.DEMOMODE,0) = 1 THEN 'Demo Mode ' ELSE '' END+
-              				CASE WHEN SUBS.OVERDUEPAYMENT > 0 THEN
-              					CASE WHEN H.DEFAULTLANGUAGE = 'TR'
-              					THEN 'Lisans aktivasyonu için tıklayınız'
-              					ELSE 'Click here to activate your licence'END
-              				ELSE '' END+
-              			 '</a>'
-              		 ELSE '' END+
-              		 '<mat-icon class="material-icons" style="font-size: 14px;position: relative;top: 2px;">launch</mat-icon></div>'
-
-              	--WHEN LEFT(@USERID,1)='-'  THEN '<b>Adminsiniz lutfen dikkatli olunuz</b>'
-
-                end
-
-
-                AS HTMLDISPLAYMESSAGE,
-
-                --2020-06-23:OGUZ
-                CAST(CASE WHEN SUBS.DEMOMODE = 1 AND SUBS.[STARTDATE] < DATEADD(MONTH,-1,GETDATE()) THEN 1 ELSE 0 END AS BIT) AS DEMOOVER,
-
-                --2020-05-26:OGUZ:HOTELSETTINGS
-                H.ROOMCAPACITY,
-                H.BEDCAPACITY,
-                --CASE WHEN H.ID = 19544 THEN null --OGUZ:https://sp.ersas.com sitesi de 4001'i kullandigi için ora bozulmasın diye
-              	 --  WHEN @@SERVERNAME <> 'DB' THEN null--OGUZ:Diger yedek30/yedek24 gibi sunucularda redirection olmasin diye
-              	 --  WHEN SUBS.MODULE_PMSMODE = 2 THEN 'midi'
-              	 --  WHEN SUBS.MODULE_PMSMODE = 3 THEN 'mini'
-              	 --  ELSE 'app'
-                --END AS REDIRECTURL,
-                CASE WHEN H.ID = 19544 THEN null --OGUZ:https://sp.ersas.com sitesi de 4001'i kullandigi için ora bozulmasın diye
-              	   WHEN @@SERVERNAME <> 'DB' THEN null--OGUZ:Diger yedek30/yedek24 gibi sunucularda redirection olmasin diye
-              	   WHEN SUBS.MODULE_PMSMODE = 0 THEN 'NonPms'
-              	   WHEN SUBS.MODULE_PMSMODE = 2 THEN 'Midi'
-              	   WHEN SUBS.MODULE_PMSMODE = 3 THEN 'Mini'
-              	   ELSE ''
-                END AS PACKAGENAME,
-                U.TASKVIEWMODE,U.MAID,
-
-                STORE.ID   AS MAINSTOREID,--2020-12-03:OGUZ
-                STORE.[NAME] AS MAINSTORE,--2020-12-03:OGUZ
-
-                U.MAXDISCOUNTPERCENT,
-                ISNULL(U.[FIRSTNAME],'') + ISNULL(' ' + U.LASTNAME,'') AS [USERNAME],
-                U.PHONE AS USERPHONE,
-                U.EMAIL AS USEREMAIL,
-                U.POSITION AS USERPOSITION,
-                Z.HOUROFFSET AS TIMEZONE_HOUROFFSET,
-                Z.NAME AS TIMEZONE_NAME,
-
-                ADR.[NAME] AS ADDRESS_NAME,
-                [AS].USESUBACCOUNT                        AS ACCOUNTING_USESUBACCOUNT,
-                [AS].LOCKINVOICEOFDESPATCH                AS ACCOUNTING_LOCKINVOICEOFDESPATCH,
-                [AS].CHECKLASTSTOCKBALANCE                AS ACCOUNTING_CHECKLASTSTOCKBALANCE,
-                [AS].ALLOWCHANGE_STOCKINVOICEACCRECEIPT   AS ACCOUNTING_ALLOWCHANGE_STOCKINVOICEACCRECEIPT  ,
-                [AS].ALLOWCHANGE_SERVICEINVOICEACCRECEIPT	AS ACCOUNTING_ALLOWCHANGE_SERVICEINVOICEACCRECEIPT,
-                [AS].ALLOWCHANGE_HOTELINVOICEACCRECEIPT	AS ACCOUNTING_ALLOWCHANGE_HOTELINVOICEACCRECEIPT  ,
-                [AS].ALLOWCHANGE_STOCKFICHEACCRECEIPT		AS ACCOUNTING_ALLOWCHANGE_STOCKFICHEACCRECEIPT	  ,
-                [AS].ALLOWCHANGE_COUNTINGACCRECEIPT		AS ACCOUNTING_ALLOWCHANGE_COUNTINGACCRECEIPT	  ,
-                [AS].ALLOWCHANGE_PAYROLLACCRECEIPT		AS ACCOUNTING_ALLOWCHANGE_PAYROLLACCRECEIPT  	  ,
-                [AS].RECEIPTNUMBER_MANUAL,--2021-02-25:AHMET
-                [AS].ENABLE_EFATURASUPPLIER_ONINVOICEFORM,--2021-05-27:TEOMAN, user bazlı seri kullanımı
-                [AS].QUICKINVOICE_PASSERBYCASH_ACCOUNTID, --2021-06-18:TEOMAN, Hızlı fatura peşin carisi
-                AS_AV1.NAME AS QUICKINVOICE_PASSERBYCASH_ACCOUNT,--2021-06-23:TEOMAN, Hızlı fatura peşin carisinin adı
-
-                --2021-03-11:OGUZ:KEMAL BEY DEDI
-                ES.[ACCOUNTING_EMAIL],
-                ES.[PURCHASING_EMAIL],
-                ES.[FRONTOFFICE_EMAIL],
-                ES.[BABS_EMAIL],
-                ES.[CALLCENTER_EMAIL],
-
-                --2021-05-26:OGUZ
-                RESC.AGEINTERVAL1 AS RES_DEFAULTRATECODEID_AGEINTERVAL1,
-                RESC.AGEINTERVAL2 AS RES_DEFAULTRATECODEID_AGEINTERVAL2,
-                RESC.AGEINTERVAL3 AS RES_DEFAULTRATECODEID_AGEINTERVAL3,
-                RESB.BOARDTYPE    AS RES_DEFAULTBOARDTYPE,
-                RESC.RATECODE     AS RES_DEFAULTRATECODE,
-                RESCUR.CODE3      AS RES_DEFAULTCURRENCY,
-                RESG.[NAME]       AS RES_DEFAULTSEGMENT,
-                RESK.[SOURCE]     AS RES_DEFAULTSOURCE,
-                RESO.ROOMTYPECODE AS RES_DEFAULTROOMTYPE,
-                RESU.[NAME]       AS RES_DEFAULTNATION,
-                RESF.CODE         AS RES_DEFAULTRATETYPE,
-
-                --SOURCE
-                HS.*
-
-
-              FROM EMDS..HOTEL H WITH(NOLOCK)
-              LEFT JOIN EMDS..HOTEL_EMAIL_SETTINGS ES WITH(NOLOCK) ON ES.HOTELID = H.ID
-              LEFT JOIN EMDS..HOTEL_DEPARTMENT DEPT WITH(NOLOCK) ON DEPT.ID = H.DEFAULTCASHDEPARTMENTID
-              LEFT JOIN EMDS..STDUSER U WITH(NOLOCK) ON U.ID = @USERID
-              LEFT JOIN EMDS..STDROLE R WITH(NOLOCK) ON R.ID = U.ROLEID
-              LEFT JOIN EMDS..STDCURCODE C WITH(NOLOCK) ON C.ID = H.DEFAULTCURRENCYID
-              LEFT JOIN ERSDEVELOPER..ANGUSDEVELOPER D WITH(NOLOCK) ON D.ID = @USERID
-              LEFT JOIN EMDS..AGENCY A WITH(NOLOCK) ON A.ID = H.ONLINEAGENCYID
-              LEFT JOIN EMDS..HOTEL_BOARDTYPE BT WITH(NOLOCK) ON BT.ID = A.BOARDID
-              LEFT JOIN EMDS..HOTEL_RATETYPE RT WITH(NOLOCK) ON RT.ID = A.RATETYPEID
-              LEFT JOIN EMDS..HOTEL_RATECODE RC WITH(NOLOCK) ON RC.ID = A.RATECODEID
-
-              LEFT JOIN EMDS..STDCURCODE OC WITH(NOLOCK) ON OC.ID = RC.CURRENCYID
-              LEFT JOIN EMDS..STDCURCODE PC WITH(NOLOCK) ON PC.ID = H.POSCURRENCYID
-
-              LEFT JOIN EMDS..APPCARD_VIRTUAL V1 WITH(NOLOCK) ON V1.ID = H.ACCOUNTID_MAINSAFE
-              LEFT JOIN EMDS..APPCARD_VIRTUAL V2 WITH(NOLOCK) ON V2.ID = H.ACCOUNTID_CREDITCARD
-              LEFT JOIN EMDS..APPCARD_VIRTUAL V3 WITH(NOLOCK) ON V3.ID = H.[ACCOUNTID_BANK]
-
-              LEFT JOIN EMDS..STDCURCODE OCC WITH(NOLOCK) ON OCC.ID = H.ONLINECURRENCYID
-              LEFT JOIN EMDS..HOTEL_SETTINGS HS WITH(NOLOCK) ON HS.HOTELID = H.ID
-              OUTER APPLY(
-              	SELECT TOP(1) *
-              	FROM EMDS..HOTEL_SUBSCRIPTION SUBS WITH(NOLOCK)
-              	WHERE SUBS.OTELID = H.ID
-              		--AND CAST(GETDATE() AS DATE) BETWEEN SUBS.STARTDATE AND SUBS.ENDDATE
-              	ORDER BY SUBS.ENDDATE desc--SUBS.ID DESC
-              )SUBS
-              LEFT JOIN EMDS..STDTIMEZONE Z WITH(NOLOCK) ON Z.ID = H.TIMEZONEID
-              LEFT JOIN EMDS..ACCOUNTING_BRANCH AB WITH(NOLOCK) ON AB.HOTELID = H.ID AND AB.ISDEFAULT = 1
-              LEFT JOIN EMDS..STDUSER_BRANCH UB  WITH(NOLOCK) ON UB.USERID = @USERID AND UB.ISDEFAULT = 1
-              LEFT JOIN EMDS..STDUSER_STORE  US  WITH(NOLOCK) ON US.USERID = @USERID AND US.ISDEFAULT = 1           	--2021-05-18:TEOMAN, KULLANICILARA DEPO SINIRLAMALARI GETIRDIK
-              LEFT JOIN EMDS..STOCK_STORE USTORE WITH(NOLOCK) ON USTORE.HOTELID = H.ID AND USTORE.ID = US.STOREID     --2021-05-18:TEOMAN, KULLANICILARA DEPO SINIRLAMALARI GETIRDIK
-              LEFT JOIN EMDS..STOCK_STORE STORE  WITH(NOLOCK) ON STORE.HOTELID = H.ID AND STORE.MAINSTORE = 1
-                                                                                              AND STORE.BRANCHID = ISNULL(UB.BRANCHID,AB.ID) --2021-03-27:TEOMAN
-              LEFT JOIN EMDS..ACCOUNTING_BRANCH UBN WITH(NOLOCK) ON UBN.ID = ISNULL( UB.BRANCHID,AB.ID )
-              LEFT JOIN EMDS..[ADDRESS] ADR WITH(NOLOCK) ON ADR.ID = H.ADDRESSID
-
-              LEFT JOIN EMDS..ACCOUNTING_SETTINGS [AS] WITH(NOLOCK) ON [AS].HOTELID = H.ID
-              LEFT JOIN EMDS..APPCARD_VIRTUAL   AS_AV1 WITH(NOLOCK) ON AS_AV1.ID = [AS].QUICKINVOICE_PASSERBYCASH_ACCOUNTID
-
-              LEFT JOIN EMDS..HOTEL_RATECODE RESC WITH(NOLOCK) ON RESC.ID = HS.RES_DEFAULTRATECODEID
-              LEFT JOIN EMDS..HOTEL_BOARDTYPE RESB WITH(NOLOCK) ON RESB.ID = HS.RES_DEFAULTBOARDTYPEID
-              LEFT JOIN EMDS..STDCURCODE RESCUR WITH(NOLOCK) ON RESCUR.ID = HS.RES_DEFAULTCURRENCYID
-              LEFT JOIN EMDS..HOTEL_SEGMENT RESG WITH(NOLOCK) ON RESG.ID = HS.RES_DEFAULTSEGMENTID
-              LEFT JOIN EMDS..HOTEL_SOURCE RESK WITH(NOLOCK) ON RESK.ID = HS.RES_DEFAULTSOURCEID
-              LEFT JOIN EMDS..HOTEL_ROOMTYPE RESO WITH(NOLOCK) ON RESO.ID = HS.RES_DEFAULTROOMTYPEID
-              LEFT JOIN EMDS..COUNTRY RESU WITH(NOLOCK) ON RESU.ID = HS.RES_DEFAULTNATIONID
-              LEFT JOIN EMDS..HOTEL_RATETYPE RESF WITH(NOLOCK) ON RESF.ID = HS.RES_DEFAULTRATETYPEID
-              WHERE H.ID = TRY_PARSE(@TENANTID AS INT)
-
-
-              ---------------------------------------------------
-              --2020-08-17:OGUZ:GELEN PARAMETRELERI GORMEK ICIN--
-              ---------------------------------------------------
-              SELECT @TENANTID AS TENANTID,@USERID AS [USERID]
-
-              DECLARE @ISSUBUSER BIT
-              SELECT TOP(1) @ISSUBUSER = 1
-              FROM EMDS..STDUSER_HOTELS WITH(NOLOCK)
-              WHERE SUBUSERID = @USERID
-
-              DECLARE @ROLEID INT
-              SELECT @ROLEID = ROLEID FROM EMDS..STDUSER WITH(NOLOCK) WHERE ID = @USERID
-
-              IF (@IPADDRESS <> '10.0.0.0' OR @ISSUBUSER = 1) AND ISNULL(@ROLEID,0)<>191--2021-06-21:OGUZ/TOLGA:APIKEY ICIN BURAYA GEREKYOK..
-              BEGIN TRY
-              	declare @IPINT BIGINT
-              	IF LEN(@IPADDRESS) < 16
-              		select @IPINT=sum(CAST([value] AS BIGINT) * case octet when 1 then 256*256*256 when 2 then 256*256 when 3 then 256 when 4 then 1 end)
-              		from(
-              			SELECT [value] ,row_number()over(order by (select null)) AS octet
-              			FROM string_split(@IPADDRESS,'.')
-              		)tbl
-
-              	DECLARE @AGENTID INT
-              	SELECT  @AGENTID = ID FROM EMDS.dbo.STDUSERAGENT WITH(NOLOCK) WHERE [NAME] = @USERAGENT
-              	IF @AGENTID IS NULL AND @USERAGENT > ''
-              	BEGIN
-              		INSERT INTO STDUSERAGENT([NAME])VALUES(@USERAGENT)
-              		SET @AGENTID = SCOPE_IDENTITY()
-              	END
-
-              	IF LEN(@IPADDRESS) < 16
-              		INSERT INTO STDUSER_LOGIN([LOGINAT],[USERID],[IPV4],[AGENTID])
-              		VALUES(GETUTCDATE(),@USERID,@IPINT,@AGENTID)
-
-              	--2021-02-26:OGUZ:TAKIP ICIN
-              	UPDATE STDUSER  WITH(READPAST)
-              	SET LASTLOGINDATE = GETUTCDATE(),
-              		LASTLOGINIP   = @IPADDRESS
-              	WHERE ID = @USERID
-              	  AND [HOTELID] <> 18892
-              END TRY
-              BEGIN CATCH
-              	PRINT 'LOGIN LOG INSERT FAILED:'
-              	PRINT ERROR_MESSAGE()
-              END CATCH
-
-
-              --2021-05-26:OGUZ:SUPERADMINLERIN TAKIBI ICIN
-              IF LEFT(@USERID,1)='-'
-              BEGIN TRY
-              	exec sp_Executesql
-              		N'UPDATE ANGUSDEVELOPER SET LOGINTIME = GETUTCDATE() WHERE ID = @USERID',
-              		N'@USERID INT',@USERID
-              END TRY
-              BEGIN CATCH
-
-              END CATCH
+                    @USERID    NVARCHAR(50),
+                    @TENANTID  NVARCHAR(50),
+                    @IPADDRESS VARCHAR(45) = NULL,
+                    @USERAGENT VARCHAR(150) = NULL,
+                    @IPCOUNTRY NVARCHAR(2) = NULL
+                AS
+
+
+                DECLARE @YEDEK30 BIT = CASE WHEN @@SERVERNAME = 'WIN-9K0D3H2Q085' THEN 1 ELSE 0 END
+                DECLARE @EMDS_LASTRESTORE NVARCHAR(50)
+
+                IF @YEDEK30 = 1
+                BEGIN
+                    DECLARE @OFFSET INT,@OFFSETSTR NVARCHAR(50)
+                    SELECT @OFFSET = HOUROFFSET,@OFFSETSTR = Z.[NAME]
+                    FROM EMDS..HOTEL H WITH(NOLOCK) 
+                    INNER JOIN EMDS..STDTIMEZONE Z WITH(NOLOCK) ON Z.ID = ISNULL(H.TIMEZONEID,16)
+                    WHERE H.ID = @TENANTID
+
+                    SELECT  @EMDS_LASTRESTORE = FORMAT(MAX(DATEADD(HOUR,@OFFSET,[bs].[backup_finish_date])),'dd MMMM HH:mm') + @OFFSETSTR
+                    FROM    msdb..restorehistory rs
+                            INNER JOIN msdb..backupset bs ON [rs].[backup_set_id] = [bs].[backup_set_id]
+                            INNER JOIN msdb..backupmediafamily bmf ON [bs].[media_set_id] = [bmf].[media_set_id]
+                    WHERE rs.[destination_database_name]='EMDS'
+
+                END
+
+                --2020-07-10 13:42 UTC'DE OGUZ KAPATTI
+                --INSERT INTO STDUSER_LOGIN(LOGINTIME,LOGINID,HOTELID)VALUES(DATEADD(HOUR,3,GETUTCDATE()),@USERID,@TENANTID )
+
+                DECLARE @TAWKTOAPIKEY varchar(MAX) = '41b70f59f97ed3aab3302ea9562ad53234188f9a'
+                DECLARE @USERINTID INT = TRY_PARSE(@USERID AS INT)
+                DECLARE @ADMINDEFAULTTENANT INT
+                DECLARE @HOTELADMINLEVEL INT = (SELECT TOP(1) ADMINLEVEL FROM EMDS.dbo.VW_HOTEL WHERE HOTELID = @TENANTID)
+                DECLARE @USERADMINLEVEL  INT
+
+                IF @USERINTID < 0
+                BEGIN
+                    DECLARE @REFCODE VARCHAR(10)
+
+                    SELECT TOP(1) 
+                        @USERADMINLEVEL=ADMINLEVEL ,
+                        @ADMINDEFAULTTENANT = EASYPMSTENANT,
+                        @REFCODE = REFCODE
+                    FROM ERSDEVELOPER..ANGUSDEVELOPER WITH(NOLOCK)
+                    WHERE ID = @USERINTID
+
+                    --2021-06-30:OGUZ:BAYILER ICIN "KENDI OTELI MI ??" KONTROLU..
+                    IF LEN(@REFCODE)>0 AND @USERADMINLEVEL = 99 
+                    BEGIN
+                        IF NOT EXISTS(SELECT TOP(1) 1 FROM EMDS..HOTEL WITH(NOLOCK) WHERE ID = @TENANTID AND REFCODE = @REFCODE AND ADMINLEVEL <= @USERADMINLEVEL)
+                            THROW 51000,'You are not allowed to connect to this hotel',1
+                    END
+                END
+
+                IF @USERINTID < 0 AND @HOTELADMINLEVEL > @USERADMINLEVEL AND @TENANTID <> @ADMINDEFAULTTENANT
+                  THROW 51000,'Your admin level is not suitable to impersonate this hotel, please consult Can Temizkan',1
+
+                --2019-03-21:OGUZ:LOGIN OLMUS OTELIN PORTALID'SI OTOMATIK DOLMALI ISTEKLERDE !!!
+                SELECT TOP(1)
+                    @REFCODE AS [REFCODE],
+                    'https://{{ .Values.reporting.host }}/Print' AS REPORTURL,
+
+                    --CASE WHEN @TENANTID IN ('18892','20854 ') OR RIGHT(@TENANTID,1) IN ('0','1','2','3') THEN 'wss://4001std-v3.azurewebsites.net/' END
+                    CASE
+                        WHEN H.ID =  21878 THEN 'https://4001kk.hoteladvisor.net/'
+                        WHEN @USERINTID < 0 THEN NULL--2021-04-06:OGUZ:ADMINLER HEP DUZ POST ILE CALISSIN
+                        WHEN (H.ID in (21907,21878,22225,21192,20846,21713 ) ) THEN NULL --AKRONES DENEME
+                        WHEN H.ID IN(20292,21392,21713,22191) AND NOT EXISTS(SELECT TOP(1) 1 FROM [ENDPOINT] E WITH(NOLOCK) WHERE E.TENANTID = @TENANTID AND E.[URL]>'') THEN 'wss://4001.hoteladvisor.net'--'wss://4001docker.azurewebsites.net'
+                        WHEN CHARINDEX('Windows NT 6.1',@USERAGENT) > 0 THEN 'wss://4001.hoteladvisor.net'--2021-03-04:OGUZ/TOLGA:WINDOWS 7'LER WEBSOCKET KULLANSIN, CUNKU ONLAR PAKET YOLLAYIP CANCEL EDEMEYEBILIYOR
+                        ELSE NULL
+                    END AS WEBSOCKETURL,
+                    (SELECT MAX(ID) FROM CONFIG_PUBLISH WITH(NOLOCK)) AS CONFIGVERSION,
+                    CONVERT(NVARCHAR(200),HASHBYTES('MD5',CAST(PINCODE AS VARCHAR(4))),2) AS PINHASH,
+                    CASE 
+                        WHEN @USERINTID < 0 AND @USERINTID <> -15/*KORAL*/ THEN 15 
+                        WHEN U.[2FASTATE] IN(3,4) AND U.[2FAKEY] > ''      THEN 60 
+                        ELSE 999999 END AS IDLELOGOUTMINUTES,
+                    H.GENDARMEDEFAULTID,
+                    H.SUBDOMAIN,
+                    H.INTERNALCHATENABLED,--2019-06-17:OGUZ/TOLGA
+                    U.INTERNALCHATUSERNAME,--2019-06-17:OGUZ/TOLGA
+                    U.INTERNALCHATPASSWORD,--2019-06-17:OGUZ/TOLGA
+                    U.STDUSERDEPID,
+                    U.CHIEFOFSTOREID ,
+                    U.NEEDAPPROVALFORPURCHASE,
+                    U.MAIDCHEF,
+                    U.USERCODE,
+                    U.NATIONALIDNO,
+                    U.KBS2FASECRET,
+                    H.DOORKEYCARDMODE,
+                    H.EMAIL AS TENANTEMAIL,
+                    H.[PHONE] AS TENANTPHONE,
+                    H.[NAME] AS TENANTNAME,
+                    H.LOGOURL AS TENANTLOGOURL,
+                    H.[ADDRESS] AS TENANTADDRESS,
+                    H.WEB AS [TENANTWEB],
+                    H.DEFAULTCASHDEPARTMENTID AS DEFAULTCASHDEPARTMENTID,
+                    DEPT.[DEPARTMENTNAME] DEFAULTCASHDEPARTMENT,
+                    C.ID AS [DEFAULTCURRENCYID],
+                    C.CODE3 AS [DEFAULTCURRENCY],
+                    PC.ID AS [POSCURRENCYID],
+                    PC.CODE3 AS [POSCURRENCY],
+
+                    --2020-01-10:OGUZ:RATEMANAGER ICIN
+                    OC.ID AS [RATECURRENCYID],
+                    OC.CODE3 AS [RATECURRENCYCODE],
+
+                    H.[PORTALID],/*CAST(H.PROGDATE AS DATE)*/convert(nvarchar(10),H.PROGDATE,121) AS PROGDATE,
+                    --master.[sys].[fn_varbintohexstr](HASHBYTES('SHA2_256', cast(@USERID as nvarchar)/*U.USERCODE*/ + @TAWKTOAPIKEY)) AS [TAWKTOUSERCODE]
+
+                    REPLACE(master.[sys].[fn_varbintohexstr]( dbo.HMAC('SHA2_256',@TAWKTOAPIKEY, H.[EMAIL] )),'0x','') AS [TAWKTOUSERCODE],
+
+                    CONVERT(NVARCHAR(5),ISNULL(H.CHECKINTIME,'14:00'),114) AS CHECKINTIME,
+                    CONVERT(NVARCHAR(5),ISNULL(H.CHECKOUTTIME,'11:00'),114) AS CHECKOUTTIME,
+
+                    --2021-10-07:OGUZ:TRANSLATOR TABLOSUNA EKLI INSANLAR GIRINCE MENUDE TRANSLATE MENUSU CIKABILSIN
+                    ISNULL((SELECT TOP(1) 'Translator,' FROM EMDS..TRANSLATORS TU WITH(NOLOCK) WHERE TU.TRANSLATORUSERID = U.ID),'')+
+                    ISNULL(R.ROLENAME,'')+ISNULL((
+                                                     SELECT ','+R.ROLENAME+ISNULL(','+R.ROLECODE,'')
+                                                     FROM EMDS..STDUSER_ROLES UR WITH(NOLOCK)
+                                                              INNER JOIN EMDS..STDROLE  R WITh(NOLOCK) ON R.ID = UR.ROLEID
+                                                     WHERE UR.USERID = U.ID
+                                                           FOR XML PATH('')
+                                                 ),'') AS [ALLROLES],
+
+                    'SP_EASYPMS_TENANTCHANGED' AS TENANTCHANGEDSP,
+
+                    CASE WHEN 1=ISNULL(SUBS.MODULE_POS,0)THEN 'EASYPOS' ELSE 'QUICKPOS' END AS [POSMODE],
+
+                    ISNULL(STUFF((
+                        SELECT ','+S.CODE2
+                        FROM EMDS..PORTAL_LANGUAGES L WITH(NOLOCK)
+                        INNER JOIN EMDS..[LANGUAGE] S WITH(NOLOCK) ON S.[LANGUAGEID] = L.LANGUAGEID
+                        WHERE L.HOTELID = H.ID
+                          AND L.ISACTIVE = 1
+                        FOR XML PATH('')
+                    ),1,1,''),'') AS LANGUAGES,
+
+                    STUFF((SELECT ','+CAST(BRANCHID AS NVARCHAR(14)) FROM EMDS..STDUSER_BRANCH B WITH(NOLOCK) WHERE B.USERID = @USERID FOR XML PATH('') ),1,1,'') AS BRANCHIDS,
+                    ISNULL(UB.BRANCHID,AB.ID) AS DEFAULTBRANCHID,
+                    UBN.NAME AS DEFAULTBRANCH,
+
+                    --2021-05-18:TEOMAN, KULLANICILARA DEPO SINIRLAMALARI GETIRDIK
+                    STUFF((SELECT ','+CAST(STOREID AS NVARCHAR(14)) FROM EMDS..STDUSER_STORE S WITH(NOLOCK) WHERE S.USERID = @USERID FOR XML PATH('') ),1,1,'') AS STOREIDS,
+                    US.STOREID  AS DEFAULTSTOREID,
+                    USTORE.NAME AS DEFAULTSTORE,
+
+                    H.DEFAULTLANGUAGE,
+                    'webhotel'AS ONLYAPPLICATION,--STDROLE BICILEBILSIN DIYE
+
+                    H.KBSMODE,
+                    H.KBSCODE,
+                    H.KBSPASSWORD,
+                    H.KBSAUTO,
+
+                    OCC.CODE3 AS ONLINECURRENCYCODE,
+                    H.ONLINECURRENCYID,
+                    H.ONLINEAGENCYID,
+                    A.RATECODEID AS ONLINERATECODEID,
+                    A.AGENCYCODE AS ONLINEAGENCYCODE,
+                    A.RATETYPEID AS DEFAULTRATETYPEID,
+                    A.BOARDID AS DEFAULTBOARDTYPEID,
+                    BT.BOARDTYPE AS DEFAULTBOARDTYPE,
+                    RT.CODE AS DEFAULTRATETYPE,
+                    RC.RATECODE AS ONLINERATECODE,
+
+                    CONVERT(NVARCHAR(MAX),(
+                        SELECT *
+                        FROM(
+                            --SELECT /*@TENANTID*/U0.HOTELID AS TENANTID,NULL AS APIURL,H0.[NAME] AS DISPLAYNAME,'Default' as [key] ,H0.[NAME] as [displayField],-1 AS DISPLAYORDER
+                            --FROM EMDS..STDUSER U0 WITH(NOLOCK)
+                            --INNER JOIN EMDS..HOTEL H0 WITH(NOLOCK) ON H0.ID = U0.HOTELID
+                            --WHERE U0.ID = @USERID
+                            SELECT /*@TENANTID*/U0.HOTELID AS TENANTID,NULL AS APIURL,H0.[NAME] AS DISPLAYNAME,'Default' as [key] ,H0.[NAME] as [displayField],-1 AS DISPLAYORDER
+                            FROM EMDS..STDUSER U0 WITH(NOLOCK)
+                            LEFT  JOIN EMDS..STDUSER_HOTELS CHILD WITH(NOLOCK) ON CHILD.SUBUSERID = @USERID
+                            LEFT  JOIN EMDS..STDUSER PARENT WITH(NOLOCK) ON PARENT.ID = CHILD.STDUSERID
+                            INNER JOIN EMDS..HOTEL H0 WITH(NOLOCK) ON H0.ID = ISNULL(PARENT.HOTELID,U0.HOTELID)
+                            WHERE U0.ID = @USERID
+
+                            UNION ALL
+
+                            --DOGRUDAN BENIM COCUKLARIM
+                            select
+                                AU.TENANTID,
+                                AU.APIURL,
+                                AU.DISPLAYNAME,
+                                AU.DISPLAYNAME AS [key],
+                                AU.DISPLAYNAME AS [displayField],
+                                cast(AU.DISPLAYORDER as smallint)
+                            FROM EMDS..[STDUSER_HOTELS] AU WITH(NOLOCK)
+                            WHERE AU.STDUSERID = @USERID
+
+                            UNION ALL
+
+                            --DOGRUDAN KARDESLERIM
+                            select
+                                SB.TENANTID,
+                                SB.APIURL,
+                                SB.DISPLAYNAME,
+                                SB.DISPLAYNAME AS [key],
+                                SB.DISPLAYNAME AS [displayField],
+                                cast(SB.DISPLAYORDER as smallint)
+                            FROM EMDS..[STDUSER_HOTELS] AU WITH(NOLOCK)
+                            INNER JOIN EMDS..[STDUSER_HOTELS] SB WITH(NOLOCK) ON SB.STDUSERID = AU.STDUSERID
+                            WHERE AU.SUBUSERID = @USERID
+                        )AS TBL
+                        ORDER BY TBL.DISPLAYORDER ASC
+                        FOR JSON AUTO
+                    )) AS APIKEYS,
+
+                    --2019-12-18:OGUZ/KEMAL:HESAPLARIN ODEMELERINI HIZLICA ALABILMEK ICIN
+                    H.ACCOUNTID_MAINSAFE,
+                    V1.NAME AS ACCOUNT_MAINSAFE,
+                    H.ACCOUNTID_CREDITCARD,
+                    V2.NAME AS ACCOUNT_CREDITCARD,
+                    H.[ACCOUNTID_BANK],
+                    V3.NAME AS[ACCOUNT_BANK],
+
+                    CAST(case when EXISTS(SELECT TOP(1) 1 FROM EMDS..EFATURA_SUPPLIER S WITH(NOLOCK) WHERE S.HOTELID = @TENANTID AND S.TaxNumber LIKE '%[0-9]%') THEN 1 ELSE 0 END AS BIT) AS EINVOICEENABLED,
+
+                  U.USEREMINDER,
+                  --2020-03-04:OGUZ
+                  (SELECT COUNT(H2.ID) FROM EMDS..HOTEL H2 WITH(NOLOCK) WHERE H2.ID = H.ID OR H2.GROUPID = H.GROUPID) AS GROUPHOTELCOUNT,
+
+                  --2020-06-12:OGUZ
+                  H.POSVERSION,
+
+                  SUBS.MODULE_PMSMINI,
+                  SUBS.MODULE_PMSMODE,
+
+                  SUBS.STOP_IF_OVERDUEPAYMENT,
+
+                  CASE
+                    WHEN @YEDEK30 = 1 
+                    THEN '<div style="width: 100%; background-color: #f44336; color: rgba(255,255,255,.84); text-align: center;padding: 5px;display: flex;justify-content: center;align-items: center;">'+
+                         '<mat-icon class="material-icons">warning</mat-icon>'+
+                         'Elektraweb Backup '+@EMDS_LASTRESTORE+
+                         '</div>'
+
+                    --WHEN @TENANTID <> '18892' THEN NULL
+                    WHEN SUBS.OVERDUEPAYMENT > 0 OR SUBS.DISPLAYMESSAGE > '' OR SUBS.DEMOMODE = 1
+                    THEN '<div style="width: 100%; background-color: #f44336; color: rgba(255,255,255,.84); text-align: center;padding: 5px;display: flex;justify-content: center;align-items: center;">'+
+                         '<mat-icon class="material-icons">warning</mat-icon>'+
+
+                         ISNULL(NULLIF(SUBS.DISPLAYMESSAGE,'')+' ','')+
+                         CASE WHEN SUBS.OVERDUEPAYMENT > 0  OR SUBS.DEMOMODE = 1
+                         THEN
+                             '<a  style="margin: 0 10px;color: rgba(255,255,255,.87);" href="javascript:((()=>{ angus.ngZone.run(()=>{ var l = angus.loadingService.showLoadingOverlay(); angus.router.navigate([''/app/hotel/payment'']).then(()=>l.destroy()) }) })())" >'+
+                                CASE WHEN ISNULL(SUBS.DEMOMODE,0) = 1 THEN 'Demo Mode ' ELSE '' END+
+                                CASE WHEN SUBS.OVERDUEPAYMENT > 0 THEN
+                                    CASE WHEN H.DEFAULTLANGUAGE = 'TR'
+                                    THEN 'Lisans aktivasyonu için tıklayınız'
+                                    ELSE 'Click here to activate your licence'END
+                                ELSE '' END+
+                             '</a>'
+                         ELSE '' END+
+                         '<mat-icon class="material-icons" style="font-size: 14px;position: relative;top: 2px;">launch</mat-icon></div>'
+
+                    --WHEN LEFT(@USERID,1)='-'  THEN '<b>Adminsiniz lutfen dikkatli olunuz</b>'
+
+                  end
+                 
+
+                  AS HTMLDISPLAYMESSAGE,
+
+                  --2020-06-23:OGUZ
+                  CAST(CASE WHEN SUBS.DEMOMODE = 1 AND SUBS.[STARTDATE] < DATEADD(MONTH,-1,GETDATE()) THEN 1 ELSE 0 END AS BIT) AS DEMOOVER,
+
+                  --2020-05-26:OGUZ:HOTELSETTINGS
+                  H.ROOMCAPACITY,
+                  H.BEDCAPACITY,
+                  --CASE WHEN H.ID = 19544 THEN null --OGUZ:https://sp.ersas.com sitesi de 4001'i kullandigi için ora bozulmasın diye
+                     --  WHEN @@SERVERNAME <> 'DB' THEN null--OGUZ:Diger yedek30/yedek24 gibi sunucularda redirection olmasin diye
+                     --  WHEN SUBS.MODULE_PMSMODE = 2 THEN 'midi'
+                     --  WHEN SUBS.MODULE_PMSMODE = 3 THEN 'mini'
+                     --  ELSE 'app'
+                  --END AS REDIRECTURL,
+                  CASE WHEN H.ID = 19544 THEN null --OGUZ:https://sp.ersas.com sitesi de 4001'i kullandigi için ora bozulmasın diye
+                       WHEN @@SERVERNAME <> 'elektraweb1.558ea2690441.database.windows.net' THEN null--OGUZ:Diger yedek30/yedek24 gibi sunucularda redirection olmasin diye
+                       WHEN SUBS.MODULE_PMSMODE = 0 THEN 'NonPms'
+                       WHEN SUBS.MODULE_PMSMODE = 2 THEN 'Midi'
+                       WHEN SUBS.MODULE_PMSMODE = 3 THEN 'Mini'
+                       ELSE ''
+                  END AS PACKAGENAME,
+                  U.TASKVIEWMODE,U.MAID,
+
+                  STORE.ID   AS MAINSTOREID,--2020-12-03:OGUZ
+                  STORE.[NAME] AS MAINSTORE,--2020-12-03:OGUZ
+
+                  U.MAXDISCOUNTPERCENT,
+                  ISNULL(U.[FIRSTNAME],'') + ISNULL(' ' + U.LASTNAME,'') AS [USERNAME],
+                  U.PHONE AS USERPHONE,
+                  U.EMAIL AS USEREMAIL,
+                  U.POSITION AS USERPOSITION,
+                  Z.HOUROFFSET AS TIMEZONE_HOUROFFSET,
+                  Z.NAME AS TIMEZONE_NAME,
+
+                  ADR.[NAME] AS ADDRESS_NAME,
+                  [AS].USESUBACCOUNT                        AS ACCOUNTING_USESUBACCOUNT,
+                  [AS].LOCKINVOICEOFDESPATCH                AS ACCOUNTING_LOCKINVOICEOFDESPATCH,
+                  [AS].CHECKLASTSTOCKBALANCE                AS ACCOUNTING_CHECKLASTSTOCKBALANCE,
+                  [AS].ALLOWCHANGE_STOCKINVOICEACCRECEIPT   AS ACCOUNTING_ALLOWCHANGE_STOCKINVOICEACCRECEIPT  ,
+                  [AS].ALLOWCHANGE_SERVICEINVOICEACCRECEIPT	AS ACCOUNTING_ALLOWCHANGE_SERVICEINVOICEACCRECEIPT,
+                  [AS].ALLOWCHANGE_HOTELINVOICEACCRECEIPT	AS ACCOUNTING_ALLOWCHANGE_HOTELINVOICEACCRECEIPT  ,
+                  [AS].ALLOWCHANGE_STOCKFICHEACCRECEIPT		AS ACCOUNTING_ALLOWCHANGE_STOCKFICHEACCRECEIPT	  ,
+                  [AS].ALLOWCHANGE_COUNTINGACCRECEIPT		AS ACCOUNTING_ALLOWCHANGE_COUNTINGACCRECEIPT	  ,
+                  [AS].ALLOWCHANGE_PAYROLLACCRECEIPT		AS ACCOUNTING_ALLOWCHANGE_PAYROLLACCRECEIPT  	  ,
+                  [AS].RECEIPTNUMBER_MANUAL,--2021-02-25:AHMET
+                  [AS].ENABLE_EFATURASUPPLIER_ONINVOICEFORM, --2021-05-27:TEOMAN, user bazlı seri kullanımı
+                  [AS].QUICKINVOICE_PASSERBYCASH_ACCOUNTID,  --2021-06-18:TEOMAN, Hızlı fatura peşin carisi
+                  [AS].SENDPAYMENTLINK_INRECONCILIATIONEMAIL,--2021-10-19:TEOMAN, Mutabakatta ödeme linki göndermek için 
+                  AS_AV1.NAME AS QUICKINVOICE_PASSERBYCASH_ACCOUNT,--2021-06-23:TEOMAN, Hızlı fatura peşin carisinin adı 
+                  [AS].DONTSHOW_ACCOUNT_BALANCES_INACCOUNTLIST AS ACCOUNTING_DONTSHOW_ACCOUNT_BALANCES_INACCOUNTLIST, --2021-08-26:TEOMAN, hesap planinda sube ve tarih secimli balans gosterim
+                  --2021-03-11:OGUZ:KEMAL BEY DEDI
+                  ES.[ACCOUNTING_EMAIL],
+                  ES.[PURCHASING_EMAIL],
+                  ES.[FRONTOFFICE_EMAIL],
+                  ES.[BABS_EMAIL],
+                  ES.[CALLCENTER_EMAIL],
+
+                  --2021-05-26:OGUZ
+                  RESC.AGEINTERVAL1 AS RES_DEFAULTRATECODEID_AGEINTERVAL1,
+                  RESC.AGEINTERVAL2 AS RES_DEFAULTRATECODEID_AGEINTERVAL2,
+                  RESC.AGEINTERVAL3 AS RES_DEFAULTRATECODEID_AGEINTERVAL3,
+                  RESB.BOARDTYPE    AS RES_DEFAULTBOARDTYPE,
+                  RESC.RATECODE     AS RES_DEFAULTRATECODE,
+                  RESCUR.CODE3      AS RES_DEFAULTCURRENCY,
+                  RESG.[NAME]       AS RES_DEFAULTSEGMENT,
+                  RESK.[SOURCE]     AS RES_DEFAULTSOURCE,
+                  RESO.ROOMTYPECODE AS RES_DEFAULTROOMTYPE,
+                  RESU.[NAME]       AS RES_DEFAULTNATION,
+                  RESF.CODE         AS RES_DEFAULTRATETYPE,
+
+                  --2021-08-20:OGUZ/HAYDAR:USER'DAN GELEN KBS'YI EZMESIN YANLISLIKLA DIYE AYRI KOLON ISMIYLE YOLLADIK
+                  HS.KBS2FASECRET AS HS_KBS2FASECRET,
+                  HS.KBSTCKN AS HS_KBSTCKN,
+                  
+                  --SOURCE
+                  HS.*
+
+
+                FROM EMDS..HOTEL H WITH(NOLOCK)
+                LEFT JOIN EMDS..HOTEL_EMAIL_SETTINGS ES WITH(NOLOCK) ON ES.HOTELID = H.ID
+                LEFT JOIN EMDS..HOTEL_DEPARTMENT DEPT WITH(NOLOCK) ON DEPT.ID = H.DEFAULTCASHDEPARTMENTID
+                LEFT JOIN EMDS..STDUSER U WITH(NOLOCK) ON U.ID = @USERID
+                LEFT JOIN EMDS..STDROLE R WITH(NOLOCK) ON R.ID = U.ROLEID
+                LEFT JOIN EMDS..STDCURCODE C WITH(NOLOCK) ON C.ID = H.DEFAULTCURRENCYID
+                LEFT JOIN ERSDEVELOPER..ANGUSDEVELOPER D WITH(NOLOCK) ON D.ID = @USERID
+                LEFT JOIN EMDS..AGENCY A WITH(NOLOCK) ON A.ID = H.ONLINEAGENCYID
+                LEFT JOIN EMDS..HOTEL_BOARDTYPE BT WITH(NOLOCK) ON BT.ID = A.BOARDID
+                LEFT JOIN EMDS..HOTEL_RATETYPE RT WITH(NOLOCK) ON RT.ID = A.RATETYPEID
+                LEFT JOIN EMDS..HOTEL_RATECODE RC WITH(NOLOCK) ON RC.ID = A.RATECODEID
+
+                LEFT JOIN EMDS..STDCURCODE OC WITH(NOLOCK) ON OC.ID = RC.CURRENCYID
+                LEFT JOIN EMDS..STDCURCODE PC WITH(NOLOCK) ON PC.ID = H.POSCURRENCYID
+
+                LEFT JOIN EMDS..APPCARD_VIRTUAL V1 WITH(NOLOCK) ON V1.ID = H.ACCOUNTID_MAINSAFE
+                LEFT JOIN EMDS..APPCARD_VIRTUAL V2 WITH(NOLOCK) ON V2.ID = H.ACCOUNTID_CREDITCARD
+                LEFT JOIN EMDS..APPCARD_VIRTUAL V3 WITH(NOLOCK) ON V3.ID = H.[ACCOUNTID_BANK]
+
+                LEFT JOIN EMDS..STDCURCODE OCC WITH(NOLOCK) ON OCC.ID = H.ONLINECURRENCYID
+                LEFT JOIN EMDS..HOTEL_SETTINGS HS WITH(NOLOCK) ON HS.HOTELID = H.ID
+                OUTER APPLY(
+                    SELECT TOP(1) *
+                    FROM EMDS..HOTEL_SUBSCRIPTION SUBS WITH(NOLOCK)
+                    WHERE SUBS.OTELID = H.ID
+                        --AND CAST(GETDATE() AS DATE) BETWEEN SUBS.STARTDATE AND SUBS.ENDDATE
+                    ORDER BY SUBS.ENDDATE desc--SUBS.ID DESC
+                )SUBS
+                LEFT JOIN EMDS..STDTIMEZONE Z WITH(NOLOCK) ON Z.ID = H.TIMEZONEID
+                LEFT JOIN EMDS..ACCOUNTING_BRANCH AB WITH(NOLOCK) ON AB.HOTELID = H.ID AND AB.ISDEFAULT = 1
+                LEFT JOIN EMDS..STDUSER_BRANCH UB  WITH(NOLOCK) ON UB.USERID = @USERID AND UB.ISDEFAULT = 1
+                LEFT JOIN EMDS..STDUSER_STORE  US  WITH(NOLOCK) ON US.USERID = @USERID AND US.ISDEFAULT = 1           	--2021-05-18:TEOMAN, KULLANICILARA DEPO SINIRLAMALARI GETIRDIK
+                LEFT JOIN EMDS..STOCK_STORE USTORE WITH(NOLOCK) ON USTORE.HOTELID = H.ID AND USTORE.ID = US.STOREID     --2021-05-18:TEOMAN, KULLANICILARA DEPO SINIRLAMALARI GETIRDIK
+                LEFT JOIN EMDS..STOCK_STORE STORE  WITH(NOLOCK) ON STORE.HOTELID = H.ID AND STORE.MAINSTORE = 1 
+                                                                                                AND STORE.BRANCHID = ISNULL(UB.BRANCHID,AB.ID) --2021-03-27:TEOMAN
+                LEFT JOIN EMDS..ACCOUNTING_BRANCH UBN WITH(NOLOCK) ON UBN.ID = ISNULL( UB.BRANCHID,AB.ID )
+                LEFT JOIN EMDS..[ADDRESS] ADR WITH(NOLOCK) ON ADR.ID = H.ADDRESSID
+
+                LEFT JOIN EMDS..ACCOUNTING_SETTINGS [AS] WITH(NOLOCK) ON [AS].HOTELID = H.ID
+                LEFT JOIN EMDS..APPCARD_VIRTUAL   AS_AV1 WITH(NOLOCK) ON AS_AV1.ID = [AS].QUICKINVOICE_PASSERBYCASH_ACCOUNTID
+
+                LEFT JOIN EMDS..HOTEL_RATECODE RESC WITH(NOLOCK) ON RESC.ID = HS.RES_DEFAULTRATECODEID
+                LEFT JOIN EMDS..HOTEL_BOARDTYPE RESB WITH(NOLOCK) ON RESB.ID = HS.RES_DEFAULTBOARDTYPEID
+                LEFT JOIN EMDS..STDCURCODE RESCUR WITH(NOLOCK) ON RESCUR.ID = HS.RES_DEFAULTCURRENCYID
+                LEFT JOIN EMDS..HOTEL_SEGMENT RESG WITH(NOLOCK) ON RESG.ID = HS.RES_DEFAULTSEGMENTID
+                LEFT JOIN EMDS..HOTEL_SOURCE RESK WITH(NOLOCK) ON RESK.ID = HS.RES_DEFAULTSOURCEID
+                LEFT JOIN EMDS..HOTEL_ROOMTYPE RESO WITH(NOLOCK) ON RESO.ID = HS.RES_DEFAULTROOMTYPEID
+                LEFT JOIN EMDS..COUNTRY RESU WITH(NOLOCK) ON RESU.ID = HS.RES_DEFAULTNATIONID
+                LEFT JOIN EMDS..HOTEL_RATETYPE RESF WITH(NOLOCK) ON RESF.ID = HS.RES_DEFAULTRATETYPEID
+                WHERE H.ID = TRY_PARSE(@TENANTID AS INT)
+
+
+                ---------------------------------------------------
+                --2020-08-17:OGUZ:GELEN PARAMETRELERI GORMEK ICIN--
+                ---------------------------------------------------
+                SELECT @TENANTID AS TENANTID,@USERID AS [USERID]
+
+                DECLARE @ISSUBUSER BIT
+                SELECT TOP(1) @ISSUBUSER = 1
+                FROM EMDS..STDUSER_HOTELS WITH(NOLOCK)
+                WHERE SUBUSERID = @USERID
+
+                DECLARE @ROLEID INT
+                SELECT @ROLEID = ROLEID FROM EMDS..STDUSER WITH(NOLOCK) WHERE ID = @USERID
+
+                IF (@IPADDRESS <> '10.0.0.0' OR @ISSUBUSER = 1) AND ISNULL(@ROLEID,0)<>191--2021-06-21:OGUZ/TOLGA:APIKEY ICIN BURAYA GEREKYOK..
+                BEGIN TRY
+                    declare @IPINT BIGINT
+                    IF LEN(@IPADDRESS) < 16
+                        select @IPINT=sum(CAST([value] AS BIGINT) * case octet when 1 then 256*256*256 when 2 then 256*256 when 3 then 256 when 4 then 1 end)
+                        from(
+                            SELECT [value] ,row_number()over(order by (select null)) AS octet 
+                            FROM string_split(@IPADDRESS,'.')
+                        )tbl
+
+                    DECLARE @AGENTID INT
+                    SELECT  @AGENTID = ID FROM EMDS.dbo.STDUSERAGENT WITH(NOLOCK) WHERE [NAME] = @USERAGENT
+                    IF @AGENTID IS NULL AND @USERAGENT > ''
+                    BEGIN
+                        INSERT INTO STDUSERAGENT([NAME])VALUES(@USERAGENT)
+                        SET @AGENTID = SCOPE_IDENTITY()
+                    END
+                 
+                    DECLARE @LASTLOGINAT DATETIME
+                    SELECT TOP(1) @LASTLOGINAT = [LOGINAT]
+                    FROM STDUSER_LOGIN WITH(NOLOCK)
+                    WHERE [USERID] = @USERID
+                      AND [LOGINAT] > DATEADD(MINUTE,-3,GETUTCDATE())
+                      AND [IP] = @IPADDRESS
+
+                    IF @LASTLOGINAT IS NULL
+                    BEGIN
+                        INSERT INTO STDUSER_LOGIN([LOGINAT],[USERID],[IPV4],[AGENTID],[COUNTRYCODE],[IP])
+                        VALUES(GETUTCDATE(),@USERID,@IPINT,@AGENTID,@IPCOUNTRY,@IPADDRESS) 
+
+                        --2021-02-26:OGUZ:TAKIP ICIN
+                        UPDATE STDUSER  WITH(READPAST)
+                        SET LASTLOGINDATE = GETUTCDATE(),
+                            LASTLOGINIP   = @IPADDRESS
+                        WHERE ID = @USERID
+                          AND [HOTELID] <> 18892
+                    END
+                END TRY
+                BEGIN CATCH
+                    PRINT 'LOGIN LOG INSERT FAILED:'
+                    PRINT ERROR_MESSAGE()
+                END CATCH
+
+
+                --2021-05-26:OGUZ:SUPERADMINLERIN TAKIBI ICIN
+                IF LEFT(@USERID,1)='-'
+                BEGIN TRY
+                    exec sp_Executesql 
+                        N'UPDATE ANGUSDEVELOPER SET LOGINTIME = GETUTCDATE() WHERE ID = @USERID',
+                        N'@USERID INT',@USERID
+                END TRY
+                BEGIN CATCH
+
+                END CATCH
+
+              
               GO
               /****** Object:  StoredProcedure [dbo].[SP_BEFORELOGIN]    Script Date: 17.08.2021 4:34:35 PM ******/
               SET ANSI_NULLS ON
