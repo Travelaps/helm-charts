@@ -74,6 +74,13 @@ spec:
               GO
               SET QUOTED_IDENTIFIER ON
               GO
+              CREATE TABLE PORTAL(
+                ID INT PRIMARY KEY IDENTITY(1,1),
+                [DOMAIN] NVARCHAR(100) NOT NULL
+              )
+              GO
+              INSERT INTO PORTAL([DOMAIN])VALUES('')
+              GO
               CREATE TABLE [dbo].[APISEQUENCE_PERIOD](
               	[ID] [int] IDENTITY(1,1) NOT NULL,
               	[SEQUENCEID] [int] NOT NULL,
