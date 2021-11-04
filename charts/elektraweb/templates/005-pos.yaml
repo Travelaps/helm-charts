@@ -1,4 +1,19 @@
 {{ if .Values.pos.install }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: pos-endpoints
+  namespace: default
+data:
+  endpoints-pos-client.json: |
+    [
+        {
+            "endpoint": "https://{{ .Values.worker.host }}/",
+            "language": "EN",
+            "forceSecureConnection": true
+        }
+    ]
+---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -16,9 +31,18 @@ spec:
       labels:
         k8s-app: pos-ng11
     spec:
+      volumes:
+        - name: endpoints
+          configMap:
+            name: angus-endpoints
+            defaultMode: 420
       containers:
         - name: pos-ng11
           image: {{ .Values.pos.image }}
+          volumeMounts:
+            - name: endpoints
+              mountPath: /usr/share/nginx/html/assets/endpoints-pos-client.json
+              subPath: endpoints-pos-client.json
       imagePullSecrets:
         - name: regcred
 ---
