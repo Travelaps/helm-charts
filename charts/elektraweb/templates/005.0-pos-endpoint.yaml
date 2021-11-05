@@ -1,0 +1,16 @@
+{{ if .Values.pos.install }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: pos-endpoints
+  namespace: default
+data:
+  endpoints-pos-client.json: |
+    [
+        {
+            "endpoint": "https://{{ .Values.worker.host }}/",
+            "language": "EN",
+            "forceSecureConnection": true
+        }
+    ]
+{{ end }}

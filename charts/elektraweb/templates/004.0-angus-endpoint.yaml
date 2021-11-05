@@ -1,0 +1,37 @@
+{{ if .Values.angus.install }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: angus-endpoints
+  namespace: default
+  labels:
+    app.kubernetes.io/name: angus-endpoints
+data:
+  endpoints-client.json: |
+    [
+        {
+            "displayName": "{{ .Values.angus.displayName }}",
+            "shortName": "{{ .Values.angus.shortName }}",
+            "endpoint": "https://{{ .Values.worker.host }}/",
+            "defaultLang": "EN",
+            "languages": ["TR","EN","DE","RU","AR","FR","RO"],
+            "sendPasswordLink": true,
+            "sendPasswordProcedure": "SP_EASYPMS_FORGOTPASSWORD",
+            "userSettings": {
+                "recordID": "settings-change-tenant",
+                "menuHTML": "${angus.api.adminLevel < 99 && angus.api.tenant && angus.api.tenant.APIKEYS && JSON.parse(APIKEYS).length > 1 ? '<h2 style=\"margin: 0;\">' + TENANTNAME + '</h2>' : ''}"
+            },
+            "loginLabels": {
+                "tenant": "Hotel Code",
+                "usercode": "User Code",
+                "password": "Password"
+            },
+            {{ if .Values.angus.logo }}
+            "logo": "{{ .Values.angus.logo }}",
+            {{ end }}
+            "adminTwitterFeed": null,
+            "useFirebaseMessaging": true,
+            "showOflineModeButton": "return angus.api.getOfflineCacheData('offlineCacheEnabled')"
+        }
+    ]
+{{ end }}
