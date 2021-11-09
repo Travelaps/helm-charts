@@ -548,17 +548,6 @@ spec:
               )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
               ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
               GO
-              INSERT INTO HOTEL(ID,[NAME])
-              VALUES(0,'SYSTEM HOTEL')
-              GO
-              {{ if .Values.hotel.install }}
-                INSERT INTO HOTEL(ID,[NAME])
-                VALUES(
-                    {{ .Values.hotel.hotelid }},
-                    '{{ .Values.hotel.hotelname }}'
-                )
-              {{ end }} 
-              GO
               /****** Object:  Table [dbo].[HOTEL_GROUP]    Script Date: 17.08.2021 4:40:31 PM ******/
               SET ANSI_NULLS ON
               GO
@@ -2192,4 +2181,14 @@ spec:
               GO
               ALTER DATABASE [EMDS] MODIFY FILE ( NAME = N'EMDS', SIZE = 6144000KB )
               GO
-              
+              INSERT INTO HOTEL(ID,[NAME])
+              VALUES(0,'SYSTEM HOTEL')
+              GO
+              {{ if .Values.hotel.install }}
+                INSERT INTO HOTEL(ID,[NAME])
+                VALUES(
+                    {{ .Values.hotel.hotelid }},
+                    '{{ .Values.hotel.hotelname }}'
+                )
+              {{ end }} 
+              GO
