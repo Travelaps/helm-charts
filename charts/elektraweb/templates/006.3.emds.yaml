@@ -190,7 +190,7 @@ spec:
               SET QUOTED_IDENTIFIER ON
               GO
               CREATE TABLE [dbo].[HOTEL](
-              	[ID] [int] IDENTITY(1,1) NOT FOR REPLICATION NOT NULL,
+              	[ID] [int] NOT NULL,
               	[NAME] [nvarchar](250) NULL,
               	[ADDRESS] [nvarchar](255) NULL,
               	[EMAIL] [nvarchar](100) NULL,
@@ -547,6 +547,17 @@ spec:
               	[UID] ASC
               )WITH (PAD_INDEX = ON, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 97, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
               ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+              GO
+              INSERT INTO HOTEL(ID,[NAME])
+              VALUES(0,'SYSTEM HOTEL')
+              GO
+              {{ if .Values.hotel.install }}
+                INSERT INTO HOTEL(ID,[NAME])
+                VALUES(
+                    {{ .Values.hotel.hotelid }},
+                    '{{ .Values.hotel.hotelname }}'
+                )
+              {{ end }} 
               GO
               /****** Object:  Table [dbo].[HOTEL_GROUP]    Script Date: 17.08.2021 4:40:31 PM ******/
               SET ANSI_NULLS ON

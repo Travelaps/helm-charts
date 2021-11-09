@@ -1,0 +1,365 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: sql-create-agentjobs
+  namespace: default
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: initial-creator
+          image: ghcr.io/travelaps/mssql2019fts:v2
+          command:
+            - /opt/mssql-tools/bin/sqlcmd
+          args:
+            - '-S'
+            - sql
+            - '-U'
+            - sa
+            - '-P'
+            - {{ .Values.sql.saPassword }}
+            - '-Q'
+            - |
+                USE [msdb]
+                GO
+
+                /****** Object:  Job [Async JOB OGUZ 2017-03-31]    Script Date: 04.11.2021 11:17:25 AM ******/
+                BEGIN TRANSACTION
+                DECLARE @ReturnCode INT
+                SELECT @ReturnCode = 0
+                /****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 04.11.2021 11:17:26 AM ******/
+                IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
+                BEGIN
+                EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+
+                END
+
+                DECLARE @jobId BINARY(16)
+                EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'Async JOB OGUZ 2017-03-31', 
+                        @enabled=1, 
+                        @notify_level_eventlog=0, 
+                        @notify_level_email=0, 
+                        @notify_level_netsend=0, 
+                        @notify_level_page=0, 
+                        @delete_level=0, 
+                        @description=N'No description available.', 
+                        @category_name=N'[Uncategorized (Local)]', 
+                        @owner_login_name=N'sa', @job_id = @jobId OUTPUT
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                /****** Object:  Step [DO ALL ASYNC JOBS]    Script Date: 04.11.2021 11:17:28 AM ******/
+                EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'DO ALL ASYNC JOBS', 
+                        @step_id=1, 
+                        @cmdexec_success_code=0, 
+                        @on_success_action=1, 
+                        @on_success_step_id=0, 
+                        @on_fail_action=2, 
+                        @on_fail_step_id=0, 
+                        @retry_attempts=0, 
+                        @retry_interval=0, 
+                        @os_run_priority=0, @subsystem=N'TSQL', 
+                        @command=N'EXEC EMDS.dbo.SP_STDASYNCCOMMAND', 
+                        @database_name=N'EMDS', 
+                        @flags=4
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'EVERY 10 SECOND', 
+                        @enabled=1, 
+                        @freq_type=4, 
+                        @freq_interval=1, 
+                        @freq_subday_type=2, 
+                        @freq_subday_interval=10, 
+                        @freq_relative_interval=0, 
+                        @freq_recurrence_factor=0, 
+                        @active_start_date=20170331, 
+                        @active_end_date=99991231, 
+                        @active_start_time=0, 
+                        @active_end_time=235959, 
+                        @schedule_uid=N'e930fa5e-2802-4e1d-854e-8b429a183140'
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                COMMIT TRANSACTION
+                GOTO EndSave
+                QuitWithRollback:
+                    IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
+                EndSave:
+                GO
+                USE [msdb]
+                GO
+
+                /****** Object:  Job [ElektraWeb Dynamic Dirty Folio]    Script Date: 04.11.2021 12:20:33 PM ******/
+                BEGIN TRANSACTION
+                DECLARE @ReturnCode INT
+                SELECT @ReturnCode = 0
+                /****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 04.11.2021 12:20:34 PM ******/
+                IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
+                BEGIN
+                EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+
+                END
+
+                DECLARE @jobId BINARY(16)
+                EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'ElektraWeb Dynamic Dirty Folio', 
+                        @enabled=1, 
+                        @notify_level_eventlog=0, 
+                        @notify_level_email=0, 
+                        @notify_level_netsend=0, 
+                        @notify_level_page=0, 
+                        @delete_level=0, 
+                        @description=N'No description available.', 
+                        @category_name=N'[Uncategorized (Local)]', 
+                        @owner_login_name=N'sa', @job_id = @jobId OUTPUT
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                /****** Object:  Step [1]    Script Date: 04.11.2021 12:20:36 PM ******/
+                EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'1', 
+                        @step_id=1, 
+                        @cmdexec_success_code=0, 
+                        @on_success_action=1, 
+                        @on_success_step_id=0, 
+                        @on_fail_action=2, 
+                        @on_fail_step_id=0, 
+                        @retry_attempts=0, 
+                        @retry_interval=0, 
+                        @os_run_priority=0, @subsystem=N'TSQL', 
+                        @command=N'EXEC [dbo].[SP_EASYPMS_RECALCULATEDYNAMICFOLIO_BYFOLIODIRTY]', 
+                        @database_name=N'EMDS', 
+                        @flags=0
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'every 5 minute', 
+                        @enabled=1, 
+                        @freq_type=4, 
+                        @freq_interval=1, 
+                        @freq_subday_type=4, 
+                        @freq_subday_interval=5, 
+                        @freq_relative_interval=0, 
+                        @freq_recurrence_factor=0, 
+                        @active_start_date=20200702, 
+                        @active_end_date=99991231, 
+                        @active_start_time=0, 
+                        @active_end_time=235959, 
+                        @schedule_uid=N'987af523-a147-4e99-872b-5b7ea34a1b52'
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                COMMIT TRANSACTION
+                GOTO EndSave
+                QuitWithRollback:
+                    IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
+                EndSave:
+                GO
+
+
+                USE [msdb]
+                GO
+
+                /****** Object:  Job [Generate Availability]    Script Date: 04.11.2021 12:21:44 PM ******/
+                BEGIN TRANSACTION
+                DECLARE @ReturnCode INT
+                SELECT @ReturnCode = 0
+                /****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 04.11.2021 12:21:45 PM ******/
+                IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
+                BEGIN
+                EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+
+                END
+
+                DECLARE @jobId BINARY(16)
+                EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'Generate Availability', 
+                        @enabled=1, 
+                        @notify_level_eventlog=0, 
+                        @notify_level_email=0, 
+                        @notify_level_netsend=0, 
+                        @notify_level_page=0, 
+                        @delete_level=0, 
+                        @description=N'Oguz, tum aktif oteller icin 1 yillik availability oldugundan emin olunsun', 
+                        @category_name=N'[Uncategorized (Local)]', 
+                        @owner_login_name=N'sa', @job_id = @jobId OUTPUT
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                /****** Object:  Step [main]    Script Date: 04.11.2021 12:21:47 PM ******/
+                EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'main', 
+                        @step_id=1, 
+                        @cmdexec_success_code=0, 
+                        @on_success_action=1, 
+                        @on_success_step_id=0, 
+                        @on_fail_action=2, 
+                        @on_fail_step_id=0, 
+                        @retry_attempts=0, 
+                        @retry_interval=0, 
+                        @os_run_priority=0, @subsystem=N'TSQL', 
+                        @command=N'--XML OPTIONS
+                    SET ANSI_NULLS ON
+                    SET ANSI_PADDING ON
+                    SET ANSI_WARNINGS ON
+                    SET ARITHABORT ON
+                    SET CONCAT_NULL_YIELDS_NULL ON
+                    SET NUMERIC_ROUNDABORT OFF
+                    SET QUOTED_IDENTIFIER ON
+
+                INSERT INTO STDASYNCCOMMAND(SKIPDUPLICATE,ASYNCCOMMAND)
+                SELECT 1,''exec SP_Calculate_Availability ''+cast(ID as nvarchar(14))+'',''''''+CONVERT(NVARCHAR(10),GETDATE(),121)+'''''',''''''+CONVERT(NVARCHAR(10),DATEADD(YEAR,1,GETDATE()),121)+''''''''
+                FROM HOTEL WITH(NOLOCK)
+                WHERE (ISDELETED  IS NULL OR ISDELETED  =0)
+                  AND (ISDISABLED IS NULL OR ISDISABLED =0)', 
+                        @database_name=N'EMDS', 
+                        @flags=0
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Every Day', 
+                        @enabled=1, 
+                        @freq_type=4, 
+                        @freq_interval=1, 
+                        @freq_subday_type=1, 
+                        @freq_subday_interval=0, 
+                        @freq_relative_interval=0, 
+                        @freq_recurrence_factor=0, 
+                        @active_start_date=20171207, 
+                        @active_end_date=99991231, 
+                        @active_start_time=0, 
+                        @active_end_time=235959, 
+                        @schedule_uid=N'7206ac01-0b14-4d80-b08a-37fa592b3d5d'
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                COMMIT TRANSACTION
+                GOTO EndSave
+                QuitWithRollback:
+                    IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
+                EndSave:
+                GO
+
+
+                USE [msdb]
+                GO
+
+                /****** Object:  Job [Rebuild Fragmented Indexes EMDS]    Script Date: 04.11.2021 12:22:44 PM ******/
+                BEGIN TRANSACTION
+                DECLARE @ReturnCode INT
+                SELECT @ReturnCode = 0
+                /****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 04.11.2021 12:22:45 PM ******/
+                IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
+                BEGIN
+                EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+
+                END
+
+                DECLARE @jobId BINARY(16)
+                EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'Rebuild Fragmented Indexes EMDS', 
+                        @enabled=1, 
+                        @notify_level_eventlog=0, 
+                        @notify_level_email=0, 
+                        @notify_level_netsend=0, 
+                        @notify_level_page=0, 
+                        @delete_level=0, 
+                        @description=N'oguz yazdi, gunluk olarak asiri fragmante olmus yani verimsizlesmis indexlerin toparlamasi icin...', 
+                        @category_name=N'[Uncategorized (Local)]', 
+                        @owner_login_name=N'sa', @job_id = @jobId OUTPUT
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                /****** Object:  Step [1]    Script Date: 04.11.2021 12:22:46 PM ******/
+                EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'1', 
+                        @step_id=1, 
+                        @cmdexec_success_code=0, 
+                        @on_success_action=1, 
+                        @on_success_step_id=0, 
+                        @on_fail_action=2, 
+                        @on_fail_step_id=0, 
+                        @retry_attempts=0, 
+                        @retry_interval=0, 
+                        @os_run_priority=0, @subsystem=N'TSQL', 
+                        @command=N'SET DEADLOCK_PRIORITY 10
+                SET QUOTED_IDENTIFIER ON
+
+                DECLARE C CURSOR LOCAL STATIC FOR
+
+                SELECT 
+                 ''ALTER ''+ ISNULL(''INDEX [''+dbindexes.[name]+''] ON'',''TABLE'') +'' ''+dbschemas.[name] +''.[''+dbtables.[name]+''] REBUILD PARTITION = ALL ''
+                +N''WITH (STATISTICS_NORECOMPUTE =OFF,STATISTICS_INCREMENTAL=OFF,ALLOW_PAGE_LOCKS=OFF,ALLOW_ROW_LOCKS=ON, MAXDOP = 1,  FILLFACTOR=97, PAD_INDEX=ON, SORT_IN_TEMPDB=ON )''
+                +'';''
+                +CHAR(10) AS CMD,
+                ROW_NUMBER()OVER(PARTITION BY dbindexes.[object_id] ORDER BY dbindexes.[index_id]) AS RN,
+                dbindexes.[object_id]
+                FROM sys.dm_db_index_physical_stats (DB_ID(''EMDS''), NULL, NULL, NULL, NULL) AS indexstats
+                INNER JOIN sys.tables dbtables on dbtables.[object_id] = indexstats.[object_id]
+                INNER JOIN sys.schemas dbschemas on dbtables.[schema_id] = dbschemas.[schema_id]
+                INNER JOIN sys.indexes AS dbindexes ON dbindexes.[object_id] = indexstats.[object_id]
+                AND indexstats.index_id = dbindexes.index_id
+                WHERE avg_fragmentation_in_percent > 20
+                  AND dbindexes.[type] IN (1,2) --CLUSTERED AND NONCLUSTERED
+                  AND indexstats.page_count > 5
+                ORDER BY RN asc --DO NOT REBUILD INDEX AFTER EACH OTHER, NOT TO BLOCK A TABLE FOR VERY LONG TIME
+
+                DECLARE @SQL NVARCHAR(MAX),@RN INT,@OBJ1 INT,@OBJ0 INT
+                OPEN C
+                WHILE 1=1
+                BEGIN TRY
+                 FETCH NEXT FROM C INTO @SQL,@RN,@OBJ1
+                 IF @@FETCH_STATUS <> 0 
+                  BREAK
+                 DECLARE @STARTTIME DATETIME = GETUTCDATE()
+                 --IF SAME OBJECT CAME AGAIN, WAIT FOR 10 SECONDS NOT TO MAKE EVERYONE WAIT
+                 IF @OBJ1 = @OBJ0
+                    WAITFOR DELAY ''00:00:10''
+
+                 EXEC(@SQL)
+                 --PRINT @SQL
+                 SET @OBJ0 = @OBJ1
+                 INSERT INTO DDLEVENTS.DBO.AGENTHISTORY( LOGTIME,JOBNAME,JOBSTEPNAME,LOGTEXT,DURATION_MS )
+                 VALUES (GETUTCDATE(),''Rebuild Fragmented Indexes EMDS'',''1'',@SQL,DATEDIFF(MILLISECOND,@STARTTIME,GETUTCDATE()))
+                END TRY
+                BEGIN CATCH
+                 --PRINT ''----------------''
+                 --PRINT @SQL
+                 INSERT INTO DDLEVENTS.DBO.AGENTHISTORY( LOGTIME,JOBNAME,JOBSTEPNAME,LOGTEXT,DURATION_MS )
+                 VALUES (GETUTCDATE(),''Rebuild Fragmented Indexes EMDS'',''1'',ERROR_MESSAGE(),DATEDIFF(MILLISECOND,@STARTTIME,GETUTCDATE()))
+                 PRINT ERROR_MESSAGE()
+                END CATCH
+                CLOSE C 
+                DEALLOCATE C', 
+                        @database_name=N'EMDS', 
+                        @database_user_name=N'dbo', 
+                        @flags=0
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Gece Turkiye Saatiyle 02:00', 
+                        @enabled=1, 
+                        @freq_type=4, 
+                        @freq_interval=1, 
+                        @freq_subday_type=1, 
+                        @freq_subday_interval=0, 
+                        @freq_relative_interval=0, 
+                        @freq_recurrence_factor=0, 
+                        @active_start_date=20200814, 
+                        @active_end_date=99991231, 
+                        @active_start_time=230000, 
+                        @active_end_time=235959, 
+                        @schedule_uid=N'a9844aa0-5b84-4a5a-879f-ac676d94cf7d'
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
+                IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+                COMMIT TRANSACTION
+                GOTO EndSave
+                QuitWithRollback:
+                    IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
+                EndSave:
+                GO
+
+
+
+
+
