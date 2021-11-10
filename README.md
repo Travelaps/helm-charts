@@ -43,7 +43,7 @@
     nano values.yaml
 
     # Bu parametreler ile kurulumu başlat
-    helm install elektraweb travelaps/elektraweb --values values.yaml --timeout 30m
+    helm install elektraweb travelaps/elektraweb --values values.yaml --timeout 120m
 
     # (opsiyonel) Kurulumu gözlemlemek için:
     watch -n1 "kubectl get pods -A"
