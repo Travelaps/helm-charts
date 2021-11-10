@@ -15,8 +15,8 @@
 - Sıfır kurulum:
     ```bash
     # Öncelikle microk8s, kubectl ve helm kurulu olduğundan emin ol:
-    sudo snap install microk8s --classic
-    sudo snap install kubectl --classic
+    sudo snap install microk8s --classic --channel=1.21/stable
+    sudo snap install kubectl --classic --channel=1.21/stable
     sudo snap install helm --classic
     
     # microk8s add-on'ları aktive et. dns olması şart, ingress ve dashboard opsiyonel
