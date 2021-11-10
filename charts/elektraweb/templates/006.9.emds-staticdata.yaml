@@ -1,3 +1,4 @@
+{{ if .Values.staticData.install }}
 kind: Job
 apiVersion: batch/v1
 metadata:
@@ -24,4 +25,4 @@ spec:
               value: sa
             - name: SQLPASS
               value: {{ .Values.sql.saPassword | quote }}
-            
+{{ end }}

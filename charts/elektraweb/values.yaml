@@ -22,7 +22,7 @@ sql:
     password: eE!01012000
 # Angus
 angus:
-  install: false
+  install: true
   image: ghcr.io/travelaps/angus:v220
   host: elektraweb
   displayName: ElektraWeb
@@ -30,12 +30,12 @@ angus:
   logo: elektraweb.png
 # Pos
 pos:
-  install: false
+  install: true
   image: ghcr.io/travelaps/pos-ng11:v72
   host: elektrawebpos
 # .NET Core FRX Rapor Programı
 reporting:
-  install: false
+  install: true
   host: elektrawebreport
   localPath: /elektraweb/fastreport
 # Kanal Yönetimi
@@ -63,9 +63,11 @@ ingressNginx:
 #Create Hotel?
 hotel:
   install: false
-  hotelid: 24434
+  #Mutlaka once cloudda register olup kendi HOTELID'nizi yazmalısınız
+  hotelid: 24434 
   hotelname: localtesthotel
-
-
+#STATIC DATA
+staticData:
+  install: true
 
 
