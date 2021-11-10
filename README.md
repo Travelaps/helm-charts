@@ -76,7 +76,7 @@
     nano values.yaml
 
     # Değişiklikleri uygula
-    helm upgrade elektraweb travelaps/elektraweb --values values.yaml --timeout 30m
+    helm upgrade elektraweb travelaps/elektraweb --values values.yaml --timeout 120m
     ```
 - Silme:
     ```bash
