@@ -85,10 +85,11 @@ spec:
               GO
               CREATE TABLE PORTAL(
                 ID INT PRIMARY KEY IDENTITY(1,1),
-                [DOMAIN] NVARCHAR(100) NOT NULL
+                [DOMAIN] NVARCHAR(100) NOT NULL,
+                [NAME] NVARCHAR(100) NOT NULL,
               )
               GO
-              INSERT INTO PORTAL([DOMAIN])VALUES('')
+              INSERT INTO PORTAL([DOMAIN],[NAME])VALUES('','')
               GO
               CREATE TABLE [dbo].[APISEQUENCE_PERIOD](
               	[ID] [int] IDENTITY(1,1) NOT NULL,
