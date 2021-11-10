@@ -1,0 +1,27 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: sql-create-emds-static-data
+  namespace: default
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-3"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: initial-creator
+          image: ghcr.io/travelaps/elektraweb-static-data
+          env:
+            - name: SQLADDRESS
+              value: sql
+            - name: SQLUSER
+              value: sa
+            - name: SQLPASS
+              value: {{ .Values.sql.saPassword | quote }}
+            
