@@ -6,7 +6,7 @@ regcred:
 # NodeJS Web Servis
 worker:
   host: nodejs4001
-  image: ghcr.io/travelaps/nodejs-worker:v444
+  image: ghcr.io/travelaps/nodejs-worker:v448
   replicas: 1
 # SQL Server
 sql:
@@ -23,7 +23,7 @@ sql:
 # Angus
 angus:
   install: false
-  image: ghcr.io/travelaps/angus:v213
+  image: ghcr.io/travelaps/angus:v220
   host: elektraweb
   displayName: ElektraWeb
   shortName: ewebcloud
