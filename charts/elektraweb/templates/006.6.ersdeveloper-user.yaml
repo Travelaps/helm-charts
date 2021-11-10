@@ -29,4 +29,4 @@ spec:
             - '-Q'
             - |
               INSERT INTO ERSDEVELOPER..ANGUSDEVELOPER(USERCODE,[PASSWORD],[EASYPMSTENANT],[ROLEID],[ROLENAME],[ADMINLEVEL],[LOGINTIME])
-              VALUES('{{ .Values.sql.elektraAdminUser.username }}','{{ .Values.sql.elektraAdminUser.password }}',1,12,'HotelOwner',255,GETDATE())
+              VALUES('{{ .Values.sql.elektraAdminUser.username }}','{{ .Values.sql.elektraAdminUser.password }}','{{ .Values.hotel.hotelid }}',12,'HotelOwner',255,GETDATE())
