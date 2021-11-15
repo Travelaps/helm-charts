@@ -58,6 +58,13 @@ metadata:
   namespace: default
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
+    {{ if .Values.certManager.install }}
+    {{ if .Values.certManager.letsencrypt.staging }}
+    cert-manager.io/issuer: letsencrypt-staging
+    {{ else }}
+    cert-manager.io/issuer: letsencrypt-prod
+    {{ end }}
+    {{ end }}
     nginx.ingress.kubernetes.io/ssl-redirect: 'false'
 spec:
   tls:

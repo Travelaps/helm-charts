@@ -82,3 +82,13 @@
     ```bash
     helm uninstall elektraweb
     ```
+
+
+## Dashboard Görüntüleme
+
+- RBAC açık değilken:
+  ````shell
+  kubectl -n kube-system get secret "$(kubectl -n kube-system get secret | grep default-token | cut -d " " -f1)" -o go-template='{{.data.token | base64decode}}{{printf "\n"}}'
+  kubectl port-forward -n kubernetes-dashboard service/kubernetes-dashboard :443
+  ````
+

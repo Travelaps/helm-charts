@@ -1,4 +1,44 @@
 {{ if .Values.sql.install }}
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: mssql-data-pv
+# spec:
+#   claimRef:
+#     name: mssql-data-pvc
+#     namespace: default
+#   capacity:
+#     storage: {{ .Values.sql.storage.capacity }}
+#   volumeMode: Filesystem
+#   accessModes:
+#     - ReadWriteMany
+#   persistentVolumeReclaimPolicy: Delete
+#   storageClassName: {{ .Values.sql.storage.storageClassName }}
+#   local:
+#     path: {{ .Values.sql.storage.localPath }}
+# #  nodeAffinity:
+# #    required:
+# #      nodeSelectorTerms:
+# #        - matchExpressions:
+# #            - key: kubernetes.io/hostname
+# #              operator: In
+# #              values:
+# #                - example-node
+# ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mssql-data-pvc
+  namespace: default
+spec:
+  storageClassName: {{ .Values.sql.storage.storageClassName }}
+  accessModes:
+    - {{ .Values.sql.storage.accessMode }}
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: {{ .Values.sql.storage.capacity }}
+---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -17,13 +57,10 @@ spec:
       labels:
         k8s-app: sql
     spec:
-      {{ if .Values.sql.localPath }}
       volumes:
         - name: mssql-data
-          hostPath:
-              path: {{ .Values.sql.localPath }}
-              type: DirectoryOrCreate
-      {{ end }}
+          persistentVolumeClaim:
+            claimName: mssql-data-pvc
       containers:
         - name: sql
           image: ghcr.io/travelaps/mssql2019fts:v2
@@ -40,11 +77,9 @@ spec:
               value: {{ .Values.sql.tcpPort | quote }}
             - name: MSSQL_MEMORY_LIMIT_MB
               value: {{ .Values.sql.memoryLimit | quote }}
-          {{ if .Values.sql.localPath }}
           volumeMounts:
             - name: mssql-data
               mountPath: /var/opt/mssql/data
-          {{ end }}
       imagePullSecrets:
         - name: regcred
       hostname: mssqlinst
@@ -60,8 +95,8 @@ spec:
   ports:
     - name: sql-port
       protocol: TCP
-      port: 1433
-      targetPort: 1433
+      port: {{ .Values.sql.tcpPort }}
+      targetPort: {{ .Values.sql.tcpPort }}
   selector:
     k8s-app: sql
   type: ClusterIP

@@ -1,0 +1,16 @@
+{{ if .Values.certManager.install }}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    email: {{ .Values.certManager.letsencrypt.email }}
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-staging-issuer-account-key
+    solvers:
+      - http01:
+          ingress:
+            class: {{ .Values.ingressNginx.class }}
+{{ end }}
