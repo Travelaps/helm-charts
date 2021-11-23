@@ -1,3 +1,4 @@
+{{ if .Values.sql.runCreationScripts }}
 kind: Job
 apiVersion: batch/v1
 metadata:
@@ -3131,3 +3132,4 @@ spec:
               GO
               ALTER TABLE [dbo].[STDCHANNELMANAGERLOG] ENABLE TRIGGER [TRG_CHANNELLOGS_RESEED]
               GO
+{{ end }}

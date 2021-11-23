@@ -17,6 +17,7 @@ sql:
   tcpPort: 1433
   agentEnabled: true
   localPath: /elektraweb/sql-data
+  runCreationScripts: true
   elektraAdminUser:
     username: elektraweb
     password: eE!01012000
@@ -64,7 +65,7 @@ ingressNginx:
 hotel:
   install: false
   #Mutlaka once cloudda register olup kendi HOTELID'nizi yazmalısınız
-  hotelid: 24434 
+  hotelid: 24434
   hotelname: localtesthotel
 #STATIC DATA
 staticData:

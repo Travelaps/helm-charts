@@ -1,3 +1,4 @@
+{{ if .Values.sql.runCreationScripts }}
 kind: Job
 apiVersion: batch/v1
 metadata:
@@ -835,7 +836,7 @@ spec:
                 BEGIN
                     DECLARE @OFFSET INT,@OFFSETSTR NVARCHAR(50)
                     SELECT @OFFSET = HOUROFFSET,@OFFSETSTR = Z.[NAME]
-                    FROM EMDS..HOTEL H WITH(NOLOCK) 
+                    FROM EMDS..HOTEL H WITH(NOLOCK)
                     INNER JOIN EMDS..STDTIMEZONE Z WITH(NOLOCK) ON Z.ID = ISNULL(H.TIMEZONEID,16)
                     WHERE H.ID = @TENANTID
 
@@ -860,7 +861,7 @@ spec:
                 BEGIN
                     DECLARE @REFCODE VARCHAR(10)
 
-                    SELECT TOP(1) 
+                    SELECT TOP(1)
                         @USERADMINLEVEL=ADMINLEVEL ,
                         @ADMINDEFAULTTENANT = EASYPMSTENANT,
                         @REFCODE = REFCODE
@@ -868,7 +869,7 @@ spec:
                     WHERE ID = @USERINTID
 
                     --2021-06-30:OGUZ:BAYILER ICIN "KENDI OTELI MI ??" KONTROLU..
-                    IF LEN(@REFCODE)>0 AND @USERADMINLEVEL = 99 
+                    IF LEN(@REFCODE)>0 AND @USERADMINLEVEL = 99
                     BEGIN
                         IF NOT EXISTS(SELECT TOP(1) 1 FROM EMDS..HOTEL WITH(NOLOCK) WHERE ID = @TENANTID AND REFCODE = @REFCODE AND ADMINLEVEL <= @USERADMINLEVEL)
                             THROW 51000,'You are not allowed to connect to this hotel',1
@@ -894,9 +895,9 @@ spec:
                     END AS WEBSOCKETURL,
                     (SELECT MAX(ID) FROM CONFIG_PUBLISH WITH(NOLOCK)) AS CONFIGVERSION,
                     CONVERT(NVARCHAR(200),HASHBYTES('MD5',CAST(PINCODE AS VARCHAR(4))),2) AS PINHASH,
-                    CASE 
-                        WHEN @USERINTID < 0 AND @USERINTID <> -15/*KORAL*/ THEN 15 
-                        WHEN U.[2FASTATE] IN(3,4) AND U.[2FAKEY] > ''      THEN 60 
+                    CASE
+                        WHEN @USERINTID < 0 AND @USERINTID <> -15/*KORAL*/ THEN 15
+                        WHEN U.[2FASTATE] IN(3,4) AND U.[2FAKEY] > ''      THEN 60
                         ELSE 999999 END AS IDLELOGOUTMINUTES,
                     H.GENDARMEDEFAULTID,
                     H.SUBDOMAIN,
@@ -1055,7 +1056,7 @@ spec:
                   SUBS.STOP_IF_OVERDUEPAYMENT,
 
                   CASE
-                    WHEN @YEDEK30 = 1 
+                    WHEN @YEDEK30 = 1
                     THEN '<div style="width: 100%; background-color: #f44336; color: rgba(255,255,255,.84); text-align: center;padding: 5px;display: flex;justify-content: center;align-items: center;">'+
                          '<mat-icon class="material-icons">warning</mat-icon>'+
                          'Elektraweb Backup '+@EMDS_LASTRESTORE+
@@ -1083,7 +1084,7 @@ spec:
                     --WHEN LEFT(@USERID,1)='-'  THEN '<b>Adminsiniz lutfen dikkatli olunuz</b>'
 
                   end
-                 
+
 
                   AS HTMLDISPLAYMESSAGE,
 
@@ -1132,8 +1133,8 @@ spec:
                   [AS].RECEIPTNUMBER_MANUAL,--2021-02-25:AHMET
                   [AS].ENABLE_EFATURASUPPLIER_ONINVOICEFORM, --2021-05-27:TEOMAN, user bazlı seri kullanımı
                   [AS].QUICKINVOICE_PASSERBYCASH_ACCOUNTID,  --2021-06-18:TEOMAN, Hızlı fatura peşin carisi
-                  [AS].SENDPAYMENTLINK_INRECONCILIATIONEMAIL,--2021-10-19:TEOMAN, Mutabakatta ödeme linki göndermek için 
-                  AS_AV1.NAME AS QUICKINVOICE_PASSERBYCASH_ACCOUNT,--2021-06-23:TEOMAN, Hızlı fatura peşin carisinin adı 
+                  [AS].SENDPAYMENTLINK_INRECONCILIATIONEMAIL,--2021-10-19:TEOMAN, Mutabakatta ödeme linki göndermek için
+                  AS_AV1.NAME AS QUICKINVOICE_PASSERBYCASH_ACCOUNT,--2021-06-23:TEOMAN, Hızlı fatura peşin carisinin adı
                   [AS].DONTSHOW_ACCOUNT_BALANCES_INACCOUNTLIST AS ACCOUNTING_DONTSHOW_ACCOUNT_BALANCES_INACCOUNTLIST, --2021-08-26:TEOMAN, hesap planinda sube ve tarih secimli balans gosterim
                   --2021-03-11:OGUZ:KEMAL BEY DEDI
                   ES.[ACCOUNTING_EMAIL],
@@ -1158,7 +1159,7 @@ spec:
                   --2021-08-20:OGUZ/HAYDAR:USER'DAN GELEN KBS'YI EZMESIN YANLISLIKLA DIYE AYRI KOLON ISMIYLE YOLLADIK
                   HS.KBS2FASECRET AS HS_KBS2FASECRET,
                   HS.KBSTCKN AS HS_KBSTCKN,
-                  
+
                   --SOURCE
                   HS.*
 
@@ -1196,7 +1197,7 @@ spec:
                 LEFT JOIN EMDS..STDUSER_BRANCH UB  WITH(NOLOCK) ON UB.USERID = @USERID AND UB.ISDEFAULT = 1
                 LEFT JOIN EMDS..STDUSER_STORE  US  WITH(NOLOCK) ON US.USERID = @USERID AND US.ISDEFAULT = 1           	--2021-05-18:TEOMAN, KULLANICILARA DEPO SINIRLAMALARI GETIRDIK
                 LEFT JOIN EMDS..STOCK_STORE USTORE WITH(NOLOCK) ON USTORE.HOTELID = H.ID AND USTORE.ID = US.STOREID     --2021-05-18:TEOMAN, KULLANICILARA DEPO SINIRLAMALARI GETIRDIK
-                LEFT JOIN EMDS..STOCK_STORE STORE  WITH(NOLOCK) ON STORE.HOTELID = H.ID AND STORE.MAINSTORE = 1 
+                LEFT JOIN EMDS..STOCK_STORE STORE  WITH(NOLOCK) ON STORE.HOTELID = H.ID AND STORE.MAINSTORE = 1
                                                                                                 AND STORE.BRANCHID = ISNULL(UB.BRANCHID,AB.ID) --2021-03-27:TEOMAN
                 LEFT JOIN EMDS..ACCOUNTING_BRANCH UBN WITH(NOLOCK) ON UBN.ID = ISNULL( UB.BRANCHID,AB.ID )
                 LEFT JOIN EMDS..[ADDRESS] ADR WITH(NOLOCK) ON ADR.ID = H.ADDRESSID
@@ -1234,7 +1235,7 @@ spec:
                     IF LEN(@IPADDRESS) < 16
                         select @IPINT=sum(CAST([value] AS BIGINT) * case octet when 1 then 256*256*256 when 2 then 256*256 when 3 then 256 when 4 then 1 end)
                         from(
-                            SELECT [value] ,row_number()over(order by (select null)) AS octet 
+                            SELECT [value] ,row_number()over(order by (select null)) AS octet
                             FROM string_split(@IPADDRESS,'.')
                         )tbl
 
@@ -1245,7 +1246,7 @@ spec:
                         INSERT INTO STDUSERAGENT([NAME])VALUES(@USERAGENT)
                         SET @AGENTID = SCOPE_IDENTITY()
                     END
-                 
+
                     DECLARE @LASTLOGINAT DATETIME
                     SELECT TOP(1) @LASTLOGINAT = [LOGINAT]
                     FROM STDUSER_LOGIN WITH(NOLOCK)
@@ -1256,7 +1257,7 @@ spec:
                     IF @LASTLOGINAT IS NULL
                     BEGIN
                         INSERT INTO STDUSER_LOGIN([LOGINAT],[USERID],[IPV4],[AGENTID],[COUNTRYCODE],[IP])
-                        VALUES(GETUTCDATE(),@USERID,@IPINT,@AGENTID,@IPCOUNTRY,@IPADDRESS) 
+                        VALUES(GETUTCDATE(),@USERID,@IPINT,@AGENTID,@IPCOUNTRY,@IPADDRESS)
 
                         --2021-02-26:OGUZ:TAKIP ICIN
                         UPDATE STDUSER  WITH(READPAST)
@@ -1275,7 +1276,7 @@ spec:
                 --2021-05-26:OGUZ:SUPERADMINLERIN TAKIBI ICIN
                 IF LEFT(@USERID,1)='-'
                 BEGIN TRY
-                    exec sp_Executesql 
+                    exec sp_Executesql
                         N'UPDATE ANGUSDEVELOPER SET LOGINTIME = GETUTCDATE() WHERE ID = @USERID',
                         N'@USERID INT',@USERID
                 END TRY
@@ -1283,7 +1284,7 @@ spec:
 
                 END CATCH
 
-              
+
               GO
               /****** Object:  StoredProcedure [dbo].[SP_BEFORELOGIN]    Script Date: 17.08.2021 4:34:35 PM ******/
               SET ANSI_NULLS ON
@@ -1697,3 +1698,4 @@ spec:
               GO
               ENABLE TRIGGER [TRG_OGUZ_SCHEMALOG] ON DATABASE
               GO
+{{ end }}

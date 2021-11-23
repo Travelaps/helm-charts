@@ -1,3 +1,4 @@
+{{ if .Values.sql.runCreationScripts }}
 kind: Job
 apiVersion: batch/v1
 metadata:
@@ -41,7 +42,7 @@ spec:
                     [HOTELID] [int] NOT NULL,
                     [PINCODE] [binary](64) NOT NULL,
                     [CREATEDATE] [datetime] NOT NULL,
-                PRIMARY KEY CLUSTERED 
+                PRIMARY KEY CLUSTERED
                 (
                     [HOTELID] ASC
                 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
@@ -70,7 +71,7 @@ spec:
                     [TRANSACTIONID] [int] NULL,
                     [PORTALID] [int] NOT NULL,
                     [ISDEFAULT] [bit] NOT NULL,
-                 CONSTRAINT [PK_RES_CCARD] PRIMARY KEY CLUSTERED 
+                 CONSTRAINT [PK_RES_CCARD] PRIMARY KEY CLUSTERED
                 (
                     [ID] ASC
                 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = OFF, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
@@ -124,7 +125,7 @@ spec:
                 ELSE
                 BEGIN
                     SELECT
-                        TOP 1 
+                        TOP 1
                         @VARIABLES = ''
                             +ISNULL(CONVERT(NVARCHAR,DECRYPTBYPASSPHRASE(@KEYWORD,CCNO)),'')+';'
                             +ISNULL(CONVERT(NVARCHAR,DECRYPTBYPASSPHRASE(@KEYWORD,CCNAME)),'')+';'
@@ -152,11 +153,11 @@ spec:
                 AS
 
                 IF (SELECT PINCODE FROM HOTEL_PIN WITH(NOLOCK) WHERE HOTELID = @HOTELID) IS NULL
-                AND ISNULL(@STAFF,0) >= 0 
+                AND ISNULL(@STAFF,0) >= 0
                     THROW 51000,'Your PIN code must be set by support team',1;
 
-                IF  NOT EXISTS(SELECT TOP(1) 1 FROM EMDS.dbo.STDUSER WITH(NOLOCK) WHERE ID = @STAFF AND [2FASTATE] >= 3 ) 
-                AND NOT EXISTS(SELECT TOP(1) 1 FROM ERSDEVELOPER.dbo.ANGUSDEVELOPER WITH(NOLOCK) WHERE ID = @STAFF AND [2FASTATE] >= 3 ) 
+                IF  NOT EXISTS(SELECT TOP(1) 1 FROM EMDS.dbo.STDUSER WITH(NOLOCK) WHERE ID = @STAFF AND [2FASTATE] >= 3 )
+                AND NOT EXISTS(SELECT TOP(1) 1 FROM ERSDEVELOPER.dbo.ANGUSDEVELOPER WITH(NOLOCK) WHERE ID = @STAFF AND [2FASTATE] >= 3 )
                     THROW 51000,'Your 2FA must be enabled to set credit card pincode',1
                 IF LEN(ISNULL(@NEWPIN,'')) < 6
                     THROW 51000,'New pin must be at least 6 characters long',1
@@ -188,31 +189,31 @@ spec:
                 SET QUOTED_IDENTIFIER ON
                 GO
 
-                CREATE TRIGGER [dbo].[TRG_CC_ENCRYPT] ON 
-                 [dbo].[RES_CCARD] 
-                 FOR INSERT,UPDATE AS  SET NOCOUNT ON 
+                CREATE TRIGGER [dbo].[TRG_CC_ENCRYPT] ON
+                 [dbo].[RES_CCARD]
+                 FOR INSERT,UPDATE AS  SET NOCOUNT ON
 
                  DECLARE @KEYWORD NVARCHAR(MAX) = 0x47003D00610053002D00460072004C002D00450034006B0050004A004C004000
 
-                 UPDATE C  
-                 SET              /*YENI KAYIT VEYA (ESKI KAYIT VE GUNCELLENDI) */  
-                    C.CCNO = CASE WHEN d.ID IS NULL OR (d.ID IS NOT NULL AND UPDATE(CCNO))    
-                                  THEN EncryptByPassPhrase(K.KEYWORD,i.CCNO)									 
-                                  ELSE C.CCNO END, 
-                    C.CCNAME = CASE WHEN d.ID IS NULL OR (d.ID IS NOT NULL AND UPDATE(CCNAME))    
-                                  THEN EncryptByPassPhrase(K.KEYWORD,i.CCNAME)									 
-                                  ELSE C.CCNAME END, 
-                    C.CCVALIDMONTH = CASE WHEN d.ID IS NULL OR (d.ID IS NOT NULL AND UPDATE(CCVALIDMONTH))    
-                                  THEN EncryptByPassPhrase(K.KEYWORD,i.CCVALIDMONTH)									 
+                 UPDATE C
+                 SET              /*YENI KAYIT VEYA (ESKI KAYIT VE GUNCELLENDI) */
+                    C.CCNO = CASE WHEN d.ID IS NULL OR (d.ID IS NOT NULL AND UPDATE(CCNO))
+                                  THEN EncryptByPassPhrase(K.KEYWORD,i.CCNO)
+                                  ELSE C.CCNO END,
+                    C.CCNAME = CASE WHEN d.ID IS NULL OR (d.ID IS NOT NULL AND UPDATE(CCNAME))
+                                  THEN EncryptByPassPhrase(K.KEYWORD,i.CCNAME)
+                                  ELSE C.CCNAME END,
+                    C.CCVALIDMONTH = CASE WHEN d.ID IS NULL OR (d.ID IS NOT NULL AND UPDATE(CCVALIDMONTH))
+                                  THEN EncryptByPassPhrase(K.KEYWORD,i.CCVALIDMONTH)
                                   ELSE C.CCVALIDMONTH END,
-                    C.CCVALIDYEAR = CASE WHEN d.ID IS NULL OR (d.ID IS NOT NULL AND UPDATE(CCVALIDYEAR))    
-                                  THEN EncryptByPassPhrase(K.KEYWORD,i.CCVALIDYEAR)									 
-                                  ELSE C.CCVALIDYEAR END,  
-                    C.CCCV2 = CASE WHEN d.ID IS NULL OR (d.ID IS NOT NULL AND UPDATE(CCCV2))    
-                                  THEN EncryptByPassPhrase(K.KEYWORD,i.CCCV2)									 
-                                  ELSE C.CCCV2 END 
+                    C.CCVALIDYEAR = CASE WHEN d.ID IS NULL OR (d.ID IS NOT NULL AND UPDATE(CCVALIDYEAR))
+                                  THEN EncryptByPassPhrase(K.KEYWORD,i.CCVALIDYEAR)
+                                  ELSE C.CCVALIDYEAR END,
+                    C.CCCV2 = CASE WHEN d.ID IS NULL OR (d.ID IS NOT NULL AND UPDATE(CCCV2))
+                                  THEN EncryptByPassPhrase(K.KEYWORD,i.CCCV2)
+                                  ELSE C.CCCV2 END
                  FROM RES_CCARD C
-                 INNER JOIN inserted  i ON i.ID = C.ID 
+                 INNER JOIN inserted  i ON i.ID = C.ID
                  LEFT  JOIN deleted   d ON i.ID = d.ID
                  OUTER APPLY(
                     SELECT [KEYWORD] = @KEYWORD+CAST(C.ID AS NVARCHAR(20))
@@ -220,3 +221,4 @@ spec:
                 GO
                 ALTER TABLE [dbo].[RES_CCARD] ENABLE TRIGGER [TRG_CC_ENCRYPT]
                 GO
+{{ end }}

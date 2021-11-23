@@ -1,3 +1,4 @@
+{{ if .Values.sql.runCreationScripts }}
 kind: Job
 apiVersion: batch/v1
 metadata:
@@ -49,7 +50,7 @@ spec:
               CREATE TYPE [dbo].[DictionaryTable] AS TABLE(
                     [KEY] [nvarchar](450) NOT NULL,
                     [VALUE] [nvarchar](max) NOT NULL,
-                    PRIMARY KEY CLUSTERED 
+                    PRIMARY KEY CLUSTERED
                 (
                     [KEY] ASC
                 )WITH (IGNORE_DUP_KEY = OFF)
@@ -2191,5 +2192,6 @@ spec:
                     {{ .Values.hotel.hotelid }},
                     '{{ .Values.hotel.hotelname }}'
                 )
-              {{ end }} 
+              {{ end }}
               GO
+{{ end }}
