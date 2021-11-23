@@ -948,6 +948,7 @@ spec:
               	[ADMINLEVEL] [int] NULL,
               	[SHOWINPERMISSIONEDITOR] [bit] NOT NULL,
               	[ROLECODE] [nvarchar](5) NULL,
+                [LASTUPDATE_DATE] datetime,
                CONSTRAINT [PK_STDROLE] PRIMARY KEY CLUSTERED
               (
               	[ID] ASC
