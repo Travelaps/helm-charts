@@ -1,4 +1,15 @@
 {{ if .Values.sql.install }}
+{{ if .Values.sql.persistentVolumeClaims }}
+{{ range $key, $value := .Values.sql.persistentVolumeClaims }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $key }}
+spec:
+  {{ toYaml $value | nindent 2 }}
+---
+{{ end }}
+{{ end }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
