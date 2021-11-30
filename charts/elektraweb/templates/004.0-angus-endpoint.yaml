@@ -13,6 +13,9 @@ data:
             "displayName": "{{ .Values.angus.displayName }}",
             "shortName": "{{ .Values.angus.shortName }}",
             "endpoint": "https://{{ .Values.worker.host }}/",
+            "url": [
+              "{{ .Values.angus.host }}"
+            ],
             "defaultLang": "EN",
             "languages": ["TR","EN","DE","RU","AR","FR","RO"],
             "sendPasswordLink": true,

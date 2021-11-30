@@ -17,12 +17,9 @@ spec:
       labels:
         k8s-app: sql
     spec:
-      {{ if .Values.sql.localPath }}
+      {{ if .Values.sql.volumes }}
       volumes:
-        - name: mssql-data
-          hostPath:
-              path: {{ .Values.sql.localPath }}
-              type: DirectoryOrCreate
+        {{- toYaml $.Values.sql.volumes | nindent 8 }}
       {{ end }}
       containers:
         - name: sql
@@ -40,10 +37,9 @@ spec:
               value: {{ .Values.sql.tcpPort | quote }}
             - name: MSSQL_MEMORY_LIMIT_MB
               value: {{ .Values.sql.memoryLimit | quote }}
-          {{ if .Values.sql.localPath }}
+          {{ if .Values.sql.volumeMounts }}
           volumeMounts:
-            - name: mssql-data
-              mountPath: /var/opt/mssql/data
+            {{- toYaml $.Values.sql.volumeMounts | nindent 12 }}
           {{ end }}
       imagePullSecrets:
         - name: regcred

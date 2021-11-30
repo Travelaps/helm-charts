@@ -6,7 +6,7 @@ regcred:
 # NodeJS Web Servis
 worker:
   host: nodejs4001
-  image: ghcr.io/travelaps/nodejs-worker:v452
+  image: ghcr.io/travelaps/nodejs-worker:v455
   replicas: 1
 # SQL Server
 sql:
@@ -16,15 +16,22 @@ sql:
   memoryLimit: 16000
   tcpPort: 1433
   agentEnabled: true
-  localPath: /elektraweb/sql-data
   runCreationScripts: true
   elektraAdminUser:
     username: elektraweb
     password: eE!01012000
+  volumes:
+    - name: mssql-data
+      hostPath:
+        path: /elektraweb/sql-data
+        type: DirectoryOrCreate
+  volumeMounts:
+    - name: mssql-data
+      mountPath: /var/opt/mssql/data
 # Angus
 angus:
   install: true
-  image: ghcr.io/travelaps/angus:v220
+  image: ghcr.io/travelaps/angus:v240
   host: elektraweb
   displayName: ElektraWeb
   shortName: ewebcloud
@@ -32,13 +39,12 @@ angus:
 # Pos
 pos:
   install: true
-  image: ghcr.io/travelaps/pos-ng11:v72
+  image: ghcr.io/travelaps/pos-ng11:v84
   host: elektrawebpos
 # .NET Core FRX Rapor Programı
 reporting:
   install: true
   host: elektrawebreport
-  localPath: /elektraweb/fastreport
 # Kanal Yönetimi
 channelManager:
   install: false
@@ -70,5 +76,6 @@ hotel:
 #STATIC DATA
 staticData:
   install: true
-
+longhorn:
+  install: false
 
