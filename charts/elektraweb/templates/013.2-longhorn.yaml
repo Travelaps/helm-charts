@@ -1186,8 +1186,10 @@ spec:
                 fieldRef:
                   fieldPath: spec.serviceAccountName
           # Manually set root directory for csi
-          #- name: KUBELET_ROOT_DIR
-          #  value: /var/lib/rancher/k3s/agent/kubelet
+          {{ if .Values.longhorn.rootDir }}
+          - name: KUBELET_ROOT_DIR
+            value: {{ .Values.longhorn.rootDir }}
+          {{ end }}
           # For AirGap Installation
           # Replace PREFIX with your private registry
           #- name: CSI_ATTACHER_IMAGE

@@ -86,4 +86,6 @@ staticData:
   install: true
 longhorn:
   install: false
+#  # microk8s ise rootDir alttaki gibi, managed ortamlarda bu zaten ayarlı olduğundan kapalı olmalı
+#  rootDir: /var/snap/microk8s/common/var/lib/kubelet
 
