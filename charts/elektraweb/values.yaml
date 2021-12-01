@@ -8,6 +8,7 @@ worker:
   host: nodejs4001
   image: ghcr.io/travelaps/nodejs-worker:v455
   replicas: 1
+  pin: uU!01012000
 # SQL Server
 sql:
   install: true

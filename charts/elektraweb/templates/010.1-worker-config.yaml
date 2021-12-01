@@ -26,7 +26,7 @@ data:
         "host": "redis"
       },
       "amqp": "amqp://guest:guest@rabbit:5672/hotel",
-      "applicationUpdatePin": "uU!01012000",
+      "applicationUpdatePin": "{{ .Values.worker.pin }}",
       "applicationUpdateURL": "https://4001.hoteladvisor.net",
       "_syncTokens": {},
       "_syncTables": [],
