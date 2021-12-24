@@ -18,6 +18,7 @@ sql:
   tcpPort: 1433
   agentEnabled: true
   runCreationScripts: true
+  serviceType: ClusterIP
   elektraAdminUser:
     username: elektraweb
     password: eE!01012000
