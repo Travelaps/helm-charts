@@ -3,9 +3,9 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: longhorn-uninstall
-  namespace: default
+  namespace: longhorn-system
   annotations:
-    "helm.sh/hook": pre-delete
+    "helm.sh/hook": post-delete
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
 spec:
   activeDeadlineSeconds: 900

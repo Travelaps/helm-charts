@@ -8,7 +8,36 @@ worker:
   host: nodejs4001
   image: ghcr.io/travelaps/nodejs-worker:v455
   replicas: 1
-  pin: uU!01012000
+  config:
+    dbConfig:
+      user: sa
+      password: aA!01012000
+      server: sql
+      trustServerCertificate: true
+    readOnly: false
+    restartHours: 0
+    applicationUpdatePin: uU!01012000
+    #syncTokens:
+    #  24434: * * * HOTEL API KEY * * *
+    #syncTables:
+    #  - Object: DELETEDRECORDS
+    #    TimeColumn: DELETEUTC
+    #    TimeValue: YESTERDAY
+    #  - Object: COUNTRY
+    #    TimeColumn: LASTUPDATE_DATE
+    #    TimeValue: YESTERDAY
+    #  - Object: STDCURCODE
+    #    TimeColumn: LASTUPDATE_DATE
+    #    TimeValue: YESTERDAY
+    #  - Object: STDEXCHANGERATES
+    #    TimeColumn: LASTUPDATE_DATE
+    #    TimeValue: YESTERDAY
+    #  - Object: CALENDAR
+    #    TimeColumn: LASTUPDATE_DATE
+    #    TimeValue: YESTERDAY
+    #  - Object: STDROLE_DETAIL
+    #    TimeColumn: LASTUPDATE
+    #    TimeValue: '1900-01-01'
 # SQL Server
 sql:
   install: true
@@ -55,6 +84,9 @@ pos:
 reporting:
   install: true
   host: elektrawebreport
+  sqlServer: sql
+  sqlUser: sa
+  sqlPassword: aA!01012000
 # Kanal Yönetimi
 channelManager:
   install: false
@@ -77,7 +109,7 @@ ingressNginx:
   class: public
   namespace: ingress
   createNamespace: true
-#Create Hotel?
+# Create Hotel?
 hotel:
   install: false
   #Mutlaka once cloudda register olup kendi HOTELID'nizi yazmalısınız

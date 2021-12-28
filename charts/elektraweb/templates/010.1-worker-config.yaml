@@ -6,6 +6,8 @@ metadata:
 data:
   config.conf.json: |
     {
+      "readOnly": {{ .Values.worker.config.readOnly }},
+      "restartHours": {{ .Values.worker.config.restartHours }},
       "dbConfig": {
         "user": "sa",
         "password": "{{ .Values.sql.saPassword }}",
@@ -13,7 +15,8 @@ data:
         "database": "EMDS",
         "options": {
           "appName": "NodeJS:WebHotelLive",
-          "encrypt": false
+          "encrypt": true,
+          "trustServerCertificate": {{ .Values.worker.config.dbConfig.trustServerCertificate }}
         },
         "pool": {
           "min": 20,
@@ -26,10 +29,28 @@ data:
         "host": "redis"
       },
       "amqp": "amqp://guest:guest@rabbit:5672/hotel",
-      "applicationUpdatePin": "{{ .Values.worker.pin }}",
       "applicationUpdateURL": "https://4001.hoteladvisor.net",
-      "_syncTokens": {},
-      "_syncTables": [],
+      "applicationUpdatePin": "{{ .Values.worker.config.applicationUpdatePin }}",
+      {{- if .Values.worker.config.syncTokens }}
+      "syncTokens": {
+        {{- range $i, $el := .Values.worker.config.syncTokens }}
+        {{- if $i -}} , {{- end }}
+        "{{ $i }}": "{{ $el }}"
+        {{- end }}
+      }
+      {{- end }}
+      {{- if .Values.worker.config.syncTables }}
+      "syncTables": [
+        {{- range $i, $el := .Values.worker.config.syncTables }}
+        {{- if $i -}} , {{- end }}
+        {
+          "Object": "{{ .Object }}",
+          "TimeColumn": "{{ .TimeColumn }}",
+          "TimeValue": "{{ .TimeValue }}"
+        }
+        {{- end }}
+      ]
+      {{- end }}
       "httpPort": 8080,
       "tenantColumn": "HOTELID",
       "tenantTable": "VW_HOTEL",

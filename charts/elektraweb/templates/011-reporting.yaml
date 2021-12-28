@@ -23,11 +23,11 @@ spec:
           image: ghcr.io/travelaps/reportingfull:latest
           env:
             - name: DS_server
-              value: sql
+              value: {{ .Values.reporting.sqlServer }}
             - name: DS_user
-              value: sa
+              value: {{ .Values.reporting.sqlUser }}
             - name: DS_password
-              value: {{ .Values.sql.saPassword }}
+              value: {{ .Values.reporting.sqlPassword }}
 ---
 kind: Service
 apiVersion: v1
