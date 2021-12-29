@@ -59,14 +59,21 @@ sql:
   volumeMounts:
     - name: mssql-data
       mountPath: /var/opt/mssql/data
-#  persistentVolumeClaims:
-#    mssql-data:
-#      accessModes:
-#        - ReadWriteMany
-#      storageClassName: longhorn
-#      resources:
-#        requests:
-#          storage: 50Gi
+  #persistentVolumeClaims:
+  #  mssql-data:
+  #    accessModes:
+  #      - ReadWriteMany
+  #    storageClassName: longhorn
+  #    resources:
+  #      requests:
+  #        storage: 50Gi
+  #  volumes:
+  #    - name: mssql-data
+  #      persistentVolumeClaim:
+  #        claimName: mssql-data
+  #  volumeMounts:
+  #    - name: mssql-data
+  #      mountPath: /var/opt/mssql/data
 # Angus
 angus:
   install: true
