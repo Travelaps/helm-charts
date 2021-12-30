@@ -53,6 +53,9 @@ metadata:
   name: nodejs-http-ingress
   namespace: default
   annotations:
+    {{- if .Values.worker.sslIssuer }}
+    cert-manager.io/issuer: {{ .Values.worker.sslIssuer }}
+    {{- end }}
     kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
     nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
     nginx.ingress.kubernetes.io/server-snippet: |

@@ -57,6 +57,9 @@ metadata:
   name: pos-ng11-ingress
   namespace: default
   annotations:
+    {{- if .Values.pos.sslIssuer }}
+    cert-manager.io/issuer: {{ .Values.pos.sslIssuer }}
+    {{- end }}
     kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
     nginx.ingress.kubernetes.io/ssl-redirect: 'false'
 spec:

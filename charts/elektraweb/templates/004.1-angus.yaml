@@ -65,6 +65,9 @@ metadata:
   name: angus-ingress
   namespace: default
   annotations:
+    {{- if .Values.angus.sslIssuer }}
+    cert-manager.io/issuer: {{ .Values.angus.sslIssuer }}
+    {{- end }}
     kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
     nginx.ingress.kubernetes.io/ssl-redirect: 'false'
 spec:

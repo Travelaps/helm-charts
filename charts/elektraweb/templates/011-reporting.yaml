@@ -52,6 +52,9 @@ metadata:
   name: reportingcore-ingress
   namespace: default
   annotations:
+    {{- if .Values.reporting.sslIssuer }}
+    cert-manager.io/issuer: {{ .Values.reporting.sslIssuer }}
+    {{- end }}
     kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
     nginx.ingress.kubernetes.io/affinity: cookie
     nginx.ingress.kubernetes.io/server-snippet: |
