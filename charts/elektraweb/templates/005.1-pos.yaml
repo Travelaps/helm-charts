@@ -22,7 +22,7 @@ spec:
       volumes:
         - name: endpoints
           configMap:
-            name: angus-endpoints
+            name: pos-endpoints
             defaultMode: 420
       containers:
         - name: pos-ng11
