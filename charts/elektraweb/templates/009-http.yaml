@@ -68,6 +68,7 @@ metadata:
       gzip_buffers 16 128k;
       gzip_types *;
     nginx.ingress.kubernetes.io/ssl-redirect: 'false'
+    nginx.ingress.kubernetes.io/proxy-body-size: '30m'
 spec:
   tls:
     - hosts:
