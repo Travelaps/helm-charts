@@ -56,6 +56,9 @@ metadata:
     {{- if .Values.worker.sslIssuer }}
     cert-manager.io/issuer: {{ .Values.worker.sslIssuer }}
     {{- end }}
+    {{- if .Values.worker.sslClusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.worker.sslClusterIssuer }}
+    {{- end }}
     kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
     nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
     nginx.ingress.kubernetes.io/server-snippet: |

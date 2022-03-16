@@ -60,6 +60,9 @@ metadata:
     {{- if .Values.pos.sslIssuer }}
     cert-manager.io/issuer: {{ .Values.pos.sslIssuer }}
     {{- end }}
+    {{- if .Values.pos.sslClusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.pos.sslClusterIssuer }}
+    {{- end }}
     kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
     nginx.ingress.kubernetes.io/ssl-redirect: 'false'
 spec:

@@ -68,6 +68,9 @@ metadata:
     {{- if .Values.angus.sslIssuer }}
     cert-manager.io/issuer: {{ .Values.angus.sslIssuer }}
     {{- end }}
+    {{- if .Values.angus.sslClusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.angus.sslClusterIssuer }}
+    {{- end }}
     kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
     nginx.ingress.kubernetes.io/ssl-redirect: 'false'
 spec:

@@ -55,6 +55,9 @@ metadata:
     {{- if .Values.reporting.sslIssuer }}
     cert-manager.io/issuer: {{ .Values.reporting.sslIssuer }}
     {{- end }}
+    {{- if .Values.reporting.sslClusterIssuer }}
+    cert-manager.io/issuer: {{ .Values.reporting.sslClusterIssuer }}
+    {{- end }}
     kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
     nginx.ingress.kubernetes.io/affinity: cookie
     nginx.ingress.kubernetes.io/server-snippet: |

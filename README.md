@@ -82,3 +82,40 @@
     ```bash
     helm uninstall elektraweb
     ```
+
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-staging
+  namespace: default
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: tolga.gerekci@ersas.com
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+    - selector: {}
+      http01:
+        ingress:
+          class: public
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-prod
+  namespace: default
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: tolga.gerekci@ersas.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - selector: {}
+      http01:
+        ingress:
+          class: public
+```
