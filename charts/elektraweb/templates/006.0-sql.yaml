@@ -22,6 +22,8 @@ spec:
   selector:
     matchLabels:
       k8s-app: sql
+  strategy:
+    type: Recreate
   template:
     metadata:
       name: sql
