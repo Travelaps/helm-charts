@@ -57,6 +57,8 @@ spec:
       imagePullSecrets:
         - name: regcred
       hostname: mssqlinst
+      securityContext:
+        fsGroup: 999
 ---
 kind: Service
 apiVersion: v1
