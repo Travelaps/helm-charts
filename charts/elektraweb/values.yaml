@@ -135,8 +135,3 @@ hotel:
 #STATIC DATA
 staticData:
   install: true
-longhorn:
-  install: false
-  # microk8s ise rootDir alttaki gibi, managed ortamlarda bu zaten ayarlı olduğundan boş olmalı
-  rootDir: # /var/snap/microk8s/common/var/lib/kubelet
-
