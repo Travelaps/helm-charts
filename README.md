@@ -12,7 +12,7 @@
   
 ## ElektraWeb
 
-- Sıfır kurulum:
+- Gereksinimler:
     ```bash
     # Öncelikle microk8s, kubectl ve helm kurulu olduğundan emin ol:
     sudo snap install microk8s --classic --channel=1.21/stable
@@ -28,7 +28,34 @@
     
     # Kubernetes çalıştığını doğrula
     kubectl cluster-info
-    
+  
+    # (Opsiyonel:Longhorn)
+    # Çoklu makina kurulumu yapılacaksa longhorn kur
+    helm repo add longhorn https://charts.longhorn.io
+    helm repo update
+    helm install longhorn longhorn/longhorn \
+         --namespace longhorn-system \
+         --create-namespace \
+         --set persistence.reclaimPolicy="Retain" \
+         --set csi.kubeletRootDir="/var/snap/microk8s/common/var/lib/kubelet"
+    # Longhorn kurulumunun tamamlanmasını bekle
+    # watch -n1 "kubectl -n longhorn-system get pod"
+  
+    # (Opsiyonel:CertManager)
+    # Otomatik SSL alımı/yenilemesi için CertManager kur
+    helm repo add jetstack https://charts.jetstack.io
+    helm repo update
+    helm install cert-manager jetstack/cert-manager \
+         --namespace cert-manager \
+         --create-namespace \
+         --version v1.7.1 \
+         --set installCRDs=true
+    # CertManager kurulumunun tamamlanmasını bekle
+    # watch -n1 "kubectl -n cert-manager get pod"
+    ```
+
+- Elektraweb Sıfır Kurulum:
+    ```bash
     # Travelaps kaynağını tanımla
     helm repo add travelaps https://travelaps.github.io/helm-charts/
     
@@ -39,7 +66,7 @@
     # Parametre dosya şablonunu values.yaml isimli dosyaya indir
     helm show values travelaps/elektraweb > values.yaml
 
-    # Parametreleri ayarla
+    # Parametreleri nano, vim vs. bir editör ile ayarla
     nano values.yaml
 
     # Bu parametreler ile kurulumu başlat
@@ -83,17 +110,24 @@
     helm uninstall elektraweb
     ```
 
+<br>
+
+#### SSL alımı için örnek ClusterIssuer
 
 ```yaml
+# Domainler dışarıya açık olacaksa, http01 solver'ı ile otomatik SSL alınabilir.
+# http01 yönteminde doğrulama, lets encrypt sunucularından domaine 80 portundan istek atılarak yapılır.
+# Eğer domainler dışarıya açık olmayacaksa, o zaman dns solver'ları kullanılmalı.
+
+# Staging
 apiVersion: cert-manager.io/v1
-kind: Issuer
+kind: ClusterIssuer
 metadata:
   name: letsencrypt-staging
-  namespace: default
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: tolga.gerekci@ersas.com
+    email: ssl@elektraweb.com
     privateKeySecretRef:
       name: letsencrypt-staging
     solvers:
@@ -102,15 +136,15 @@ spec:
         ingress:
           class: public
 ---
+# Prod
 apiVersion: cert-manager.io/v1
-kind: Issuer
+kind: ClusterIssuer
 metadata:
   name: letsencrypt-prod
-  namespace: default
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: tolga.gerekci@ersas.com
+    email: ssl@elektraweb.com
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
