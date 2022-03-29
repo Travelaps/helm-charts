@@ -90,6 +90,10 @@ angus:
   displayName: ElektraWeb
   shortName: ewebcloud
   logo: elektraweb.png
+  # azureSettings:
+  #   container: files
+  #   storageUrl: nodejs4001
+  #   token: ?token=TOKEN&se=2023-02-26T15:10:47Z
 # Pos
 pos:
   install: true

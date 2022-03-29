@@ -29,6 +29,13 @@ data:
                 "usercode": "User Code",
                 "password": "Password"
             },
+            {{ if .Values.angus.azureSettings }}
+            "azureSettings": {
+              "container": "{{ .Values.angus.azureSettings.container }}",
+              "storageUrl": "{{ .Values.angus.azureSettings.storageUrl }}",
+              "token": "{{ .Values.angus.azureSettings.token }}"
+            },
+            {{ end }}
             {{ if .Values.angus.logo }}
             "logo": "{{ .Values.angus.logo }}",
             {{ end }}
