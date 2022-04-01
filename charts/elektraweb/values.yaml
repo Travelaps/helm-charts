@@ -18,6 +18,7 @@ worker:
     readOnly: false
     restartHours: 0
     applicationUpdatePin: uU!01012000
+    #syncRepeatDelaySeconds: 30
     #syncTokens:
     #  24434: * * * HOTEL API KEY * * *
     #syncTables:

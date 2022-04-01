@@ -31,6 +31,9 @@ data:
       "amqp": "amqp://guest:guest@rabbit:5672/hotel",
       "applicationUpdateURL": "https://4001.hoteladvisor.net",
       "applicationUpdatePin": "{{ .Values.worker.config.applicationUpdatePin }}",
+      {{- if .Values.worker.config.syncRepeatDelaySeconds }}
+      "syncRepeatDelaySeconds": {{.Values.worker.config.syncRepeatDelaySeconds}},
+      {{- end}}
       {{- if .Values.worker.config.syncTokens }}
       "syncTokens": {
         {{- range $i, $el := .Values.worker.config.syncTokens }}
