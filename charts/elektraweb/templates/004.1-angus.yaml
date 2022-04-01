@@ -72,7 +72,6 @@ metadata:
     cert-manager.io/cluster-issuer: {{ .Values.angus.sslClusterIssuer }}
     {{- end }}
     kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
-    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
 spec:
   tls:
     - hosts:
