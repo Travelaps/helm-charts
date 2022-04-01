@@ -35,24 +35,10 @@ data:
       "syncRepeatDelaySeconds": {{.Values.worker.config.syncRepeatDelaySeconds}},
       {{- end}}
       {{- if .Values.worker.config.syncTokens }}
-      "syncTokens": {
-        {{- range $i, $el := .Values.worker.config.syncTokens }}
-        {{- if $i -}} , {{- end }}
-        "{{ $i }}": "{{ $el }}"
-        {{- end }}
-      }
+      "syncTokens": {{ toPrettyJson .Values.worker.config.syncTokens | indent 6 | trim }},
       {{- end }}
       {{- if .Values.worker.config.syncTables }}
-      "syncTables": [
-        {{- range $i, $el := .Values.worker.config.syncTables }}
-        {{- if $i -}} , {{- end }}
-        {
-          "Object": "{{ .Object }}",
-          "TimeColumn": "{{ .TimeColumn }}",
-          "TimeValue": "{{ .TimeValue }}"
-        }
-        {{- end }}
-      ]
+      "syncTokens": {{ toPrettyJson .Values.worker.config.syncTables | indent 6 | trim }},
       {{- end }}
       "httpPort": 8080,
       "tenantColumn": "HOTELID",
