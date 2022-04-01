@@ -1,3 +1,4 @@
+{{ if .Values.longhorn }}
 {{ if .Values.longhorn.install }}
 {{- $longhornSC := (lookup "storage.k8s.io/v1" "StorageClass" "" "longhorn") -}}
 {{- if not $longhornSC }}
@@ -20,4 +21,5 @@ parameters:
 {{- else}}
 {{- fail "the existing longhorn storageclass doesn't have provisioner as driver.longhorn.io" }}
 {{- end}}
+{{- end }}
 {{- end }}
