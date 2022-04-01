@@ -7,7 +7,7 @@ regcred:
 worker:
   host: nodejs4001
   # sslClusterIssuer: letsencrypt-staging
-  image: ghcr.io/travelaps/nodejs-worker:v473
+  image: ghcr.io/travelaps/nodejs-worker:v476
   replicas: 1
   config:
     dbConfig:
@@ -85,7 +85,7 @@ sql:
 # Angus
 angus:
   install: true
-  image: ghcr.io/travelaps/angus:v340
+  image: ghcr.io/travelaps/angus:v361
   host: elektraweb
   # sslClusterIssuer: letsencrypt-staging
   displayName: ElektraWeb
@@ -98,7 +98,7 @@ angus:
 # Pos
 pos:
   install: true
-  image: ghcr.io/travelaps/pos-ng11:v143
+  image: ghcr.io/travelaps/pos-ng11:v151
   host: elektrawebpos
   # sslClusterIssuer: letsencrypt-staging
 # .NET Core FRX Rapor Programı
