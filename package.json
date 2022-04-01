@@ -1,0 +1,19 @@
+{
+  "name": "helm-charts",
+  "version": "1.0.0",
+  "description": "Travelaps kubernetes kurulumları için helm chartları",
+  "main": "index.js",
+  "scripts": {
+    "debug:elektraweb": "helm template --debug ./charts/elektraweb > __output.yaml"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Travelaps/helm-charts.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Travelaps/helm-charts/issues"
+  },
+  "homepage": "https://github.com/Travelaps/helm-charts#readme"
+}
