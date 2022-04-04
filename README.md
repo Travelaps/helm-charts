@@ -14,17 +14,13 @@
 
 - Gereksinimler:
     ```bash
+    # Öncelikle microk8s, kubectl ve helm kurulu olduğundan emin ol:
     sudo snap install microk8s --classic --channel=1.21/stable && \
     sudo snap install kubectl --classic --channel=1.21/stable  && \
     sudo snap install helm --classic
     ```
     
     ```bash
-    # Öncelikle microk8s, kubectl ve helm kurulu olduğundan emin ol:
-    sudo snap install microk8s --classic --channel=1.21/stable
-    sudo snap install kubectl --classic --channel=1.21/stable
-    sudo snap install helm --classic
-    
     # makinanın dns adreslerini bul
     cat /etc/resolv.conf | grep nameserver | grep -v 127.0.0.53; cat /run/systemd/resolve/resolv.conf | grep nameserver | grep -v 127.0.0.53
    
