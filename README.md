@@ -16,14 +16,15 @@
     ```bash
     # Öncelikle microk8s, kubectl ve helm kurulu olduğundan emin ol:
     sudo snap install microk8s --classic --channel=1.21/stable && \
-    sudo snap install kubectl --classic --channel=1.21/stable  && \
-    sudo snap install helm --classic
+      sudo snap install kubectl --classic --channel=1.21/stable  && \
+      sudo snap install helm --classic
     ```
-    
     ```bash
     # makinanın dns adreslerini bul
-    cat /etc/resolv.conf | grep nameserver | grep -v 127.0.0.53; cat /run/systemd/resolve/resolv.conf | grep nameserver | grep -v 127.0.0.53
-   
+    cat /etc/resolv.conf | grep nameserver | grep -v 127.0.0.53; \
+      cat /run/systemd/resolve/resolv.conf | grep nameserver | grep -v 127.0.0.53
+    ```
+    ```bash 
     # microk8s add-on'ları aktive et. dns olması şart, ingress ve dashboard opsiyonel
     # dns adresi olarak üstte bulunan adresleri virgülle ayırarak yaz
     sudo microk8s enable dns:1.1.1.1,8.8.8.8 dashboard ingress
