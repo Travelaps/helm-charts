@@ -19,8 +19,14 @@
     sudo snap install kubectl --classic --channel=1.21/stable
     sudo snap install helm --classic
     
+    # makinanın dns adreslerini bul
+    cat /etc/resolv.conf
+    # eğer systemd kullanılıyorsa (ubuntu 20.04): 
+    cat /run/systemd/resolve/resolv.conf
+   
     # microk8s add-on'ları aktive et. dns olması şart, ingress ve dashboard opsiyonel
-    sudo microk8s enable dns dashboard ingress
+    # dns adresi olarak üstte bulunan adresleri virgülle ayırarak yaz
+    sudo microk8s enable dns:1.1.1.1,8.8.8.8 dashboard ingress
     
     # Oluşan kubernetes erişim config dosyasını kubectl'nin görebileceği yere dump et
     mkdir .kube
