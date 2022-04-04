@@ -20,9 +20,7 @@
     sudo snap install helm --classic
     
     # makinanın dns adreslerini bul
-    cat /etc/resolv.conf
-    # eğer systemd kullanılıyorsa (ubuntu 20.04): 
-    cat /run/systemd/resolve/resolv.conf
+    cat /etc/resolv.conf | grep nameserver | grep -v 127.0.0.53; cat /run/systemd/resolve/resolv.conf | grep nameserver | grep -v 127.0.0.53
    
     # microk8s add-on'ları aktive et. dns olması şart, ingress ve dashboard opsiyonel
     # dns adresi olarak üstte bulunan adresleri virgülle ayırarak yaz
