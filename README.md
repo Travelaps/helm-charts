@@ -160,3 +160,6 @@ spec:
         ingress:
           class: public
 ```
+# Longhorn multipath
+  https://longhorn.io/kb/troubleshooting-volume-with-multipath/
+  
