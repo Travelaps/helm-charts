@@ -12,6 +12,17 @@
   
 ## ElektraWeb
 
+- Erişime açık olması gereken domainler: (sadece kurulum sırasında değil program çalışırken de erişebilmeli, aksi taktirde kapanan programı geri açamayabilir)
+  - 4001.hoteladvisor.net
+  - ghcr.io
+  - security.ubuntu.com
+  - tr.archive.ubuntu.com
+  - registry.hub.docker.com
+  - docker.io
+  - *.docker.io
+  - docker.com
+  - *.docker.com
+
 - Gereksinimler:
     ```bash
     # Öncelikle microk8s, kubectl ve helm kurulu olduğundan emin ol:
