@@ -2,7 +2,6 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: rabbit
-  namespace: default
   labels:
     k8s-app: rabbit
 spec:
@@ -23,7 +22,6 @@ kind: Service
 apiVersion: v1
 metadata:
   name: rabbit
-  namespace: default
   labels:
     k8s-app: rabbit
 spec:

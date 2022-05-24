@@ -3,7 +3,6 @@ kind: Job
 apiVersion: batch/v1
 metadata:
   name: sql-create-angus-webhotel
-  namespace: default
   annotations:
     "helm.sh/hook": post-install
     "helm.sh/hook-weight": "-50"

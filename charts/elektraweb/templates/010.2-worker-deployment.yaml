@@ -2,7 +2,6 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: nodejs-worker-elektraweb
-  namespace: default
   labels:
     component: nodejs-worker
     k8s-app: nodejs-worker-elektraweb

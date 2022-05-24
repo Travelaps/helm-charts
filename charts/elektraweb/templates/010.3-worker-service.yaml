@@ -2,7 +2,6 @@ kind: Service
 apiVersion: v1
 metadata:
   name: service-elektraweb
-  namespace: default
   labels:
     k8s-app: nodejs-http
 spec:

@@ -3,7 +3,6 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: file-uploader
-  namespace: default
   labels:
     k8s-app: file-uploader
 spec:
@@ -58,7 +57,6 @@ kind: Service
 apiVersion: v1
 metadata:
   name: file-uploader
-  namespace: default
   labels:
     k8s-app: file-uploader
 spec:
@@ -76,7 +74,6 @@ kind: Ingress
 apiVersion: networking.k8s.io/v1
 metadata:
   name: file-uploader-ingress
-  namespace: default
   annotations:
     kubernetes.io/ingress.class: public
     nginx.ingress.kubernetes.io/enable-cors: 'true'
