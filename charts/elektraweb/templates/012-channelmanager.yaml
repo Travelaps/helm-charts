@@ -3,7 +3,6 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: channelmanager
-  namespace: default
   labels:
     k8s-app: channelmanager
 spec:
