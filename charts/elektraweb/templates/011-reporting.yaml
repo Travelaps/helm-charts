@@ -3,7 +3,6 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: reportingcore
-  namespace: default
   labels:
     k8s-app: reportingcore
 spec:
@@ -33,7 +32,6 @@ kind: Service
 apiVersion: v1
 metadata:
   name: reportingcore
-  namespace: default
   labels:
     k8s-app: reportingcore
 spec:
@@ -50,7 +48,6 @@ kind: Ingress
 apiVersion: networking.k8s.io/v1
 metadata:
   name: reportingcore-ingress
-  namespace: default
   annotations:
     {{- if .Values.reporting.sslIssuer }}
     cert-manager.io/issuer: {{ .Values.reporting.sslIssuer }}
