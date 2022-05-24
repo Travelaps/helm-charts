@@ -60,7 +60,7 @@ spec:
   sessionAffinity: None
 ---
 kind: Ingress
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 metadata:
   name: angus-ingress
   namespace: default
