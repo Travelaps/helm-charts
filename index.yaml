@@ -3,6 +3,16 @@ entries:
   elektraweb:
   - apiVersion: v2
     appVersion: 1-452-0
+    created: "2022-05-24T08:19:55.487186937Z"
+    description: ElektraWeb Helm Chart
+    digest: 9e18cb6fb1d695a9677e7b6dac666669e6ef7f3eb0111931f09ffe7926baa09a
+    name: elektraweb
+    type: application
+    urls:
+    - https://github.com/Travelaps/helm-charts/releases/download/elektraweb-1.1.2/elektraweb-1.1.2.tgz
+    version: 1.1.2
+  - apiVersion: v2
+    appVersion: 1-452-0
     created: "2022-05-24T08:15:23.492320887Z"
     description: ElektraWeb Helm Chart
     digest: a60eb1bc57101848dfb0a3aa6ba65123c68c2d3591c831cb7a2691d0207ee0a1
