@@ -8,9 +8,9 @@ data:
       "readOnly": {{ .Values.worker.config.readOnly }},
       "restartHours": {{ .Values.worker.config.restartHours }},
       "dbConfig": {
-        "user": "sa",
-        "password": "{{ .Values.sql.saPassword }}",
-        "server": "sql",
+        "user": "{{ .Values.worker.config.dbConfig.user }}",
+        "password": "{{ .Values.worker.config.dbConfig.password }}",
+        "server": "{{ .Values.worker.config.dbConfig.server }}",
         "database": "EMDS",
         "options": {
           "appName": "NodeJS:WebHotelLive",
