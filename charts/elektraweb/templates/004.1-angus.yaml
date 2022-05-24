@@ -84,6 +84,8 @@ spec:
           - path: /
             pathType: ImplementationSpecific
             backend:
-              serviceName: angus
-              servicePort: 80
+              service:
+                name: angus
+                port:
+                  number: 80
 {{ end }}
