@@ -1,5 +1,8 @@
 
-[![Docs](https://img.shields.io/badge/ubuntu-20.04.4---?style=flat-square)](https://releases.ubuntu.com/20.04/)
+[![OS](https://img.shields.io/badge/ubuntu-20.04.4-red?style=flat-square&logo=ubuntu)](https://releases.ubuntu.com/20.04/)
+[![Microk8s](https://img.shields.io/badge/microk8s-1.21-red?style=flat-square&logo=microk8s)](https://microk8s.io/resources)
+[![Kubectl](https://img.shields.io/badge/kubectl-1.21-blue?style=flat-square&logo=kubernetes)](https://kubernetes.io/docs/tasks/tools/)
+[![Helm](https://img.shields.io/badge/Helm-blue?style=flat-square&logo=helm)](https://helm.sh/)
 # Kullanım
 
 - Helm komutu çalıştırılan yerde [Helm](https://helm.sh) kurulu olmalı.
