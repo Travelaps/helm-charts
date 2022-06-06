@@ -21,11 +21,11 @@ spec:
             - /opt/mssql-tools/bin/sqlcmd
           args:
             - '-S'
-            - sql
+            - {{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}
             - '-U'
-            - sa
+            - {{ .Values.sql.connection.user }}
             - '-P'
-            - {{ .Values.sql.saPassword }}
+            - {{ .Values.sql.connection.password }}
             - '-Q'
             - |
               CREATE DATABASE [ANGUS_WEBHOTEL] COLLATE TURKISH_CI_AS

@@ -45,6 +45,11 @@ sql:
   install: true
   pid: Standard
   saPassword: aA!01012000
+  connection:
+    server: sql
+    port: 1433
+    user: sa
+    password: aA!01012000
   memoryLimit: 16000
   tcpPort: 1433
   agentEnabled: true

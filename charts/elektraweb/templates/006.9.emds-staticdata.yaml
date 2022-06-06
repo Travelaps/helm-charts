@@ -19,9 +19,9 @@ spec:
           image: ghcr.io/travelaps/elektraweb-static-data
           env:
             - name: SQLADDRESS
-              value: sql
+              value: "{{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}"
             - name: SQLUSER
-              value: sa
+              value: "{{ .Values.sql.connection.user }}"
             - name: SQLPASS
-              value: {{ .Values.sql.saPassword | quote }}
+              value: "{{ .Values.sql.connection.password }}"
 {{ end }}
