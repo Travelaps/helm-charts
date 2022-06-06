@@ -1,3 +1,5 @@
+
+[![Docs](https://img.shields.io/badge/ubuntu-20.04.4---?style=flat-square)](https://releases.ubuntu.com/20.04/)
 # Kullanım
 
 - Helm komutu çalıştırılan yerde [Helm](https://helm.sh) kurulu olmalı.
