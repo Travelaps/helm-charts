@@ -11,6 +11,9 @@ data:
         "user": "{{ .Values.worker.config.dbConfig.user }}",
         "password": "{{ .Values.worker.config.dbConfig.password }}",
         "server": "{{ .Values.worker.config.dbConfig.server }}",
+        {{-if .Values.worker.config.dbConfig.port }}
+        "port": {{ .Values.worker.config.dbConfig.port }},
+        {{- end }}
         "database": "EMDS",
         "options": {
           "appName": "NodeJS:WebHotelLive",
