@@ -531,4 +531,15 @@ entries:
     urls:
     - https://github.com/Travelaps/helm-charts/releases/download/elektraweb-1.0.7/elektraweb-1.0.7.tgz
     version: 1.0.7
+  monitoring:
+  - apiVersion: v2
+    appVersion: 7.16.2
+    created: "2022-06-10T07:31:23.484212696Z"
+    description: Elastic Search Monitoring
+    digest: c3dcd02de8c7d5821fb5b317ae7ee32fa620d94c3b3b27b8f5ff5a15515d31e3
+    name: monitoring
+    type: application
+    urls:
+    - https://github.com/Travelaps/helm-charts/releases/download/monitoring-1.0.0/monitoring-1.0.0.tgz
+    version: 1.0.0
 generated: "2021-09-20T14:26:51.447982679Z"
