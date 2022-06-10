@@ -1,0 +1,385 @@
+#elasticsearchcrd
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elasticsearch
+  namespace: elastic-monitoring
+spec:
+  auth: {}
+  http:
+    service:
+      metadata: {}
+      spec: {}
+    tls:
+      certificate: {}
+  monitoring:
+    logs: {}
+    metrics: {}
+  nodeSets:
+    - config:
+        node.store.allow_mmap: false
+      count: 1
+      name: default
+      podTemplate:
+        metadata:
+          creationTimestamp: null
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                limits:
+                  memory: 4Gi
+                requests:
+                  memory: 2Gi
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 20Gi
+            storageClassName: longhorn
+          status: {}
+  transport:
+    service:
+      metadata: {}
+      spec: {}
+    tls:
+      certificate: {}
+  updateStrategy:
+    changeBudget: {}
+  version: 7.16.2
+---
+#kibanacrd
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana
+  namespace: elastic-monitoring
+spec:
+  count: 1
+  elasticsearchRef:
+    name: elasticsearch
+  enterpriseSearchRef:
+    name: ''
+  http:
+    service:
+      metadata: {}
+      spec: {}
+    tls:
+      certificate: {}
+  monitoring:
+    logs: {}
+    metrics: {}
+  podTemplate:
+    metadata:
+      creationTimestamp: null
+    spec:
+      containers:
+        - env:
+            - name: NODE_OPTIONS
+              value: '--max-old-space-size=2048'
+          name: kibana
+          resources:
+            limits:
+              memory: 3Gi
+            requests:
+              memory: 2Gi
+  version: 7.16.2
+---
+#kibanafrontend
+kind: Service
+apiVersion: v1
+metadata:
+  name: kibana-kb-http
+  namespace: elastic-monitoring
+spec:
+  ports:
+    - name: https
+      protocol: TCP
+      port: 5601
+      targetPort: 5601
+  selector:
+    common.k8s.elastic.co/type: kibana
+    kibana.k8s.elastic.co/name: kibana
+  type: LoadBalancer
+  sessionAffinity: None
+  externalTrafficPolicy: Cluster
+---
+#beat
+#filebeat
+apiVersion: beat.k8s.elastic.co/v1beta1
+kind: Beat
+metadata:
+  name: filebeat
+  namespace: elastic-monitoring
+spec:
+  config:
+    filebeat:
+      autodiscover:
+        providers:
+          - hints:
+              default_config:
+                paths:
+                  - /var/log/containers/*${data.kubernetes.container.id}.log
+                type: container
+              enabled: true
+            node: ${NODE_NAME}
+            type: kubernetes
+    processors:
+      - add_host_metadata: {}
+  daemonSet:
+    podTemplate:
+      metadata:
+        creationTimestamp: null
+      spec:
+        automountServiceAccountToken: true
+        containers:
+          - env:
+              - name: NODE_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+            name: filebeat
+            resources:
+              limits:
+                cpu: '1'
+                memory: 2000Mi
+              requests:
+                cpu: 250m
+                memory: 500Mi
+            securityContext:
+              runAsUser: 0
+            volumeMounts:
+              - mountPath: /var/log/containers
+                name: varlogcontainers
+              - mountPath: /var/log/pods
+                name: varlogpods
+              - mountPath: /var/lib/docker/containers
+                name: varlibdockercontainers
+        dnsPolicy: ClusterFirstWithHostNet
+        hostNetwork: true
+        serviceAccountName: default
+        terminationGracePeriodSeconds: 30
+        volumes:
+          - hostPath:
+              path: /var/log/containers
+            name: varlogcontainers
+          - hostPath:
+              path: /var/log/pods
+            name: varlogpods
+          - hostPath:
+              path: /var/lib/docker/containers
+            name: varlibdockercontainers
+    updateStrategy: {}
+  elasticsearchRef:
+    name: elasticsearch
+  kibanaRef:
+    name: kibana
+  type: filebeat
+  version: 7.16.2
+---
+#metricbeat
+apiVersion: beat.k8s.elastic.co/v1beta1
+kind: Beat
+metadata:
+  name: metricbeat
+  namespace: elastic-monitoring
+spec:
+  config:
+    metricbeat:
+      autodiscover:
+        providers:
+          - hints:
+              default_config: {}
+              enabled: 'true'
+            node: ${NODE_NAME}
+            type: kubernetes
+      modules:
+        - metricsets:
+            - cpu
+            - load
+            - memory
+            - network
+            - process
+            - process_summary
+          module: system
+          period: 10s
+          process:
+            include_top_n:
+              by_cpu: 5
+              by_memory: 5
+          processes:
+            - .*
+        - metricsets:
+            - filesystem
+            - fsstat
+          module: system
+          period: 1m
+          processors:
+            - drop_event:
+                when:
+                  regexp:
+                    system:
+                      filesystem:
+                        mount_point: ^/(sys|cgroup|proc|dev|etc|host|lib)($|/)
+        - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          hosts:
+            - https://${NODE_NAME}:10250
+          metricsets:
+            - node
+            - system
+            - pod
+            - container
+            - volume
+          module: kubernetes
+          node: ${NODE_NAME}
+          period: 10s
+          ssl:
+            verification_mode: none
+    monitoring:
+      enabled: false
+    processors:
+      - add_cloud_metadata: {}
+      - add_host_metadata: {}
+  daemonSet:
+    podTemplate:
+      metadata:
+        creationTimestamp: null
+      spec:
+        automountServiceAccountToken: true
+        containers:
+          - args:
+              - '-e'
+              - '-c'
+              - /etc/beat.yml
+              - '-system.hostfs=/hostfs'
+            env:
+              - name: NODE_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+            name: metricbeat
+            resources:
+              limits:
+                cpu: '1'
+                memory: 2000Mi
+              requests:
+                cpu: 250m
+                memory: 500Mi
+            volumeMounts:
+              - mountPath: /hostfs/sys/fs/cgroup
+                name: cgroup
+              - mountPath: /var/run/docker.sock
+                name: dockersock
+              - mountPath: /hostfs/proc
+                name: proc
+        dnsPolicy: ClusterFirstWithHostNet
+        hostNetwork: true
+        securityContext:
+          runAsUser: 0
+        serviceAccountName: default
+        terminationGracePeriodSeconds: 30
+        volumes:
+          - hostPath:
+              path: /sys/fs/cgroup
+            name: cgroup
+          - hostPath:
+              path: /var/run/docker.sock
+            name: dockersock
+          - hostPath:
+              path: /proc
+            name: proc
+    updateStrategy: {}
+  elasticsearchRef:
+    name: elasticsearch
+  kibanaRef:
+    name: kibana
+  type: metricbeat
+  version: 7.16.2
+---
+#packetbeat
+apiVersion: beat.k8s.elastic.co/v1beta1
+kind: Beat
+metadata:
+  name: packetbeat
+  namespace: elastic-monitoring
+spec:
+  config:
+    packetbeat.flows:
+      enabled: false
+      period: 10s
+      timeout: 30s
+    packetbeat.interfaces.device: any
+    packetbeat.protocols:
+      - max_message_size: 1073741824
+        ports:
+          - 80
+          - 8000
+          - 8080
+          - 9200
+          - 3006
+          - 8081
+          - 5000
+        send_all_headers: true
+        send_request: true
+        send_response: true
+        type: http
+    processors:
+      - add_kubernetes_metadata:
+          host: ${HOSTNAME}
+      - convert:
+          fail_on_error: false
+          fields:
+            - from: http.response.headers.m-qry
+              to: metrics.sql
+              type: integer
+            - from: http.response.headers.m-dur
+              to: metrics.total-duration
+              type: integer
+            - from: http.response.headers.m-nor
+              to: metrics.after-sql-processing
+              type: integer
+            - from: http.response.headers.m-wai
+              to: metrics.wait-mode-idle
+              type: integer
+            - from: http.response.headers.m-rec
+              to: metrics.sql-record-count
+              type: integer
+            - from: http.response.headers.m-lck
+              to: metrics.lock-idle
+              type: integer
+          ignore_missing: true
+  daemonSet:
+    podTemplate:
+      metadata:
+        creationTimestamp: null
+      spec:
+        automountServiceAccountToken: true
+        containers:
+          - name: packetbeat
+            resources:
+              limits:
+                cpu: 400m
+                memory: 800Mi
+              requests:
+                cpu: 100m
+                memory: 200Mi
+            securityContext:
+              capabilities:
+                add:
+                  - NET_ADMIN
+              runAsUser: 0
+        dnsPolicy: ClusterFirstWithHostNet
+        hostNetwork: true
+        serviceAccountName: default
+        terminationGracePeriodSeconds: 30
+    updateStrategy: {}
+  elasticsearchRef:
+    name: elasticsearch
+  kibanaRef:
+    name: kibana
+  type: packetbeat
+  version: 7.16.2

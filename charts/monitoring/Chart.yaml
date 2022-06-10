@@ -1,0 +1,7 @@
+apiVersion: v2
+name: monitoring
+description: Elastic Search Monitoring
+
+type: application
+version: 1.0.0
+appVersion: "7.16.2"
