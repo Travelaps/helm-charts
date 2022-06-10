@@ -39,8 +39,8 @@ spec:
               - ReadWriteOnce
             resources:
               requests:
-                storage: 20Gi
-            storageClassName: longhorn
+                storage: 50Gi
+            storageClassName: longhorn-static
           status: {}
   transport:
     service:

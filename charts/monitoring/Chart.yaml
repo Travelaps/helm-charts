@@ -3,5 +3,5 @@ name: monitoring
 description: Elastic Search Monitoring
 
 type: application
-version: 1.0.0
+version: 1.0.1
 appVersion: "7.16.2"
