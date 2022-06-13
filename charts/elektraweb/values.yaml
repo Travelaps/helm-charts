@@ -150,7 +150,7 @@ fileUploader:
   install: false
   image: ghcr.io/travelaps/file-uploader:v3
   env:
-    TRUSTED_ORIGINS: '["https://nodejs4001"]'
+    TRUSTED_ORIGINS: '["https://elektraweb"]'
     TRUSTED_IPS: '["*"]'
     ALLOWED_FILETYPES: '["*"]'
     ALLOWED_TOKENS: '["TOKEN"]'
