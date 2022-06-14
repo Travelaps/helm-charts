@@ -40,7 +40,7 @@ data:
       "syncTokens": {{ toPrettyJson .Values.worker.config.syncTokens | indent 6 | trim }},
       {{- end }}
       {{- if .Values.worker.config.syncTables }}
-      "syncTokens": {{ toPrettyJson .Values.worker.config.syncTables | indent 6 | trim }},
+      "syncTables": {{ toPrettyJson .Values.worker.config.syncTables | indent 6 | trim }},
       {{- end }}
       "httpPort": 8080,
       "tenantColumn": "HOTELID",
