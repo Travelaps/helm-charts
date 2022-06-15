@@ -3,6 +3,15 @@ regcred:
   enabled: true
   user: talyabilisim
   key: REQUIRED-github-access-token
+# PVC
+#persistentVolumeClaims:
+#  mssql-data:
+#    accessModes:
+#      - ReadWriteOnce
+#    storageClassName: longhorn
+#    resources:
+#      requests:
+#        storage: 100Gi
 # NodeJS Web Servis
 worker:
   host: nodejs4001
@@ -66,14 +75,6 @@ sql:
   volumeMounts:
     - name: mssql-data
       mountPath: /var/opt/mssql/data
-  #persistentVolumeClaims:
-  #  mssql-data:
-  #    accessModes:
-  #      - ReadWriteOnce
-  #    storageClassName: longhorn
-  #    resources:
-  #      requests:
-  #        storage: 100Gi
   #  volumes:
   #    - name: mssql-data
   #      persistentVolumeClaim:
