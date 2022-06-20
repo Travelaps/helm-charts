@@ -1,4 +1,4 @@
-{{ if .Values.angus.install }}
+{{ if .Values.elastic.install }}
 #elasticsearchcrd
 apiVersion: elasticsearch.k8s.elastic.co/v1
 kind: Elasticsearch
