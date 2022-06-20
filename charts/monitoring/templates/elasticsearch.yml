@@ -109,7 +109,6 @@ spec:
   sessionAffinity: None
   externalTrafficPolicy: Cluster
 ---
-#beat
 #filebeat
 apiVersion: beat.k8s.elastic.co/v1
 kind: Beat
