@@ -564,6 +564,16 @@ entries:
   monitoring:
   - apiVersion: v2
     appVersion: 7.16.2
+    created: "2022-06-20T13:47:15.784028744Z"
+    description: Elastic Search Monitoring
+    digest: 9f05df3480bab32c05461dde552b24747d2de8ebaa050f50f1eca7b309e8c15f
+    name: monitoring
+    type: application
+    urls:
+    - https://github.com/Travelaps/helm-charts/releases/download/monitoring-1.0.3/monitoring-1.0.3.tgz
+    version: 1.0.3
+  - apiVersion: v2
+    appVersion: 7.16.2
     created: "2022-06-20T13:29:29.149194054Z"
     description: Elastic Search Monitoring
     digest: 4b96cdaa08b8ce16ada9770bba56d9e8f9a3c34e0c27fe5c8dd66c0c7b2666c2
