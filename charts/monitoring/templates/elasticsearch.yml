@@ -1,4 +1,4 @@
-{{ if .Values.elastic.install }}
+{{ if .Values.angus.install }}
 #elasticsearchcrd
 apiVersion: elasticsearch.k8s.elastic.co/v1
 kind: Elasticsearch
@@ -109,8 +109,9 @@ spec:
   sessionAffinity: None
   externalTrafficPolicy: Cluster
 ---
+#beat
 #filebeat
-apiVersion: beat.k8s.elastic.co/v1
+apiVersion: beat.k8s.elastic.co/v1beta1
 kind: Beat
 metadata:
   name: filebeat
@@ -182,7 +183,7 @@ spec:
   version: 7.16.2
 ---
 #metricbeat
-apiVersion: beat.k8s.elastic.co/v1
+apiVersion: beat.k8s.elastic.co/v1beta1
 kind: Beat
 metadata:
   name: metricbeat
@@ -301,7 +302,7 @@ spec:
   version: 7.16.2
 ---
 #packetbeat
-apiVersion: beat.k8s.elastic.co/v1
+apiVersion: beat.k8s.elastic.co/v1beta1
 kind: Beat
 metadata:
   name: packetbeat
@@ -383,4 +384,4 @@ spec:
     name: kibana
   type: packetbeat
   version: 7.16.2
-{{ end }}
+  {{ end }}
