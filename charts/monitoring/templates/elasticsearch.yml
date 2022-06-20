@@ -111,7 +111,7 @@ spec:
 ---
 #beat
 #filebeat
-apiVersion: beat.k8s.elastic.co/v1beta1
+apiVersion: beat.k8s.elastic.co/v1
 kind: Beat
 metadata:
   name: filebeat
@@ -183,7 +183,7 @@ spec:
   version: 7.16.2
 ---
 #metricbeat
-apiVersion: beat.k8s.elastic.co/v1beta1
+apiVersion: beat.k8s.elastic.co/v1
 kind: Beat
 metadata:
   name: metricbeat
@@ -302,7 +302,7 @@ spec:
   version: 7.16.2
 ---
 #packetbeat
-apiVersion: beat.k8s.elastic.co/v1beta1
+apiVersion: beat.k8s.elastic.co/v1
 kind: Beat
 metadata:
   name: packetbeat
