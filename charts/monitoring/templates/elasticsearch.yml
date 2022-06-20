@@ -1,3 +1,4 @@
+{{ if .Values.elastic.install }}
 #elasticsearchcrd
 apiVersion: elasticsearch.k8s.elastic.co/v1
 kind: Elasticsearch
@@ -383,3 +384,4 @@ spec:
     name: kibana
   type: packetbeat
   version: 7.16.2
+{{ end }}

@@ -1,0 +1,8 @@
+# Programlarımıza erişim için gerekli GitHub erişim anahtarı
+regcred:
+  enabled: true
+  user: talyabilisim
+  key: REQUIRED-github-access-token
+# elastic
+elastic:
+  install: true
