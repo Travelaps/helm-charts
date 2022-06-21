@@ -116,4 +116,5 @@ fabric.properties
 
 .idea
 values.yaml
+!charts/**/values.yaml
 __output.yaml
