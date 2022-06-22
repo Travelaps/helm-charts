@@ -3,6 +3,7 @@ regcred:
   enabled: true
   user: talyabilisim
   key: REQUIRED-github-access-token
+  
 # elasticsearch
 elasticsearch:
   install: true
