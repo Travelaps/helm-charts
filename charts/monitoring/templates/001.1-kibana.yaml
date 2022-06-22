@@ -1,0 +1,48 @@
+{{ if .Values.kibana.install }}
+#kibanacrd
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana
+  namespace: elastic-monitoring
+spec:
+  count: 1
+  elasticsearchRef:
+    name: elasticsearch
+  enterpriseSearchRef:
+    name: ''
+  podTemplate:
+    metadata:
+      creationTimestamp: null
+    spec:
+      containers:
+        - env:
+            - name: NODE_OPTIONS
+              value: {{ .Values.kibana.nodeOptions.spaceSize | quote }}
+          name: kibana
+          resources:
+            limits:
+              memory: {{ .Values.kibana.resources.limitsMemory | quote }}
+            requests:
+              memory: {{ .Values.kibana.resources.requestsMemory | quote }}
+  version: {{ .Values.kibana.version | quote }}
+---
+#kibanafrontend
+kind: Service
+apiVersion: v1
+metadata:
+  name: kibana-kb-http
+  namespace: elastic-monitoring
+spec:
+  ports:
+    - name: https
+      protocol: TCP
+      port: 5601
+      targetPort: 5601
+  selector:
+    common.k8s.elastic.co/type: kibana
+    kibana.k8s.elastic.co/name: kibana
+  type: LoadBalancer
+  sessionAffinity: None
+  externalTrafficPolicy: Cluster
+{{ end }}

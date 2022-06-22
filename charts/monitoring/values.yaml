@@ -3,6 +3,31 @@ regcred:
   enabled: true
   user: talyabilisim
   key: REQUIRED-github-access-token
-# elastic
-elastic:
+# elasticsearch
+elasticsearch:
   install: true
+  resources:
+    limitsMemory: 4Gi
+    requestsMemory: 2Gi
+  version: 7.16.2
+# kibana
+kibana:
+  install: true
+  nodeOptions:
+    spaceSize: '--max-old-space-size=2048'
+  resources:
+    limitsMemory: 3Gi
+    requestsMemory: 2Gi
+  version: 7.16.2
+# beat
+beat:
+  install: true
+  filebeat:
+    resources:
+      limitsCpu: '1'
+      limitsMemory: 2000Mi
+      requestsCpu: 250m
+      requestsMemory: 500Mi
+  version: 7.16.2
+
+      

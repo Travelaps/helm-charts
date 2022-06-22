@@ -1,61 +1,4 @@
-{{ if .Values.kibana.install }}
-#kibanacrd
-apiVersion: kibana.k8s.elastic.co/v1
-kind: Kibana
-metadata:
-  name: kibana
-  namespace: elastic-monitoring
-spec:
-  count: 1
-  elasticsearchRef:
-    name: elasticsearch
-  enterpriseSearchRef:
-    name: ''
-  http:
-    service:
-      metadata: {}
-      spec: {}
-    tls:
-      certificate: {}
-  monitoring:
-    logs: {}
-    metrics: {}
-  podTemplate:
-    metadata:
-      creationTimestamp: null
-    spec:
-      containers:
-        - env:
-            - name: NODE_OPTIONS
-              value: '--max-old-space-size=2048'
-          name: kibana
-          resources:
-            limits:
-              memory: 3Gi
-            requests:
-              memory: 2Gi
-  version: 7.16.2
----
-#kibanafrontend
-kind: Service
-apiVersion: v1
-metadata:
-  name: kibana-kb-http
-  namespace: elastic-monitoring
-spec:
-  ports:
-    - name: https
-      protocol: TCP
-      port: 5601
-      targetPort: 5601
-  selector:
-    common.k8s.elastic.co/type: kibana
-    kibana.k8s.elastic.co/name: kibana
-  type: LoadBalancer
-  sessionAffinity: None
-  externalTrafficPolicy: Cluster
----
-#beat
+{{ if .Values.beat.install }}
 #filebeat
 apiVersion: beat.k8s.elastic.co/v1beta1
 kind: Beat
@@ -92,11 +35,11 @@ spec:
             name: filebeat
             resources:
               limits:
-                cpu: '1'
-                memory: 2000Mi
+                cpu: {{ .Values.beat.filebeat.resources.limitsCpu | quote }}
+                memory: {{ .Values.beat.filebeat.resources.limitsMemory | quote }}
               requests:
-                cpu: 250m
-                memory: 500Mi
+                cpu: {{ .Values.beat.filebeat.resources.requestsCpu | quote }}
+                memory: {{ .Values.beat.filebeat.resources.requestsMemory | quote }}
             securityContext:
               runAsUser: 0
             volumeMounts:
@@ -126,7 +69,7 @@ spec:
   kibanaRef:
     name: kibana
   type: filebeat
-  version: 7.16.2
+  version: {{ .Values.beat.version | quote }}
 ---
 #metricbeat
 apiVersion: beat.k8s.elastic.co/v1beta1
@@ -245,7 +188,7 @@ spec:
   kibanaRef:
     name: kibana
   type: metricbeat
-  version: 7.16.2
+  version: {{ .Values.beat.version | quote }}
 ---
 #packetbeat
 apiVersion: beat.k8s.elastic.co/v1beta1
@@ -329,5 +272,5 @@ spec:
   kibanaRef:
     name: kibana
   type: packetbeat
-  version: 7.16.2
-  {{ end }}
+  version: {{ .Values.beat.version | quote }}
+{{ end }}

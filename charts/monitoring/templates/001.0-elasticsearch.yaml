@@ -1,0 +1,44 @@
+{{ if .Values.elasticsearch.install }}
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elasticsearch
+  namespace: elastic-monitoring
+spec:
+  nodeSets:
+    - config:
+        node.store.allow_mmap: false
+      count: 1
+      name: default
+      podTemplate:
+        metadata:
+          creationTimestamp: null
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                limits:
+                  memory: {{ .Values.elasticsearch.resources.limitsMemory | quote }}
+                requests:
+                  memory: {{ .Values.elasticsearch.resources.requestsMemory | quote }}
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 50Gi
+            storageClassName: longhorn-static
+          status: {}
+  transport:
+    service:
+      metadata: {}
+      spec: {}
+    tls:
+      certificate: {}
+  updateStrategy:
+    changeBudget: {}
+  version: {{ .Values.elasticsearch.version | quote }}
+{{ end }}
