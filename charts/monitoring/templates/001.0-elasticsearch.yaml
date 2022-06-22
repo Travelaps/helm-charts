@@ -30,7 +30,7 @@ spec:
             resources:
               requests:
                 storage: 50Gi
-            storageClassName: longhorn-static
+            storageClassName: longhorn
           status: {}
   transport:
     service:

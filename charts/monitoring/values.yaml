@@ -28,6 +28,18 @@ beat:
       limitsMemory: 2000Mi
       requestsCpu: 250m
       requestsMemory: 500Mi
+  metricbeat:
+    resources:
+      limitsCpu: '1'
+      limitsMemory: 2000Mi
+      requestsCpu: 250m
+      requestsMemory: 500Mi
+  packetbeat:
+    resources:
+      limitsCpu: 400m
+      limitsMemory: 800Mi
+      requestsCpu: 100m
+      requestsMemory: 200Mi
   version: 7.16.2
 
       

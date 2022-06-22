@@ -154,11 +154,11 @@ spec:
             name: metricbeat
             resources:
               limits:
-                cpu: '1'
-                memory: 2000Mi
+                cpu: {{ .Values.beat.metricbeat.resources.limitsCpu | quote }}
+                memory: {{ .Values.beat.metricbeat.resources.limitsMemory | quote }}
               requests:
-                cpu: 250m
-                memory: 500Mi
+                cpu: {{ .Values.beat.metricbeat.resources.requestsCpu | quote }}
+                memory: {{ .Values.beat.metricbeat.resources.requestsMemory | quote }}
             volumeMounts:
               - mountPath: /hostfs/sys/fs/cgroup
                 name: cgroup
@@ -252,11 +252,11 @@ spec:
           - name: packetbeat
             resources:
               limits:
-                cpu: 400m
-                memory: 800Mi
+                cpu: {{ .Values.beat.packetbeat.resources.limitsCpu | quote }}
+                memory: {{ .Values.beat.packetbeat.resources.limitsMemory | quote }}
               requests:
-                cpu: 100m
-                memory: 200Mi
+                cpu: {{ .Values.beat.packetbeat.resources.requestsCpu | quote }}
+                memory: {{ .Values.beat.packetbeat.resources.requestsMemory | quote }}
             securityContext:
               capabilities:
                 add:
