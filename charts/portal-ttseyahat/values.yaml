@@ -18,6 +18,7 @@ worker:
       user: DB_USER
       password: DB_PASSWORD
       server: DB_ADDR
+      trustServerCertificate: true
 portal:
   image: ghcr.io/travelaps/portal:v2-tt
 reporting:

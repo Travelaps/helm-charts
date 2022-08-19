@@ -558,7 +558,8 @@ data:
         "database": "EMDS",
         "options": {
           "appName": "NodeJS:WebPortalLive",
-          "encrypt": true
+          "encrypt": true,
+          "trustServerCertificate": {{ .Values.worker.config.dbConfig.trustServerCertificate }}
         },
         "pool": {
           "min": 1,
