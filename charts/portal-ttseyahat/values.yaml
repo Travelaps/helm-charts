@@ -1,0 +1,29 @@
+regcred:
+  user: talyabilisim
+  key: GITHUB_TOKEN
+angus:
+  image: ghcr.io/travelaps/angus:v508
+  host: KOKPIT_URL
+  azureSettings:
+    container: files
+    storageUrl: NODEJS_HTTP_URL
+    token: ?token=TOKEN&se=EXPIRATION_TIME
+http:
+  image: ghcr.io/travelaps/nodejs-http:v2-beta
+  host: NODEJS_HTTP_URL
+worker:
+  image: ghcr.io/travelaps/nodejs-worker:v505
+  config:
+    dbConfig:
+      user: DB_USER
+      password: DB_PASSWORD
+      server: DB_ADDR
+portal:
+  image: ghcr.io/travelaps/portal:v2-tt
+reporting:
+  image: ghcr.io/travelaps/reportingfull:latest
+  sqlServer: DB_ADDR
+  sqlUser: DB_USER
+  sqlPassword: DB_PASSWORD
+
+

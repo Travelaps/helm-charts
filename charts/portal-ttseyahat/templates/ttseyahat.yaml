@@ -1,0 +1,773 @@
+{{- define "imagePullSecret" }}
+{{- with .Values.regcred }}
+{{- printf "{\"auths\":{\"ghcr.io\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"a@a.com\",\"auth\":\"%s\"}}}" .user .key (printf "%s:%s" .user .key | b64enc) | b64enc }}
+{{- end }}
+{{- end }}
+kind: Secret
+apiVersion: v1
+metadata:
+  name: regcred
+data:
+  .dockerconfigjson: {{ template "imagePullSecret" . }}
+type: kubernetes.io/dockerconfigjson
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: angus
+  labels:
+    k8s-app: angus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: angus
+  template:
+    metadata:
+      name: angus
+      labels:
+        k8s-app: angus
+    spec:
+      volumes:
+        - name: endpoints
+          configMap:
+            name: angus-endpoints
+            defaultMode: 511
+      containers:
+        - name: angus
+          image: {{ .Values.angus.image }}
+          resources: {}
+          volumeMounts:
+            - name: endpoints
+              mountPath: /usr/share/nginx/html/app/assets/endpoints-client.json
+              subPath: endpoints-client.json
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+        - name: regcred
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: nodejs-http
+  labels:
+    k8s-app: nodejs-http
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: nodejs-http
+  template:
+    metadata:
+      name: nodejs-http
+      labels:
+        k8s-app: nodejs-http
+    spec:
+      containers:
+        - name: nodejs-http
+          image: {{ .Values.http.image }}
+          env:
+            - name: AMQP
+              value: 'amqp://guest:guest@rabbit:5672/'
+            - name: HOSTS
+              value: |
+                {
+                  "{{ .Values.http.host }}": "portal"
+                }
+            - name: PORT
+              value: '8080'
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+        - name: regcred
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: nodejs-worker-elektraweb
+  labels:
+    component: nodejs-worker
+    k8s-app: nodejs-worker-elektraweb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: nodejs-worker-elektraweb
+  template:
+    metadata:
+      name: nodejs-worker-elektraweb
+      labels:
+        component: nodejs-worker
+        k8s-app: nodejs-worker-elektraweb
+    spec:
+      volumes:
+        - name: worker-configs
+          configMap:
+            name: worker-config
+            defaultMode: 420
+      containers:
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: nodejs-worker-elektraweb
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 3
+            timeoutSeconds: 1
+            periodSeconds: 3
+            successThreshold: 1
+            failureThreshold: 10
+          env:
+            - name: CONFIGPATH
+              value: /configs/config.conf.json
+          imagePullPolicy: IfNotPresent
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 1
+            successThreshold: 1
+            failureThreshold: 120
+          volumeMounts:
+            - name: worker-configs
+              mountPath: /configs
+          terminationMessagePolicy: File
+          image: {{ .Values.worker.image }}
+          args:
+            - '-i'
+            - '1'
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+        - name: regcred
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: portal
+  labels:
+    k8s-app: portal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: portal
+  template:
+    metadata:
+      labels:
+        k8s-app: portal
+    spec:
+      containers:
+        - name: portal
+          image: {{ .Values.portal.image }}
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+        - name: regcred
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: rabbit
+  labels:
+    k8s-app: rabbit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: rabbit
+  template:
+    metadata:
+      name: rabbit
+      labels:
+        k8s-app: rabbit
+    spec:
+      containers:
+        - name: rabbit
+          image: 'rabbitmq:3-management'
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: redis
+  labels:
+    k8s-app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: redis
+  template:
+    metadata:
+      name: redis
+      labels:
+        k8s-app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis
+          command:
+            - redis-server
+            - '--save'
+            - ''''''
+            - '--appendonly'
+            - 'no'
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: reportingcore
+  labels:
+    k8s-app: reportingcore
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      k8s-app: reportingcore
+  template:
+    metadata:
+      name: reportingcore
+      labels:
+        k8s-app: reportingcore
+    spec:
+      containers:
+        - name: reportingcore
+          image: {{ .Values.reporting.image }}
+          env:
+            - name: DS_server
+              value: {{ .Values.reporting.sqlServer }}
+            - name: DS_user
+              value: {{ .Values.reporting.sqlUser }}
+            - name: DS_password
+              value: {{ .Values.reporting.sqlPassword }}
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+        - name: regcred
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: angus
+  labels:
+    k8s-app: angus
+spec:
+  ports:
+    - name: angus-port
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+  selector:
+    k8s-app: angus
+  type: ClusterIP
+  sessionAffinity: None
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: nodejs-http
+  labels:
+    k8s-app: nodejs-http
+spec:
+  ports:
+    - name: nodejs-port
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+  selector:
+    k8s-app: nodejs-http
+  type: ClusterIP
+  sessionAffinity: None
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: portal
+  labels:
+    k8s-app: portal
+spec:
+  ports:
+    - name: 8080-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    k8s-app: portal
+  type: ClusterIP
+  sessionAffinity: None
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: rabbit
+  labels:
+    k8s-app: rabbit
+spec:
+  ports:
+    - name: rabbit-port
+      protocol: TCP
+      port: 5672
+      targetPort: 5672
+    - name: rabbit-management-port
+      protocol: TCP
+      port: 15672
+      targetPort: 15672
+  selector:
+    k8s-app: rabbit
+  type: ClusterIP
+  sessionAffinity: None
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: redis
+  labels:
+    k8s-app: redis
+spec:
+  ports:
+    - name: redis-port
+      protocol: TCP
+      port: 6379
+      targetPort: 6379
+  selector:
+    k8s-app: redis
+  type: ClusterIP
+  sessionAffinity: None
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: reportingcore
+  labels:
+    k8s-app: reportingcore
+spec:
+  ports:
+    - name: reporting-port
+      protocol: TCP
+      port: 5000
+      targetPort: 5000
+  selector:
+    k8s-app: reportingcore
+  type: ClusterIP
+  sessionAffinity: None
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+
+---
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: angus-endpoints
+  labels:
+    app.kubernetes.io/name: angus-endpoints
+data:
+  endpoints-client.json: |
+    [
+        {
+            "displayName": "TravelAps",
+            "shortName": "portal",
+            "endpoint": "https://{{ .Values.http.host }}/",
+            "url": [
+              "{{ .Values.angus.host }}"
+            ],
+            "defaultLang": "TR",
+            "desc": "Travel Aps",
+            "tenantSelectEveryone": false,
+            "infoLink": "https://www.travelaps.com",
+            "sendPasswordLink": true,
+            "sendPasswordProcedure": "SP_PORTAL_FORGOTPASSWORD",
+            "register": false,
+            "showNews": true,
+            "tawkto": false,
+            "azureSettings": {
+              "container": "{{ .Values.angus.azureSettings.container }}",
+              "storageUrl": "{{ .Values.angus.azureSettings.storageUrl }}",
+              "token": "{{ .Values.angus.azureSettings.token }}"
+            }
+        }
+    ]
+
+---
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: worker-config
+data:
+  config.conf.json: |
+    {
+      "dbConfig": {
+        "user": "{{ .Values.worker.config.dbConfig.user }}",
+        "password": "{{ .Values.worker.config.dbConfig.password }}",
+        "server": "{{ .Values.worker.config.dbConfig.server }}",
+        "database": "EMDS",
+        "options": {
+          "appName": "NodeJS:WebPortalLive",
+          "encrypt": true
+        },
+        "pool": {
+          "min": 1,
+          "max": 100
+        }
+      },
+      "redis": {
+        "host": "redis"
+      },
+      "amqp": "amqp://guest:guest@rabbit:5672/portal",
+      "httpPort": 8080,
+      "tenantColumn": "PORTALID",
+      "tenantTable": "VW_PORTAL",
+      "title2FA": "WebPortal",
+      "encryptionSalt": 4005,
+      "frameworkDb": "ANGUS_WEBPORTAL",
+      "logFailedRequests": true,
+      "tempFolder": "/tmp/caches/portal/temp",
+      "persistCaches": true,
+      "persistCachesPath": "/tmp/caches/portal",
+      "passwordHashAlgorithm": "sha512",
+      "passwordHashEncoding": "ucs-2",
+      "sqlCacheFolder": "/tmp/caches/portal/sql",
+      "sqlCacheObjects": {
+        "*": 3,
+        "SP_TRAVELROBOT_AUTOCOMPLETEHOTEL_RQ": 2678400,
+        "SP_PORTALV4_HOTELBEDS_AUTOCOMPLETE_DESTINATIONS": 86400,
+        "SP_PORTALV4_HOSPITAL_AUTOCOMPLETE": 2678400,
+        "SP_TRAVELLANDA_AUTOCOMPLETE_HOTELS": 2678400,
+        "SP_EXPEDIA_AUTOCOMPLETE_HOTELS": 2678400,
+        "SP_HOTELBEDS_AUTOCOMPLETE_HOTELS": 2678400,
+        "SP_TRAVELROBOT_AUTOCOMPLETEHOTEL_RS": 2678400,
+        "SP_PAXIMUM_AUTOCOMPLETE_DESTINATIONS": 2678400,
+        "SP_HOSPITAL_AUTOCOMPLETE": 2678400,
+        "SP_PORTALV4_HOTELBEDS_AUTOCOMPLETE_HOTELS": 86400,
+        "SP_HOTELSPRO_AUTOCOMPLETE_HOTELS": 2678400,
+        "SP_RATEHAWK_AUTOCOMPLETEHOTEL_RQ": 2678400,
+        "SP_TRAVELROBOT_AUTOCOMPLETE_RQ": 2678400,
+        "SP_RATEHAWK_AUTOCOMPLETEHOTEL_RS": 2678400,
+        "SP_PORTAL_AIRPORT_AUTOCOMPLETE2": 2678400,
+        "SP_PORTAL_TRANSFER_AUTOCOMPLETE": 2678400,
+        "SP_PORTALV4_TRANSFER_AUTOCOMPLETE": 2678400,
+        "SP_PORTALV4_RAPID_AUTOCOMPLETE_DESTINATIONS": 2678400,
+        "SP_PORTALV4_RAPID_AUTOCOMPLETE_HOTELS": 2678400,
+        "SP_RATEHAWK_AUTOCOMPLETE_RS": 2678400,
+        "SP_PORTAL_AIRPORT_AUTOCOMPLETE": 2678400,
+        "SP_EXPEDIA_AUTOCOMPLETE_DESTINATIONS": 2678400,
+        "SP_PORTAL_SPA_AUTOCOMPLETE": 2678400,
+        "SP_PORTAL_AIRPORT_AUTOCOMPLETE1": 2678400,
+        "SP_TRAVELLANDA_AUTOCOMPLETE_DESTINATIONS": 2678400,
+        "SP_HOTELBEDS_AUTOCOMPLETE_DESTINATIONS": 2678400,
+        "SP_HOTELSPRO_AUTOCOMPLETE_DESTINATIONS": 2678400,
+        "SP_TRAVELROBOT_AUTOCOMPLETE_RS": 2678400,
+        "SP_PAXIMUM_AUTOCOMPLETE_HOTELS": 2678400,
+        "SP_RATEHAWK_AUTOCOMPLETE_RQ": 2678400,
+        "SP_PORTAL_AIRPORT_AUTOCOMPLETE_JSON": 2678400,
+        "SP_PORTALV4_TRAVELLANDA_AUTOCOMPLETE_HOTELS": 2678400,
+        "SP_PORTALV4_FLIGHT_AUTOCOMPLETE": 2678400,
+        "SP_HOTELBEDS_TRANSFER_AUTOCOMPLETE": 2678400,
+        "--------------------": -1,
+        "SP_PORTAL_SEO": 10000,
+        "SP_PORTALV4_CORALTATIL_LIST_HOTELS": 86400,
+        "SP_PORTALV4_HOTELLIST": 86400,
+        "SP_PORTALV4_HOTELBEDS_LIST_HOTELS": 86400,
+        "SP_PORTALV4_TRAVELLANDA_LIST_HOTELS": 86400,
+        "SP_PORTAL_PLACELIKE": 86400,
+        "SP_PORTALV4_CORALTATIL_PLACES": 86400,
+        "SP_PORTALV4_CORALTATIL_HOTELS": 86400,
+        "SP_PORTALV4_CORALTATIL_HOTELIMAGE": 86400,
+        "SP_PORTALV4_CORALTATIL_DETAIL_HOTELS": 86400,
+        "SP_PORTALV4_HOTELLISTPRICES": 600,
+        "SP_PORTALV4_GETDOMAINCONFIG": 86400,
+        "SP_PORTALV4_EXCHANGELIST": 300,
+        "SP_PORTALV4_TOUR_PRICE": 180,
+        "SP_PORTALV4_TOUR_CONTRACTPRICE": 180,
+        "SP_PORTALV4_TOUR_DETAILS": 180,
+        "SP_PORTALV4_HOTELMINPRICES": 3600,
+        "SP_PORTALV4_HOTELDETAIL": 600,
+        "SP_PORTALV4_GETFOOTERDESIGN": 600,
+        "SP_PORTALV4_GETHOMEPAGE": 600,
+        "FN_PORTALV4_SEO_DOMAIN": 600,
+        "SP_PORTALV4_SEO": 600,
+        "SP_PORTALV4_TOURPRICES_WITH_CATEGORY_SEOURL": 600,
+        "xAPISEQUENCE": 10,
+        "SP_PORTALV4_PORTAL_CONFIGURATION": 86400
+      },
+      "autoFill": {
+        "CREATEDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATE_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATIONDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATION_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATIONTIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "CREATION_TIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "STAFF": "((body || {}).UserObject || {}).USERID",
+        "STDUSERID": "((body || {}).UserObject || {}).USERID",
+        "CREATORID": "((body || {}).UserObject || {}).USERID",
+        "IPADDRESS": "(body || {}).IpAddress || null",
+        "IPCOUNTRY": "new Promise(r1=>op.GetIp({IpAddress: body.IpAddress},r2=>r1(r2.COUNTRYCODE)))",
+        "MACADDRESS": "(body || {}).MacAddress || null",
+        "DOMAIN": "(body || {}).Referer || null",
+        "HOTELID": "((body || {}).UserObject || {}).HOTELID"
+      },
+      "autoUpdate": {
+        "LAST_UPDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "LASTUPDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "LASTUPDATE_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "LASTUPDATED": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "UPDATEDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "UPDATETIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
+        "UPDATEUSER": "((body || {}).UserObject || {}).USERID"
+      },
+      "mailCredentials": {
+        "from": "",
+        "server": "",
+        "user": "",
+        "password": "",
+        "port": 587,
+        "secure": false
+      },
+      "mailAutoSend": {
+        "queryFind": "SELECT TOP(10) E.*,A.SMTP_FROM,A.SMTP_SERVER,A.SMTP_USER,A.SMTP_PASS,A.SMTP_SECURE,A.SMTP_PORT,A.SMTP_TLS,A.SMTP_SENDERFIXED FROM EMAIL_SENT E WITH(NOLOCK)  LEFT JOIN PORTAL P WITH(NOLOCK) ON P.ID = E.PORTALID  LEFT JOIN HOTEL_SMTPACCOUNTS A WITH(NOLOCK) ON A.ID = ISNULL(E.SMTPACCOUNTID,P.SMTPACCOUNTID) WHERE E.[STATUSID] = 1",
+        "queryMark": "UPDATE TOP(1) EMAIL_SENT SET [STATUSID] = 2, [ERRORMESSAGE]= @ERRORMESSAGE WHERE ID = @ID",
+        "intervalSeconds": 10,
+        "columns": {
+          "primaryKey": "ID",
+          "recipient": "EMAIL",
+          "subject": "SUBJECT",
+          "body": "CONTENT",
+          "cc": "CCTO",
+          "bcc": "BCCTO",
+          "replyTo": "REPLYTO"
+        }
+      },
+      "maskColumns": [
+        "PASSWORD",
+        "PASSWORD64",
+        "MASTERPASSWORD"
+      ],
+      "neverUpdate": [
+        "PASSWORD64"
+      ],
+      "skipLogs": [
+        "SP_EFATURA_EFINANS_RSSEND",
+        "SP_EFATURA_EFINANS_PREPAREXML",
+        "SP_PORTAL_TENANTCHANGED",
+        "SP_GETPAYMENTSETTINGS",
+        "SP_UPDATECONTACTREQUEST",
+        "SP_GETGARANTIPAYSETTINGS",
+        "SP_SIMPLERESERVATION_TOURPRICELISTLITE",
+        "SP_GETDOMAINCONFIG",
+        "SP_PORTAL_PLACELIKE",
+        "SP_GIATA_PORTALV4_LISTPROPERTYBYCOORDINATES",
+        "SP_SIMPLERESERVATION_TOURLIST",
+        "SP_SIMPLERESERVATION_TOURLISTINFO",
+        "SP_PORTALV4_GETPAYMENTGATEOFBINNUMBER",
+        "SP_PORTALV4_BASKET_CHANGESTATUS",
+        "SP_PORTALV4_TOUR_CONTRACTPRICE",
+        "SP_PORTALV4_TICKET_LIST",
+        "SP_PORTALV4_LISTCARDTRANSACTIONS",
+        "SP_PORTALV4_HOTELDETAIL",
+        "SP_PORTALV4_HOTELLISTPRICES",
+        "SP_PORTALV4_CHECKPROMOTRANSFER",
+        "SP_PORTALV4_BANNER",
+        "SP_PORTALV4_HOTELLIST",
+        "SP_PORTALV4_HOTELMINPRICES",
+        "SP_PORTALV4_PORTAL_CONFIGURATION",
+        "SP_PORTALV4_HOTELBEDS_DETAIL_HOTELS",
+        "SP_PORTALV4_HOTEL_CHECKIN",
+        "SP_PORTALV4_TICKET_DETAILPRICE",
+        "SP_PORTALV4_TOUR_LIST",
+        "SP_PORTALV4_TICKET_DETAIL",
+        "SP_PORTALV4_SEO",
+        "SP_PORTALV4_GETBUYLATERLIST",
+        "SP_PORTALV4_HOTELDETAILPRICE",
+        "SP_PORTALV4_TICKET_SEANCELIST",
+        "SP_PORTALV4_SALEREPORT",
+        "SP_PORTALV4_GETHOTELEXTRASERVICE",
+        "SP_PORTALV4_HOSPITAL_SPECIALITY_TREATMENTS",
+        "SP_PORTALV4_GETHOTELEXTRASERVICEPRICE",
+        "SP_PORTALV4_HOSPITAL_INFO",
+        "SP_PORTALV4_HOSPITAL_DETAIL",
+        "SP_PORTALV4_HOSPITAL_AUTOCOMPLETE",
+        "SP_PORTALV4_SALESPERFORMANCE",
+        "SP_PORTALV4_HOTELBEDS_AUTOCOMPLETE_DESTINATIONS",
+        "SP_PORTALV4_HOSPITAL_TREATMENTS",
+        "SP_PORTALV4_GETDOMAINCONFIG",
+        "SP_PORTALV4_EXCHANGELIST",
+        "SP_PORTALV4_GETUSER_XMLSERVICE",
+        "SP_PORTALV4_GETINSTALLMENT",
+        "SP_PORTALV4_HOSPITAL_SPECIALITY",
+        "SP_PORTALV4_HOTELBEDS_HOTELIMAGE",
+        "SP_PORTALV4_GETPORTAL_INSTALLMENT",
+        "SP_PORTALV4_WEBPAGES",
+        "SP_PORTALV4_TOUR_DETAILS",
+        "SP_PORTALV4_GETAGENCYTAXINFO",
+        "SP_PORTALV4_HOTELBEDS_AUTOCOMPLETE_HOTELS",
+        "SP_PORTALV4_TOUR_CATEGORIES",
+        "SP_PORTALV4_GETHOMEPAGE",
+        "SP_PORTALV4_GETAGREEMENT",
+        "SP_PORTALV4_CASHIERS_REPORT",
+        "SP_PORTALV4_TICKET_DATELIST",
+        "SP_PORTALV4_CHECKPROMOHOTEL",
+        "SP_PORTALV4_TOUR_PRICE",
+        "SP_PORTALV4_GETCATEGORY",
+        "SP_PORTALV4_GETPHOTOGALERY",
+        "SP_PORTALV4_HOTELBEDS_LIST_HOTELS",
+        "SP_PORTALV4_GETFOOTERDESIGN"
+      ],
+      "disableGzip": true,
+      "ipAccessKey": ""
+    }
+

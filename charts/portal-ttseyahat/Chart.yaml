@@ -1,0 +1,6 @@
+apiVersion: v2
+name: portal-ttseyahat
+description: TTSeyahat Portal Helm Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
