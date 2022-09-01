@@ -27,7 +27,7 @@ spec:
           image: {{ .Values.angus.image }}
           volumeMounts:
             - name: endpoints
-              mountPath: /usr/share/nginx/html/assets/endpoints-client.json
+              mountPath: /usr/share/nginx/html/app/assets/endpoints-client.json
               subPath: endpoints-client.json
           readinessProbe:
             tcpSocket:
@@ -51,7 +51,7 @@ spec:
     - name: angus-port
       protocol: TCP
       port: 80
-      targetPort: 80
+      targetPort: 8080
   selector:
     k8s-app: angus
   type: ClusterIP
