@@ -143,7 +143,7 @@ hotel:
   #Mutlaka once cloudda register olup kendi HOTELID'nizi yazmalısınız
   hotelid: 24434
   hotelname: localtesthotel
-#STATIC DATA
+# Static Data
 staticData:
   install: true
 # File Uploader
@@ -162,4 +162,8 @@ fileUploader:
   volumeMounts:
     - name: files
       mountPath: /app/uploads/files/
-
+# Callcenter Integration
+callcenterintegration:
+  install: false 
+  image: ghcr.io/travelaps/call-center-integration:v20
+  host: callcenterintegration

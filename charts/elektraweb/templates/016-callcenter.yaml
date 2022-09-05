@@ -1,0 +1,90 @@
+{{ if .Values.callcenterintegration.install }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: call-center-integration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: call-center-integration
+  template:
+    metadata:
+      name: call-center-integration
+      creationTimestamp: null
+      labels:
+        k8s-app: call-center-integration
+    spec:
+      containers:
+        - name: call-center-integration
+          image: {{ .Values.callcenterintegration.image }}
+          env:
+            - name: APIURL
+              value: https://{{ .Values.worker.host }}/
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+          securityContext:
+            privileged: false
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+        - name: regcred
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: call-center-integration
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
+  selector:
+    k8s-app: call-center-integration
+  type: ClusterIP
+  sessionAffinity: None
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: call-center-integration-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/cors-allow-credentials: 'true'
+    nginx.ingress.kubernetes.io/cors-allow-methods: GET, POST, OPTIONS
+    nginx.ingress.kubernetes.io/cors-allow-origin: '*'
+    nginx.ingress.kubernetes.io/cors-max-age: '600'
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
+    nginx.ingress.kubernetes.io/limit-rpm: '5'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.callcenterintegration.host }}
+      secretName: callcenterintegration-cert
+  rules:
+    - host: {{ .Values.callcenterintegration.host }}
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: call-center-integration
+                port:
+                  number: 8000
+{{ end }}
