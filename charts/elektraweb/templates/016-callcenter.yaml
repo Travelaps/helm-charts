@@ -62,7 +62,7 @@ apiVersion: networking.k8s.io/v1
 metadata:
   name: call-center-integration-ingress
   annotations:
-    kubernetes.io/ingress.class: nginx
+    kubernetes.io/ingress.class: public
     nginx.ingress.kubernetes.io/cors-allow-credentials: 'true'
     nginx.ingress.kubernetes.io/cors-allow-methods: GET, POST, OPTIONS
     nginx.ingress.kubernetes.io/cors-allow-origin: '*'
