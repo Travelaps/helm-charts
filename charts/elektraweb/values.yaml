@@ -71,7 +71,7 @@ sql:
   agentEnabled: true
   runCreationScripts: true
   createSqlAgentJobs: true
-  creatinScriptImage: ghcr.io/travelaps/elektrawebdb:onprem-v3
+  creationScriptImage: ghcr.io/travelaps/elektrawebdb:onprem-v3
   serviceType: ClusterIP
   elektraAdminUser:
     username: elektraweb
