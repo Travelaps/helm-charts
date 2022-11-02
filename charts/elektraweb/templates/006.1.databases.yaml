@@ -28,7 +28,7 @@ spec:
             - {{ .Values.sql.connection.password }}
             - '-Q'
             - |
-              IF NOT EXIST ( SELECT * FROM sys.databases WHERE name = '{{ .Values.dbNames.EMDS }}' )
+              IF NOT EXISTS ( SELECT * FROM sys.databases WHERE name = '{{ .Values.dbNames.EMDS }}' )
               BEGIN
                 CREATE DATABASE {{ .Values.dbNames.EMDS }} COLLATE TURKISH_CI_AS
                 ALTER DATABASE [{{ .Values.dbNames.EMDS }}] SET RECOVERY SIMPLE
