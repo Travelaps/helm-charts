@@ -14,7 +14,7 @@ data:
         {{- if .Values.worker.config.dbConfig.port }}
         "port": {{ .Values.worker.config.dbConfig.port }},
         {{- end }}
-        "database": "EMDS",
+        "database": "{{ .Values.dbNames.EMDS }}",
         "options": {
           "appName": "NodeJS:WebHotelLive",
           "encrypt": true,
@@ -47,7 +47,8 @@ data:
       "tenantTable": "VW_HOTEL",
       "tenantObject": "HOTEL",
       "tenantPrimaryKey": "ID",
-      "frameworkDb": "ANGUS_WEBHOTEL",
+      "frameworkDb": "{{ .Values.dbNames.EMDS }}",
+      "frameworkDbSchema": "ang",
       "logFailedRequests": true,
       "persistCaches": true,
       "persistCachesPath": "/tmp/elektraweb",
@@ -211,6 +212,9 @@ data:
       ],
       "apiKeyRoles": [
           191,
-          204
+          204,
+          226,
+          227,
+          228
       ]
     }
