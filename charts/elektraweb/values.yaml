@@ -49,6 +49,13 @@ worker:
     #  - Object: STDROLE_DETAIL
     #    TimeColumn: LASTUPDATE
     #    TimeValue: '1900-01-01'
+# DB Names
+dbNames:
+  EMDS: EMDS
+  EMDS_LOGS: EMDS_LOGS
+  DDLEVENTS: DDLEVENTS
+  ERSDEVELOPER: ERSDEVELOPER
+  ZDB01: ZDB01
 # SQL Server
 sql:
   install: true
@@ -63,6 +70,8 @@ sql:
   tcpPort: 1433
   agentEnabled: true
   runCreationScripts: true
+  createSqlAgentJobs: true
+  creatinScriptImage: ghcr.io/travelaps/elektrawebdb:onprem-v3
   serviceType: ClusterIP
   elektraAdminUser:
     username: elektraweb

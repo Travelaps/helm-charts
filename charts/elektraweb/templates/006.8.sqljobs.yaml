@@ -1,4 +1,4 @@
-{{ if .Values.sql.runCreationScripts }}
+{{ if .Values.sql.createSqlAgentJobs }}
 kind: Job
 apiVersion: batch/v1
 metadata:

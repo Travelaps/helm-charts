@@ -16,49 +16,12 @@ spec:
         - name: regcred
       containers:
         - name: initial-creator
-          image: ghcr.io/travelaps/mssql2019fts:v2
-          command:
-            - /opt/mssql-tools/bin/sqlcmd
+          image: {{ .Values.sql.creationScriptImage }}
           args:
-            - '-S'
-            - {{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}
-            - '-U'
-            - {{ .Values.sql.connection.user }}
-            - '-P'
-            - {{ .Values.sql.connection.password }}
-            - '-Q'
-            - |
-              CREATE DATABASE DDLEVENTS COLLATE TURKISH_CI_AS
-              GO
-              ALTER DATABASE [DDLEVENTS] SET RECOVERY SIMPLE
-              GO
-              ALTER DATABASE [DDLEVENTS] SET AUTO_CLOSE OFF WITH NO_WAIT
-              GO
-              ALTER DATABASE [DDLEVENTS] SET AUTO_CREATE_STATISTICS OFF
-              GO
-              ALTER DATABASE [DDLEVENTS] SET AUTO_UPDATE_STATISTICS OFF WITH NO_WAIT
-              GO
-              USE [DDLEVENTS]
-              GO
-              ALTER DATABASE SCOPED CONFIGURATION SET MAXDOP = 1
-              GO
-              ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET MAXDOP = 1
-              GO
-              CREATE TABLE [dbo].[DDLHISTORY](
-                  [WHEN] [datetime] NOT NULL,
-                  [DBUSER] [nvarchar](50) NOT NULL,
-                  [DBNAME] [nvarchar](50) NOT NULL,
-                  [COMMAND] [nvarchar](max) NOT NULL,
-                  [HOSTNAME] [nvarchar](128) NOT NULL,
-                  [ID] [int] IDENTITY(1,1) NOT NULL,
-                  PRIMARY KEY CLUSTERED
-                  (
-                    [ID] ASC
-                  )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-              ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-              GO
-              ALTER TABLE [dbo].[DDLHISTORY] ADD  CONSTRAINT [DF__DDLHISTORY__WHEN__239E4DCF]  DEFAULT (getutcdate()) FOR [WHEN]
-              GO
-              ALTER TABLE [dbo].[DDLHISTORY] ADD  DEFAULT (host_name()) FOR [HOSTNAME]
-              GO
+            - /Action:Publish
+            - /SourceFile:/elektrawebdb/DDLEVENTS/DDLEVENTS.dacpac
+            - /TargetServerName:tcp:{{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}
+            - /TargetUser:{{ .Values.sql.connection.user }}
+            - /TargetPassword:{{ .Values.sql.connection.password }}
+            - /TargetDatabaseName:{{ .Values.dbNames.DDLEVENTS }}
 {{ end }}
