@@ -1,0 +1,44 @@
+{{ if .Values.sql.runCreationScripts }}
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: sql-create-databases
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-92"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: initial-creator
+          image: ghcr.io/travelaps/mssql2019fts:v2
+          command:
+            - /opt/mssql-tools/bin/sqlcmd
+          args:
+            - '-S'
+            - {{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}
+            - '-U'
+            - {{ .Values.sql.connection.user }}
+            - '-P'
+            - {{ .Values.sql.connection.password }}
+            - '-Q'
+            - |
+              IF NOT EXIST ( SELECT * FROM sys.databases WHERE name = '{{ .Values.dbNames.EMDS }}' )
+              BEGIN
+                CREATE DATABASE {{ .Values.dbNames.EMDS }} COLLATE TURKISH_CI_AS
+                GO
+                ALTER DATABASE [{{ .Values.dbNames.EMDS }}] SET RECOVERY SIMPLE
+                GO
+                ALTER DATABASE [{{ .Values.dbNames.EMDS }}] SET AUTO_CLOSE OFF WITH NO_WAIT
+                GO
+                ALTER DATABASE [{{ .Values.dbNames.EMDS }}] SET AUTO_CREATE_STATISTICS OFF
+                GO
+                ALTER DATABASE [{{ .Values.dbNames.EMDS }}] SET AUTO_UPDATE_STATISTICS OFF WITH NO_WAIT
+                GO
+              END
+{{ end }}

@@ -5,7 +5,7 @@ metadata:
   name: sql-create-emds-static-data
   annotations:
     "helm.sh/hook": post-install
-    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-weight": "-91"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   ttlSecondsAfterFinished: 300
@@ -16,7 +16,7 @@ spec:
         - name: regcred
       containers:
         - name: initial-creator
-          image: ghcr.io/travelaps/elektraweb-static-data
+          image: ghcr.io/travelaps/elektraweb-static-data:latest
           env:
             - name: SQLADDRESS
               value: "{{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}"
@@ -24,4 +24,6 @@ spec:
               value: "{{ .Values.sql.connection.user }}"
             - name: SQLPASS
               value: "{{ .Values.sql.connection.password }}"
+            - name: DBNAME
+              value: "{{ .Values.dbNames.EMDS }}"
 {{ end }}
