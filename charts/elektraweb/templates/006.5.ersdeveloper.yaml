@@ -1,0 +1,29 @@
+{{ if .Values.sql.runCreationScripts }}
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: sql-create-ersdeveloper
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-60"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: initial-creator
+          image: {{ .Values.sql.creationScriptImage }}
+          args:
+            - /Action:Publish
+            - /SourceFile:/elektrawebdb/ERSDEVELOPER/ERSDEVELOPER.dacpac
+            - /TargetServerName:tcp:{{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}
+            - /TargetUser:{{ .Values.sql.connection.user }}
+            - /TargetPassword:{{ .Values.sql.connection.password }}
+            - /TargetDatabaseName:{{ .Values.dbNames.ERSDEVELOPER }}
+            - /Variables:EMDS={{ .Values.dbNames.EMDS }}
+            - /Variables:DDLEVENTS={{ .Values.dbNames.DDLEVENTS }}
+{{ end }}
