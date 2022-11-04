@@ -151,7 +151,7 @@ hotel:
   install: false
   #Mutlaka once cloudda register olup kendi HOTELID'nizi yazmalısınız
   hotelid: 24434
-  hotelname: localtesthotel
+  hotelname: Hotel Name
 # Static Data
 staticData:
   install: true
