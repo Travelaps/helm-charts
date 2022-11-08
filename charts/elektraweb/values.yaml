@@ -16,7 +16,7 @@ regcred:
 worker:
   host: nodejs4001
   # sslClusterIssuer: letsencrypt-staging
-  image: ghcr.io/travelaps/nodejs-worker:v476
+  image: ghcr.io/travelaps/nodejs-worker:v521
   replicas: 1
   config:
     dbConfig:
@@ -71,7 +71,7 @@ sql:
   agentEnabled: true
   runCreationScripts: true
   createSqlAgentJobs: true
-  creationScriptImage: ghcr.io/travelaps/elektrawebdb:onprem-v3
+  creationScriptImage: ghcr.io/travelaps/elektrawebdb:onprem-v8
   serviceType: ClusterIP
   elektraAdminUser:
     username: elektraweb
@@ -100,7 +100,7 @@ sql:
 # Angus
 angus:
   install: true
-  image: ghcr.io/travelaps/angus:v361
+  image: ghcr.io/travelaps/angus:v565
   host: elektraweb
   # sslClusterIssuer: letsencrypt-staging
   displayName: ElektraWeb
@@ -113,7 +113,7 @@ angus:
 # Pos
 pos:
   install: true
-  image: ghcr.io/travelaps/pos-ng11:v151
+  image: ghcr.io/travelaps/pos-ng11:v355
   host: elektrawebpos
   # sslClusterIssuer: letsencrypt-staging
 # .NET Core FRX Rapor Programı
@@ -151,7 +151,7 @@ hotel:
   install: false
   #Mutlaka once cloudda register olup kendi HOTELID'nizi yazmalısınız
   hotelid: 24434
-  hotelname: localtesthotel
+  hotelname: Hotel Name
 # Static Data
 staticData:
   install: true

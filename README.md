@@ -1,7 +1,7 @@
 
-[![OS](https://img.shields.io/badge/ubuntu-20.04.4-red?style=flat-square&logo=ubuntu)](https://releases.ubuntu.com/20.04/)
-[![Microk8s](https://img.shields.io/badge/microk8s-1.21-red?style=flat-square&logo=canonical)](https://microk8s.io/resources)
-[![Kubectl](https://img.shields.io/badge/kubectl-1.21-blue?style=flat-square&logo=kubernetes)](https://kubernetes.io/docs/tasks/tools/)
+[![OS](https://img.shields.io/badge/ubuntu-22.04.4-red?style=flat-square&logo=ubuntu)](https://releases.ubuntu.com/jammy/)
+[![Microk8s](https://img.shields.io/badge/microk8s-1.24-red?style=flat-square&logo=canonical)](https://microk8s.io/resources)
+[![Kubectl](https://img.shields.io/badge/kubectl-1.24-blue?style=flat-square&logo=kubernetes)](https://kubernetes.io/docs/tasks/tools/)
 [![Helm](https://img.shields.io/badge/Helm-blue?style=flat-square&logo=helm)](https://helm.sh/)
 # Kullanım
 
@@ -31,8 +31,8 @@
 - Gereksinimler:
     ```bash
     # Öncelikle microk8s, kubectl ve helm kurulu olduğundan emin ol:
-    sudo snap install microk8s --classic --channel=1.21/stable && \
-      sudo snap install kubectl --classic --channel=1.21/stable  && \
+    sudo snap install microk8s --classic --channel=1.24/stable && \
+      sudo snap install kubectl --classic --channel=1.24/stable  && \
       sudo snap install helm --classic
     ```
     ```bash
