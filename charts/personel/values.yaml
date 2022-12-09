@@ -34,8 +34,8 @@ angus:
   install: true
   image: ghcr.io/travelaps/angus:v565
   host: personel
-  # sslClusterIssuer: letsencrypt-staging
-   azureSettings:
+# sslClusterIssuer: letsencrypt-staging
+azureSettings:
      container: files
      storageUrl: personelapi
      token: ?token=TOKEN&se=2023-02-26T15:10:47Z
