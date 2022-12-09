@@ -1,6 +1,27 @@
 apiVersion: v1
 entries:
+  Personel:
+  - apiVersion: v2
+    appVersion: 1-452-0
+    created: "2022-12-09T14:50:11.731628408Z"
+    description: Personel Helm Chart
+    digest: 1ba723b2e87a4e847b340022acb4bbc474a81dd1458911771647b52bca060b85
+    name: Personel
+    type: application
+    urls:
+    - https://github.com/Travelaps/helm-charts/releases/download/Personel-1.0.1/Personel-1.0.1.tgz
+    version: 1.0.1
   elektraweb:
+  - apiVersion: v2
+    appVersion: 1-452-0
+    created: "2022-12-09T14:50:11.901550525Z"
+    description: ElektraWeb Helm Chart
+    digest: b0ee034054c61b3b6362b0b3b4e0b88f3763d57c660de8ffca35b5f2f32bd73a
+    name: elektraweb
+    type: application
+    urls:
+    - https://github.com/Travelaps/helm-charts/releases/download/elektraweb-1.4.3/elektraweb-1.4.3.tgz
+    version: 1.4.3
   - apiVersion: v2
     appVersion: 1-452-0
     created: "2022-11-14T12:44:30.14167997Z"
@@ -863,4 +884,4 @@ entries:
     urls:
     - https://github.com/Travelaps/helm-charts/releases/download/portal-ttseyahat-1.0.0/portal-ttseyahat-1.0.0.tgz
     version: 1.0.0
-generated: "2022-11-14T12:44:30.142265471Z"
+generated: "2022-12-09T14:50:11.902171231Z"
