@@ -1,0 +1,41 @@
+{{ if .Values.angus.install }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: angus-endpoints
+  labels:
+    app.kubernetes.io/name: angus-endpoints
+data:
+  endpoints-client.json: |
+    [
+          {
+            "displayName": "Elektra İK",
+            "shortName": "hr",
+            "endpoint": "https://{{ .Values.worker.host }}/",
+            "url": [
+              "https://{{ .Values.angus.host }}/"
+            ],
+            "defaultLang": "TR",
+            "desc": "Elektra İK",
+            "autoInjectTenantFields": [
+              {
+                "field": "FIRMAID"
+              }
+            ],
+            "userSettings": {
+              "recordID": "settings",
+              "menuHTML": "<div>\n  <div>\n    ${TENANTNAME}\n  </div>\n  <div>\n    <b>${translate('Seçili Firma')}:</b> ${FIRMAID_KISAADI} (${FIRMAID})\n  </div>\n <div>\n   <b> ${translate('Yıl')}:</b> ${YIL} <b>- ${translate('Ay')}:</b> ${AY}\n  </div>\n </div>\n"
+            },
+            "register": true,
+            "showNews": true,
+            "azureSettings": {
+              "container": "{{ .Values.angus.azureSettings.container }}",
+              "storageUrl": "{{ .Values.angus.azureSettings.storageUrl }}",
+              "token": "{{ .Values.angus.azureSettings.token }}"
+            },
+            "sendPasswordLink": true,
+            "sendPasswordProcedure": "SP_EASYPMS_FORGOTPASSWORD",
+            "tawkto": false
+          }
+    ]
+{{ end }}

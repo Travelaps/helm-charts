@@ -1,0 +1,18 @@
+{{ if .Values.onlineBooking.install }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: online-booking-endpoints
+  namespace: default
+data:
+  endpoints.json: |
+    [
+      {
+        "displayName": "Rezervasyon Al",
+        "endpoint": "https://{{ .Values.worker.host }}",
+        "url": [
+          "{{ .Values.onlineBooking.host }}"
+        ]
+      }
+    ]
+  {{ end }}

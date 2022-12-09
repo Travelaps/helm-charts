@@ -1,0 +1,67 @@
+{{- if .Values.worker.install }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-worker-personel
+  labels:
+    component: nodejs-worker-personel
+    k8s-app: nodejs-worker-personel
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  selector:
+    matchLabels:
+      k8s-app: nodejs-worker-personel
+  template:
+    metadata:
+     annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/017.1-personel-worker-config.yaml") . | sha256sum }}
+      name: nodejs-worker-personel
+      creationTimestamp: null
+      labels:
+        component: nodejs-worker-personel
+        k8s-app: nodejs-worker-personel
+    spec:
+      volumes:
+        - name: worker-configs-personel
+          configMap:
+            name: worker-config-personel
+            defaultMode: 420
+      containers:
+        - name: nodejs-worker-personel
+          image: {{ .Values.worker.image }}
+          args:
+            - '-i'
+            - '1'
+          env:
+            - name: CONFIGPATH
+              value: /configs/personel-config.conf.json
+          resources: {}
+          volumeMounts:
+            - name: worker-configs-personel
+              mountPath: /configs
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 3
+            timeoutSeconds: 1
+            periodSeconds: 3
+            successThreshold: 1
+            failureThreshold: 10
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 1
+            successThreshold: 1
+            failureThreshold: 120
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+        - name: regcred
+{{ end }}

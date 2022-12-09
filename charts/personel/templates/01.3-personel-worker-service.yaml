@@ -1,0 +1,17 @@
+{{- if .Values.worker.install }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: service-personel
+  labels:
+    k8s-app: nodejs-http
+spec:
+  ports:
+    - name: service-port
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    k8s-app: nodejs-worker-personel
+  type: ClusterIP
+{{ end }}

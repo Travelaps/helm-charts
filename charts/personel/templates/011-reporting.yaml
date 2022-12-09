@@ -1,0 +1,85 @@
+{{ if .Values.reporting.install }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: reportingcore
+  labels:
+    k8s-app: reportingcore
+spec:
+  selector:
+    matchLabels:
+      k8s-app: reportingcore
+  template:
+    metadata:
+      name: reportingcore
+      labels:
+        k8s-app: reportingcore
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: reportingcore
+          image: ghcr.io/travelaps/reportingfull:latest
+          env:
+            - name: DS_server
+              value: {{ .Values.reporting.sqlServer }}
+            - name: DS_user
+              value: {{ .Values.reporting.sqlUser }}
+            - name: DS_password
+              value: {{ .Values.reporting.sqlPassword }}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: reportingcore
+  labels:
+    k8s-app: reportingcore
+spec:
+  ports:
+    - name: reporting-port
+      protocol: TCP
+      port: 5000
+      targetPort: 5000
+  selector:
+    k8s-app: reportingcore
+  type: ClusterIP
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: reportingcore-ingress
+  annotations:
+    {{- if .Values.reporting.sslIssuer }}
+    cert-manager.io/issuer: {{ .Values.reporting.sslIssuer }}
+    {{- end }}
+    {{- if .Values.reporting.sslClusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.reporting.sslClusterIssuer }}
+    {{- end }}
+    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/server-snippet: |
+      gunzip on;
+      gzip on;
+      gzip_vary on;
+      gzip_proxied any;
+      gzip_comp_level 5;
+      gzip_min_length 512;
+      gzip_buffers 16 128k;
+      gzip_types *;
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.reporting.host }}
+      secretName: elektrawebreport-cert
+  rules:
+    - host: {{ .Values.reporting.host }}
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: reportingcore
+                port:
+                  number: 5000
+{{ end }}

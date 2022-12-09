@@ -1,0 +1,35 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: redis
+  labels:
+    k8s-app: redis
+spec:
+  selector:
+    matchLabels:
+      k8s-app: redis
+  template:
+    metadata:
+      name: redis
+      labels:
+        k8s-app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: redis
+  labels:
+    k8s-app: redis
+spec:
+  ports:
+    - name: redis-port
+      protocol: TCP
+      port: 6379
+      targetPort: 6379
+  selector:
+    k8s-app: redis
+  type: ClusterIP

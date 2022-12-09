@@ -1,0 +1,127 @@
+{{- if .Values.fileUploader.install }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: file-uploader
+  labels:
+    k8s-app: file-uploader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: file-uploader
+  template:
+    metadata:
+      name: file-uploader
+      labels:
+        k8s-app: file-uploader
+    spec:
+      {{- if .Values.fileUploader.volumes }}
+      volumes:
+        {{- toYaml $.Values.fileUploader.volumes | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: file-uploader
+          image: {{ .Values.fileUploader.image }}
+          env:
+            - name: TRUSTED_ORIGINS
+              value: {{ .Values.fileUploader.env.TRUSTED_ORIGINS | squote }}
+            - name: TRUSTED_IPS
+              value: {{ .Values.fileUploader.env.TRUSTED_IPS | squote }}
+            - name: ALLOWED_FILETYPES
+              value: {{ .Values.fileUploader.env.ALLOWED_FILETYPES | squote }}
+            - name: ALLOWED_TOKENS
+              value: {{ .Values.fileUploader.env.ALLOWED_TOKENS | squote }}
+          {{- if .Values.fileUploader.volumes }}
+          volumeMounts:
+            {{- toYaml $.Values.fileUploader.volumeMounts | nindent 12 }}
+          {{- end }}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: false
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+        - name: regcred
+      schedulerName: default-scheduler
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: file-uploader
+  labels:
+    k8s-app: file-uploader
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+  selector:
+    k8s-app: file-uploader
+  type: ClusterIP
+  sessionAffinity: None
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: file-uploader-ingress
+  annotations:
+    kubernetes.io/ingress.class: public
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
+    nginx.ingress.kubernetes.io/cors-allow-methods: GET, POST, OPTIONS, PUT
+    nginx.ingress.kubernetes.io/cors-allow-origin: '*'
+    nginx.ingress.kubernetes.io/cors-allow-headers: >-
+      DNT,
+      X-CustomHeader,
+      Keep-Alive,
+      User-Agent,
+      X-Requested-With,
+      If-Modified-Since,
+      Cache-Control,
+      Content-Type,
+      Authorization,
+      x-ms-blob-content-md5,
+      x-ms-blob-content-type,
+      x-ms-blob-type,
+      x-ms-client-request-id,
+      x-ms-date,
+      x-ms-version
+    nginx.ingress.kubernetes.io/cors-allow-credentials: 'true'
+    nginx.ingress.kubernetes.io/cors-max-age: '86400'
+    nginx.ingress.kubernetes.io/proxy-body-size: 30m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
+    nginx.ingress.kubernetes.io/server-snippet: |
+      gunzip on;
+      gzip on;
+      gzip_vary on;
+      gzip_proxied any;
+      gzip_comp_level 5;
+      gzip_min_length 512;
+      gzip_buffers 16 128k;
+      gzip_types *;
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.worker.host }}
+      secretName: nodejs4001-cert
+  rules:
+    - host: {{ .Values.worker.host }}
+      http:
+        paths:
+          - path: /files
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: file-uploader
+                port:
+                  number: 80
+{{ end }}
