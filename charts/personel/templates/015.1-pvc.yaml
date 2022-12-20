@@ -1,0 +1,11 @@
+{{ if .Values.persistentVolumeClaims }}
+{{ range $key, $value := .Values.persistentVolumeClaims }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $key }}
+spec:
+  {{ toYaml $value | nindent 2 }}
+---
+{{ end }}
+{{ end }}

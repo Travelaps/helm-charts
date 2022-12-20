@@ -1,0 +1,88 @@
+{{ if .Values.angus.install }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: angus
+  labels:
+    k8s-app: angus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: angus
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/004.0-angus-endpoint.yaml") . | sha256sum }}
+      name: angus
+      labels:
+        k8s-app: angus
+    spec:
+      volumes:
+        - name: endpoints
+          configMap:
+              name: angus-endpoints
+      containers:
+        - name: angus
+          image: {{ .Values.angus.image }}
+          volumeMounts:
+            - name: endpoints
+              mountPath: /usr/share/nginx/html/app/assets/endpoints-client.json
+              subPath: endpoints-client.json
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+      imagePullSecrets:
+        - name: regcred
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: angus
+  labels:
+    k8s-app: angus
+spec:
+  ports:
+    - name: angus-port
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+  selector:
+    k8s-app: angus
+  type: ClusterIP
+  sessionAffinity: None
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: angus-ingress
+  annotations:
+    {{- if .Values.angus.sslIssuer }}
+    cert-manager.io/issuer: {{ .Values.angus.sslIssuer }}
+    {{- end }}
+    {{- if .Values.angus.sslClusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.angus.sslClusterIssuer }}
+    {{- end }}
+    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.angus.host }}
+      secretName: angus-cert
+  rules:
+    - host: {{ .Values.angus.host }}
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: angus
+                port:
+                  number: 80
+{{ end }}

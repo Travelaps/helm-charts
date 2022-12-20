@@ -124,6 +124,12 @@ reporting:
   sqlServer: sql
   sqlUser: sa
   sqlPassword: aA!01012000
+# Online Rezervasyon
+onlineBooking:
+  install: true
+  image: ghcr.io/travelaps/online-booking:v3
+  host: onlinebooking
+  # sslClusterIssuer: letsencrypt-staging
 # Kanal Yönetimi
 channelManager:
   install: false
@@ -176,3 +182,4 @@ callcenterintegration:
   install: false 
   image: ghcr.io/travelaps/call-center-integration:v20
   host: callcenterintegration
+  

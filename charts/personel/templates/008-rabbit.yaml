@@ -1,0 +1,39 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: rabbit
+  labels:
+    k8s-app: rabbit
+spec:
+  selector:
+    matchLabels:
+      k8s-app: rabbit
+  template:
+    metadata:
+      name: rabbit
+      labels:
+        k8s-app: rabbit
+    spec:
+      containers:
+        - name: rabbit
+          image: 'rabbitmq:3-management'
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: rabbit
+  labels:
+    k8s-app: rabbit
+spec:
+  ports:
+    - name: rabbit-port
+      protocol: TCP
+      port: 5672
+      targetPort: 5672
+    - name: rabbit-management-port
+      protocol: TCP
+      port: 15672
+      targetPort: 15672
+  selector:
+    k8s-app: rabbit
+  type: ClusterIP

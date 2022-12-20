@@ -1,0 +1,60 @@
+# Programlarımıza erişim için gerekli GitHub erişim anahtarı
+regcred:
+  enabled: true
+  name: regcred
+  user: talyabilisim
+  key: REQUIRED-github-access-token
+# NodeJS Web Servis
+worker:
+  host: personelapi
+  # sslClusterIssuer: letsencrypt-staging
+  image: ghcr.io/travelaps/nodejs-worker:v523
+  httpimage: ghcr.io/travelaps/nodejs-http:v28-beta
+  replicas: 1
+  config:
+    dbConfig:
+      user: sa
+      password: aA!01012000
+      server: sql
+dbNames:
+  PERSONEL: PERSONEL
+# SQL
+sql:
+  connection:
+    server: sql
+    port: 1433
+    user: sa
+    password: aA!01012000
+  agentEnabled: true
+  runCreationScripts: true
+  createSqlAgentJobs: true
+  creationScriptImage: ghcr.io/travelaps/elektrawebdb:onprem-v8
+# Angus
+angus:
+  install: true
+  image: ghcr.io/travelaps/angus:v565
+  host: personel
+# sslClusterIssuer: letsencrypt-staging
+azureSettings:
+     container: files
+     storageUrl: personelapi
+     token: ?token=TOKEN&se=2023-02-26T15:10:47Z
+# Static Data
+staticData:
+  install: true
+# File Uploader
+fileUploader:
+  install: false
+  image: ghcr.io/travelaps/file-uploader:v3
+  env:
+    TRUSTED_ORIGINS: '["https://personel"]'
+    TRUSTED_IPS: '["*"]'
+    ALLOWED_FILETYPES: '["*"]'
+    ALLOWED_TOKENS: '["TOKEN"]'
+  volumes:
+    - name: files
+      persistentVolumeClaim:
+        claimName: file-uploader
+  volumeMounts:
+    - name: files
+      mountPath: /app/uploads/files/

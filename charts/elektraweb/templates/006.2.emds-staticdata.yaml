@@ -16,7 +16,7 @@ spec:
         - name: regcred
       containers:
         - name: initial-creator
-          image: ghcr.io/travelaps/elektraweb-static-data:latest
+          image: ghcr.io/travelaps/elektraweb-static-data:v8
           env:
             - name: SQLADDRESS
               value: "{{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}"
