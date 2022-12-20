@@ -8,7 +8,7 @@ metadata:
     "helm.sh/hook-weight": "-8"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
-  ttlSecondsAfterFinished: 300
+  ttlSecondsAfterFinished: 86400
   template:
     spec:
       restartPolicy: Never
