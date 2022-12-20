@@ -15,6 +15,7 @@ regcred:
 # NodeJS Web Servis
 worker:
   host: nodejs4001
+  tlsSecretName: nodejs4001-cert
   # sslClusterIssuer: letsencrypt-staging
   image: ghcr.io/travelaps/nodejs-worker:v521
   replicas: 1
@@ -102,6 +103,7 @@ angus:
   install: true
   image: ghcr.io/travelaps/angus:v565
   host: elektraweb
+  tlsSecretName: elektraweb-cert
   # sslClusterIssuer: letsencrypt-staging
   displayName: ElektraWeb
   shortName: ewebcloud
@@ -115,11 +117,13 @@ pos:
   install: true
   image: ghcr.io/travelaps/pos-ng11:v355
   host: elektrawebpos
+  tlsSecretName: elektrawebpos-cert
   # sslClusterIssuer: letsencrypt-staging
 # .NET Core FRX Rapor Programı
 reporting:
   install: true
   host: elektrawebreport
+  tlsSecretName: elektrawebreport-cert
   # sslClusterIssuer: letsencrypt-staging
   sqlServer: sql
   sqlUser: sa
@@ -129,6 +133,7 @@ onlineBooking:
   install: true
   image: ghcr.io/travelaps/online-booking:v3
   host: onlinebooking
+  tlsSecretName: onlinebooking-cert
   # sslClusterIssuer: letsencrypt-staging
 # Kanal Yönetimi
 channelManager:
@@ -182,4 +187,3 @@ callcenterintegration:
   install: false 
   image: ghcr.io/travelaps/call-center-integration:v20
   host: callcenterintegration
-  

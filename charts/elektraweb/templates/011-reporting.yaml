@@ -70,7 +70,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.reporting.host }}
-      secretName: elektrawebreport-cert
+      secretName: {{ .Values.reporting.tlsSecretName | default "elektrawebreport-cert" }}
   rules:
     - host: {{ .Values.reporting.host }}
       http:

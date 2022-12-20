@@ -65,7 +65,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.pos.host }}
-      secretName: elektrawebpos-cert
+      secretName: {{ .Values.pos.tlsSecretName | default "elektrawebpos-cert" }}
   rules:
     - host: {{ .Values.pos.host }}
       http:

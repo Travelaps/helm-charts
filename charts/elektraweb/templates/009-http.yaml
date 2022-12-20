@@ -72,7 +72,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.worker.host }}
-      secretName: nodejs4001-cert
+      secretName: {{ .Values.worker.tlsSecretName | default "nodejs4001-cert" }}
   rules:
     - host: {{ .Values.worker.host }}
       http:

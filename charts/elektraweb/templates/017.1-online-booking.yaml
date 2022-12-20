@@ -94,7 +94,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.onlineBooking.host }}
-      secretName: elektraweb-cert
+      secretName: {{ .Values.onlineBooking.tlsSecretName | default "onlinebooking-cert" }}
   rules:
     - host: {{ .Values.onlineBooking.host }}
       http:
