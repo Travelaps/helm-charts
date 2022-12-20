@@ -31,14 +31,9 @@ spec:
               IF NOT EXISTS ( SELECT * FROM sys.databases WHERE name = '{{ .Values.dbNames.EMDS }}' )
               BEGIN
                 CREATE DATABASE {{ .Values.dbNames.EMDS }} COLLATE TURKISH_CI_AS
-                GO
                 ALTER DATABASE [{{ .Values.dbNames.EMDS }}] SET RECOVERY SIMPLE
-                GO
                 ALTER DATABASE [{{ .Values.dbNames.EMDS }}] SET AUTO_CLOSE OFF WITH NO_WAIT
-                GO
                 ALTER DATABASE [{{ .Values.dbNames.EMDS }}] SET AUTO_CREATE_STATISTICS OFF
-                GO
                 ALTER DATABASE [{{ .Values.dbNames.EMDS }}] SET AUTO_UPDATE_STATISTICS OFF WITH NO_WAIT
-                GO
               END
 {{ end }}
