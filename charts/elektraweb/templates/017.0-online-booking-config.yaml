@@ -9,7 +9,7 @@ data:
     [
       {
         "displayName": "Rezervasyon Al",
-        "endpoint": "https://{{ .Values.worker.host }}",
+        "endpoint": "https://{{ .Values.worker.host }}/",
         "url": [
           "{{ .Values.onlineBooking.host }}"
         ]
