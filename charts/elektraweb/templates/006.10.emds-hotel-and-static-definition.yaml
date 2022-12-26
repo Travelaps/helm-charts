@@ -1,0 +1,73 @@
+{{ if .Values.sql.runCreationScripts }}
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: sql-insert-hotel-and-static-definitions
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-7"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: initial-creator
+          image: ghcr.io/travelaps/mssql2019fts:v2
+          command:
+            - /opt/mssql-tools/bin/sqlcmd
+          args:
+            - '-S'
+            - {{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}
+            - '-U'
+            - {{ .Values.sql.connection.user }}
+            - '-P'
+            - {{ .Values.sql.connection.password }}
+            - '-I'
+            - '-Q'
+            - |
+
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL ON
+              INSERT INTO {{ .Values.dbNames.EMDS }}..HOTEL(ID,[NAME])
+              VALUES(0,'SYSTEM HOTEL')
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL OFF
+
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL_ROOMTYPE ON
+              INSERT INTO {{ .Values.dbNames.EMDS }}.dbo.HOTEL_ROOMTYPE
+              (ID,ROOMTYPECODE,ROOMTYPENAME,HOTELID)
+              VALUES  (0,'SYSTEM ROOMTYPE','SYSTEM ROOMTYPE', 0);
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL_ROOMTYPE OFF
+
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL_BOARDTYPE ON
+              INSERT INTO {{ .Values.dbNames.EMDS }}.dbo.HOTEL_BOARDTYPE
+              (ID,BOARDTYPENAME,BOARDTYPE,HOTELID)
+              VALUES  (0,'SYSTEM BOARDTYPE','SYSTEM BOARDTYPE', 0);
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL_BOARDTYPE OFF
+
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL_RATETYPE ON
+              INSERT INTO {{ .Values.dbNames.EMDS }}.dbo.HOTEL_RATETYPE
+              (ID,CODE,HOTELID)
+              VALUES  (0,'SYSTEM RATETYPE', 0);
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL_RATETYPE OFF
+
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.AGENCY ON
+              INSERT INTO {{ .Values.dbNames.EMDS }}.dbo.AGENCY
+              (ID,AGENCYCODE,FULLNAME,HOTELID)
+              VALUES  (0,'SYSTEM AGENCY','SYSTEM AGENCY', 0);
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.AGENCY OFF
+
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL_RATECODE ON
+              INSERT INTO {{ .Values.dbNames.EMDS }}.dbo.HOTEL_RATECODE
+              (ID,RATECODE,HOTELID)
+              VALUES  (0,'SYSTEM RATECODE', 0);
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL_RATECODE OFF
+
+              INSERT INTO {{ .Values.dbNames.EMDS }}..HOTEL_KEY_VALUE(HOTELID,[KEY],[VALUE])
+              VALUES(0,'endpointUrl','https://{{ .Values.worker.host}}')
+
+              INSERT INTO {{ .Values.dbNames.EMDS }}..HOTEL_KEY_VALUE(HOTELID,[KEY],[VALUE])
+              VALUES(0,'reportUrl','https://{{ .Values.reporting.host}}')
+{{ end }}
