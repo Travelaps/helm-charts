@@ -2,10 +2,10 @@
 kind: Job
 apiVersion: batch/v1
 metadata:
-  name: sql-create-emds-static-data
+  name: sql-create-personel-static-data
   annotations:
     "helm.sh/hook": post-install
-    "helm.sh/hook-weight": "-91"
+    "helm.sh/hook-weight": "-90"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   ttlSecondsAfterFinished: 86400
@@ -16,7 +16,7 @@ spec:
         - name: regcred
       containers:
         - name: initial-creator
-          image: {{ .Values.staticData.image }}
+          image: {{ .Values.staticData.image}}
           env:
             - name: SQLADDRESS
               value: "{{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}"
@@ -25,5 +25,5 @@ spec:
             - name: SQLPASS
               value: "{{ .Values.sql.connection.password }}"
             - name: DBNAME
-              value: "{{ .Values.dbNames.EMDS }}"
+              value: "{{ .Values.dbNames.PERSONEL }}"
 {{ end }}

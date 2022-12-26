@@ -18,6 +18,7 @@ worker:
   tlsSecretName: nodejs4001-cert
   # sslClusterIssuer: letsencrypt-staging
   image: ghcr.io/travelaps/nodejs-worker:v521
+  httpimage: ghcr.io/travelaps/nodejs-http:v28-beta
   replicas: 1
   config:
     dbConfig:
@@ -72,7 +73,7 @@ sql:
   agentEnabled: true
   runCreationScripts: true
   createSqlAgentJobs: true
-  creationScriptImage: ghcr.io/travelaps/elektrawebdb:onprem-v8
+  creationScriptImage: ghcr.io/travelaps/elektrawebdb:onprem-v15
   serviceType: ClusterIP
   elektraAdminUser:
     username: elektraweb
@@ -166,6 +167,7 @@ hotel:
 # Static Data
 staticData:
   install: true
+  image: ghcr.io/travelaps/elektraweb-static-data:v10
 # File Uploader
 fileUploader:
   install: false

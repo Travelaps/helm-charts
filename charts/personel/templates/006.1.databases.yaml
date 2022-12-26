@@ -1,0 +1,39 @@
+{{ if .Values.sql.runCreationScripts }}
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: sql-create-databases
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-100"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: initial-creator
+          image: ghcr.io/travelaps/mssql2019fts:v2
+          command:
+            - /opt/mssql-tools/bin/sqlcmd
+          args:
+            - '-S'
+            - {{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}
+            - '-U'
+            - {{ .Values.sql.connection.user }}
+            - '-P'
+            - {{ .Values.sql.connection.password }}
+            - '-Q'
+            - |
+              IF NOT EXISTS ( SELECT * FROM sys.databases WHERE name = '{{ .Values.dbNames.PERSONEL }}' )
+              BEGIN
+                CREATE DATABASE {{ .Values.dbNames.PERSONEL }} COLLATE TURKISH_CI_AS
+                ALTER DATABASE [{{ .Values.dbNames.PERSONEL }}] SET RECOVERY SIMPLE
+                ALTER DATABASE [{{ .Values.dbNames.PERSONEL }}] SET AUTO_CLOSE OFF WITH NO_WAIT
+                ALTER DATABASE [{{ .Values.dbNames.PERSONEL }}] SET AUTO_CREATE_STATISTICS OFF
+                ALTER DATABASE [{{ .Values.dbNames.PERSONEL }}] SET AUTO_UPDATE_STATISTICS OFF WITH NO_WAIT
+              END
+{{ end }}

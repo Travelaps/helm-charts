@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: nodejs-http
-          image: 'ghcr.io/travelaps/nodejs-http:latest'
+          image: {{ .Values.worker.httpimage | default "ghcr.io/travelaps/nodejs-http:latest" }}
           env:
             - name: AMQP
               value: 'amqp://guest:guest@rabbit:5672/'

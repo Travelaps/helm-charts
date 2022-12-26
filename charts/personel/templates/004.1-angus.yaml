@@ -73,7 +73,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.angus.host }}
-      secretName: angus-cert
+      secretName: {{ .Values.angus.tlsSecretName | default "elektraweb-cert" }}
   rules:
     - host: {{ .Values.angus.host }}
       http:

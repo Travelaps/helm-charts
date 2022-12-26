@@ -7,6 +7,7 @@ regcred:
 # NodeJS Web Servis
 worker:
   host: personelapi
+  tlsSecretName: nodejs4001-cert
   # sslClusterIssuer: letsencrypt-staging
   image: ghcr.io/travelaps/nodejs-worker:v523
   httpimage: ghcr.io/travelaps/nodejs-http:v28-beta
@@ -28,10 +29,11 @@ sql:
   agentEnabled: true
   runCreationScripts: true
   createSqlAgentJobs: true
-  creationScriptImage: ghcr.io/travelaps/elektrawebdb:onprem-v8
+  creationScriptImage: ghcr.io/travelaps/elektrawebdb:onprem-v15
 # Angus
 angus:
   install: true
+  tlsSecretName: elektraweb
   image: ghcr.io/travelaps/angus:v565
   host: personel
 # sslClusterIssuer: letsencrypt-staging
@@ -42,6 +44,7 @@ azureSettings:
 # Static Data
 staticData:
   install: true
+  image: ghcr.io/travelaps/personel-static-data:v1
 # File Uploader
 fileUploader:
   install: false
