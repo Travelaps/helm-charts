@@ -4,86 +4,86 @@ metadata:
   name: personel-worker-config
 data:
   personel-config.conf.json: |
-{
-    "httpPort": 3014,
-    "httpsPort": null,
-    "httpsCertificate": null,
-    "httpsCertificatePassword": null,
-    "tenantColumn": "TENANTID",
-    "tenantTable": "VW_TENANTS",
-    "passwordHashAlgorithm": "sha512",
-    "passwordHashEncoding": "ucs-2",
-    "encryptionSalt": 3013,
-    "RoleLearningMode": false,
-    "frameworkDb": "ANGUS_PERSONEL",
-    "dbConfig": {
-        "user": "{{ .Values.worker.config.dbConfig.user }}",
-        "password": "{{ .Values.worker.config.dbConfig.password }}",
-        "server": "{{ .Values.worker.config.dbConfig.server }}",
-        "database": "{{ .Values.dbNames.PERSONEL }}",
-        "options": {
-            "appName": "NodeJS:PERSONEL",
-            "encrypt": true
+    {
+        "httpPort": 3014,
+        "httpsPort": null,
+        "httpsCertificate": null,
+        "httpsCertificatePassword": null,
+        "tenantColumn": "TENANTID",
+        "tenantTable": "VW_TENANTS",
+        "passwordHashAlgorithm": "sha512",
+        "passwordHashEncoding": "ucs-2",
+        "encryptionSalt": 3013,
+        "RoleLearningMode": false,
+        "frameworkDb": "ANGUS_PERSONEL",
+        "dbConfig": {
+            "user": "{{ .Values.worker.config.dbConfig.user }}",
+            "password": "{{ .Values.worker.config.dbConfig.password }}",
+            "server": "{{ .Values.worker.config.dbConfig.server }}",
+            "database": "{{ .Values.dbNames.PERSONEL }}",
+            "options": {
+                "appName": "NodeJS:PERSONEL",
+                "encrypt": true
+            },
+            "pool": {
+                "min": 50,
+                "max": 50
+            }
         },
-        "pool": {
-            "min": 50,
-            "max": 50
+        "mailCredentials": null,
+        "sqlCacheFolder": "/tmp/personel",
+        "sqlCacheObjects": {
+            "*": 3,
+            "*MIGRATE": -1,
+            "VW_SRV_SICIL_LIST": 3600
+        },
+        "redis": {
+            "host": "redis"
+        },
+        "mailAutoSend": {
+            "queryFind": "SELECT TOP(10) E.* FROM EMAIL_SENT E WITH(NOLOCK) WHERE E.[STATUSID] = 1",
+            "queryMark": "UPDATE TOP(1) EMAIL_SENT SET [STATUSID] = 2, [ERRORMESSAGE]= @ERRORMESSAGE WHERE ID = @ID",
+            "intervalSeconds": 10,
+            "columns": {
+                    "primaryKey": "ID",
+                    "recipient": "EMAIL",
+                    "subject": "SUBJECT",
+                    "body": "CONTENT",
+                    "cc": "CCTO",
+                    "bcc": "BCCTO",
+                    "replyTo": "REPLYTO"
+            }
+        },
+        "maskColumns":[ "SIFRESI" ],
+        "amqp": "amqp://guest:guest@rabbit:5672/",
+        "autoFill": {
+            "CREATEDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+            "CREATE_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+            "CREATIONDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+            "CREATION_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+            "CREATIONTIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
+            "CREATION_TIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
+            "USERID": "((body || {}).UserObject || {}).USERID",
+            "STDUSERID": "((body || {}).UserObject || {}).USERID",
+            "CREATORID": "((body || {}).UserObject || {}).USERID",
+            "STAFF": "((body || {}).UserObject || {}).USERID",
+            "IPADDRESS": "(body || {}).IpAddress || null",
+            "IPCOUNTRY": "new Promise(r1=>op.GetIp({IpAddress: body.IpAddress},r2=>r1(r2.COUNTRYCODE)))",
+            "DOMAIN": "(body || {}).Referer || null",
+            "PROGDATE": "endpoints[ body.UserObject.SUPERADMIN === true ? (body.Parameters || body.Row || tempBody)['HOTELID'] : body.UserObject.TENNANTVALUE1  ].PROGDATE",
+            "PROGDATE_PLUS1": "endpoints[ body.UserObject.SUPERADMIN === true ? (body.Parameters || body.Row || tempBody)['HOTELID'] : body.UserObject.TENNANTVALUE1  ].PROGDATE_PLUS1",
+            "LOGINTOKEN": "(body || {}).LoginToken",
+            "TAKENBY": "body.UserObject.USERCODE"
+        },
+        "autoUpdate": {
+            "LAST_UPDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+            "LASTUPDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+            "LASTUPDATE_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+            "LASTUPDATED": "new Date().toISOString().substring(0,19).replace('T',' ')",
+            "UPDATEDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
+            "UPDATETIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
+            "STAFF": "((body || {}).UserObject || {}).USERID",
+            "UPDATEUSER": "((body || {}).UserObject || {}).USERID",
+            "TAKENBY": "body.UserObject.USERCODE"
         }
-    },
-    "mailCredentials": null,
-    "sqlCacheFolder": "/tmp/personel",
-    "sqlCacheObjects": {
-        "*": 3,
-        "*MIGRATE": -1,
-        "VW_SRV_SICIL_LIST": 3600
-    },
-    "redis": {
-        "host": "redis"
-    },
-    "mailAutoSend": {
-        "queryFind": "SELECT TOP(10) E.* FROM EMAIL_SENT E WITH(NOLOCK) WHERE E.[STATUSID] = 1",
-        "queryMark": "UPDATE TOP(1) EMAIL_SENT SET [STATUSID] = 2, [ERRORMESSAGE]= @ERRORMESSAGE WHERE ID = @ID",
-        "intervalSeconds": 10,
-        "columns": {
-                "primaryKey": "ID",
-                "recipient": "EMAIL",
-                "subject": "SUBJECT",
-                "body": "CONTENT",
-                "cc": "CCTO",
-                "bcc": "BCCTO",
-                "replyTo": "REPLYTO"
-        }
-    },
-    "maskColumns":[ "SIFRESI" ],
-    "amqp": "amqp://guest:guest@rabbit:5672/",
-    "autoFill": {
-        "CREATEDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
-        "CREATE_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
-        "CREATIONDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
-        "CREATION_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
-        "CREATIONTIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
-        "CREATION_TIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
-        "USERID": "((body || {}).UserObject || {}).USERID",
-        "STDUSERID": "((body || {}).UserObject || {}).USERID",
-        "CREATORID": "((body || {}).UserObject || {}).USERID",
-        "STAFF": "((body || {}).UserObject || {}).USERID",
-        "IPADDRESS": "(body || {}).IpAddress || null",
-        "IPCOUNTRY": "new Promise(r1=>op.GetIp({IpAddress: body.IpAddress},r2=>r1(r2.COUNTRYCODE)))",
-        "DOMAIN": "(body || {}).Referer || null",
-        "PROGDATE": "endpoints[ body.UserObject.SUPERADMIN === true ? (body.Parameters || body.Row || tempBody)['HOTELID'] : body.UserObject.TENNANTVALUE1  ].PROGDATE",
-        "PROGDATE_PLUS1": "endpoints[ body.UserObject.SUPERADMIN === true ? (body.Parameters || body.Row || tempBody)['HOTELID'] : body.UserObject.TENNANTVALUE1  ].PROGDATE_PLUS1",
-        "LOGINTOKEN": "(body || {}).LoginToken",
-        "TAKENBY": "body.UserObject.USERCODE"
-    },
-    "autoUpdate": {
-        "LAST_UPDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
-        "LASTUPDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
-        "LASTUPDATE_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
-        "LASTUPDATED": "new Date().toISOString().substring(0,19).replace('T',' ')",
-        "UPDATEDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
-        "UPDATETIME": "new Date().toISOString().substring(0,19).replace('T',' ')",
-        "STAFF": "((body || {}).UserObject || {}).USERID",
-        "UPDATEUSER": "((body || {}).UserObject || {}).USERID",
-        "TAKENBY": "body.UserObject.USERCODE"
     }
-}
