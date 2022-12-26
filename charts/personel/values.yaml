@@ -10,7 +10,7 @@ worker:
   tlsSecretName: nodejs3013-cert
   # sslClusterIssuer: letsencrypt-staging
   image: ghcr.io/travelaps/nodejs-worker:v523
-  httpimage: ghcr.io/travelaps/nodejs-http:v28-beta
+  httpImage: ghcr.io/travelaps/nodejs-http:v28-beta
   replicas: 1
   config:
     dbConfig:

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: nodejs-http
-          image: {{ .Values.angus.httpimage }}
+          image: {{ .Values.worker.httpImage }}
           env:
             - name: PORT
               value: '8080'
