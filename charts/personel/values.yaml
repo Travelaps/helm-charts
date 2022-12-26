@@ -43,8 +43,8 @@ angus:
      token: ?token=TOKEN&se=2023-02-26T15:10:47Z
 reporting:
   install: true
-  host: personelseport
-  tlsSecretName: personelseport-cert
+  host: personelreport
+  tlsSecretName: personelreport-cert
   # sslClusterIssuer: letsencrypt-staging
   sqlServer: sql
   sqlUser: sa
@@ -69,3 +69,6 @@ fileUploader:
   volumeMounts:
     - name: files
       mountPath: /app/uploads/files/
+# Nginx Ingress
+ingressNginx:
+  class: public
