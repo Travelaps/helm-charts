@@ -18,6 +18,7 @@ worker:
       user: sa
       password: aA!01012000
       server: sql
+      trustServerCertificate: true
 dbNames:
   PERSONEL: PERSONEL
   DDLEVENTS: DDLEVENTS

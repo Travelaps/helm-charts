@@ -24,7 +24,8 @@ data:
             "database": "{{ .Values.dbNames.PERSONEL }}",
             "options": {
                 "appName": "NodeJS:PERSONEL",
-                "encrypt": true
+                "encrypt": true,
+                "trustServerCertificate": {{ .Values.worker.config.dbConfig.trustServerCertificate }}
             },
             "pool": {
                 "min": 50,
