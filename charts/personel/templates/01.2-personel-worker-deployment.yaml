@@ -4,7 +4,7 @@ kind: Deployment
 metadata:
   name: nodejs-worker-personel
   labels:
-    component: nodejs-worker-personel
+    component: nodejs-worker
     k8s-app: nodejs-worker-personel
 spec:
   replicas: {{ .Values.worker.replicas }}
@@ -17,13 +17,13 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/01.1-personel-worker-config.yaml") . | sha256sum }}
       name: nodejs-worker-personel
       labels:
-        component: nodejs-worker-personel
+        component: nodejs-worker
         k8s-app: nodejs-worker-personel
     spec:
       volumes:
-        - name: worker-configs-personel
+        - name: personel-worker-config
           configMap:
-            name: worker-config-personel
+            name: personel-worker-config
             defaultMode: 420
       containers:
         - name: nodejs-worker-personel
@@ -36,7 +36,7 @@ spec:
               value: /configs/personel-config.conf.json
           resources: {}
           volumeMounts:
-            - name: worker-configs-personel
+            - name: personel-worker-config
               mountPath: /configs
           livenessProbe:
             httpGet:
