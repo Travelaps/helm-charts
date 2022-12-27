@@ -5,7 +5,7 @@ metadata:
 data:
   personel-config.conf.json: |
     {
-        "httpPort": 3014,
+        "httpPort": 8080,
         "httpsPort": null,
         "httpsCertificate": null,
         "httpsCertificatePassword": null,
@@ -58,6 +58,7 @@ data:
         },
         "maskColumns":[ "SIFRESI" ],
         "amqp": "amqp://guest:guest@rabbit:5672/personel",
+        "applicationUpdateURL": "https://3013.hoteladvisor.net",
         "autoFill": {
             "CREATEDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
             "CREATE_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
