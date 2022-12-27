@@ -13,10 +13,9 @@ spec:
       k8s-app: nodejs-worker-personel
   template:
     metadata:
-     annotations:
+      annotations:
         checksum/config: {{ include (print $.Template.BasePath "/01.1-personel-worker-config.yaml") . | sha256sum }}
       name: nodejs-worker-personel
-      creationTimestamp: null
       labels:
         component: nodejs-worker-personel
         k8s-app: nodejs-worker-personel
