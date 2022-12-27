@@ -3,6 +3,16 @@ entries:
   Personel:
   - apiVersion: v2
     appVersion: 1-452-0
+    created: "2022-12-27T07:10:43.224469755Z"
+    description: Personel Helm Chart
+    digest: 8ba2e19519262f6bc9f9470130f29977bda0b57498d450e31ffb9860ac54b257
+    name: Personel
+    type: application
+    urls:
+    - https://github.com/Travelaps/helm-charts/releases/download/Personel-1.0.9/Personel-1.0.9.tgz
+    version: 1.0.9
+  - apiVersion: v2
+    appVersion: 1-452-0
     created: "2022-12-26T13:03:57.013396528Z"
     description: Personel Helm Chart
     digest: 0a57fd038299d27adbc249415cc23b94e24627f32ba9205a94ac5789490c745c
@@ -1014,4 +1024,4 @@ entries:
     urls:
     - https://github.com/Travelaps/helm-charts/releases/download/portal-ttseyahat-1.0.0/portal-ttseyahat-1.0.0.tgz
     version: 1.0.0
-generated: "2022-12-26T13:03:57.014040519Z"
+generated: "2022-12-27T07:10:43.225467062Z"
