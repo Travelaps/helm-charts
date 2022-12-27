@@ -15,7 +15,8 @@ data:
         "passwordHashEncoding": "ucs-2",
         "encryptionSalt": 3013,
         "RoleLearningMode": false,
-        "frameworkDb": "ANGUS_PERSONEL",
+        "frameworkDb": "PERSONEL",
+        "frameworkDbSchema": "ang",
         "dbConfig": {
             "user": "{{ .Values.worker.config.dbConfig.user }}",
             "password": "{{ .Values.worker.config.dbConfig.password }}",

@@ -6,6 +6,7 @@ regcred:
   key: REQUIRED-github-access-token
 # NodeJS Web Servis
 worker:
+  install: true
   host: personelapi
   tlsSecretName: nodejs3013-cert
   # sslClusterIssuer: letsencrypt-staging

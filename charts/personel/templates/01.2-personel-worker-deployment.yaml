@@ -14,7 +14,7 @@ spec:
   template:
     metadata:
      annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/017.1-personel-worker-config.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/01.1-personel-worker-config.yaml") . | sha256sum }}
       name: nodejs-worker-personel
       creationTimestamp: null
       labels:
