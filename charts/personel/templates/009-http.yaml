@@ -25,7 +25,7 @@ spec:
             - name: HOSTS
               value: |
                 {
-                  "{{ .Values.worker.host }}": "hotel"
+                  "{{ .Values.worker.host }}": "personel"
                 }
       imagePullSecrets:
         - name: regcred

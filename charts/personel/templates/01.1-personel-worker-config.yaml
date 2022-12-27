@@ -57,7 +57,7 @@ data:
             }
         },
         "maskColumns":[ "SIFRESI" ],
-        "amqp": "amqp://guest:guest@rabbit:5672/",
+        "amqp": "amqp://guest:guest@rabbit:5672/personel",
         "autoFill": {
             "CREATEDATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
             "CREATE_DATE": "new Date().toISOString().substring(0,19).replace('T',' ')",
