@@ -26,4 +26,5 @@ spec:
             - /TargetDatabaseName:{{ .Values.dbNames.PERSONEL }}
             - /Variables:master=master
             - /Variables:msdb=msdb
+            - /Variables:DDLEVENTS={{ .Values.dbNames.DDLEVENTS }}
 {{ end }}

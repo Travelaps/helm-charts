@@ -19,6 +19,7 @@ worker:
       server: sql
 dbNames:
   PERSONEL: PERSONEL
+  DDLEVENTS: DDLEVENTS
 # SQL
 sql:
   connection:
