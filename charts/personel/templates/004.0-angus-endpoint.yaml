@@ -13,7 +13,7 @@ data:
             "shortName": "hr",
             "endpoint": "https://{{ .Values.worker.host }}/",
             "url": [
-              "https://{{ .Values.angus.host }}/"
+              "{{ .Values.angus.host }}"
             ],
             "defaultLang": "TR",
             "desc": "Elektra İK",
