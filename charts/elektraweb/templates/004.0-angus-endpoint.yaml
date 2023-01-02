@@ -18,6 +18,7 @@ data:
             "defaultLang": "EN",
             "languages": ["TR","EN","DE","RU","AR","FR","RO"],
             "sendPasswordLink": true,
+            "favorite": true,
             "sendPasswordProcedure": "SP_EASYPMS_FORGOTPASSWORD",
             "userSettings": {
                 "recordID": "settings-change-tenant",

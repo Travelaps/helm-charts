@@ -17,7 +17,7 @@ worker:
   host: nodejs4001
   tlsSecretName: nodejs4001-cert
   # sslClusterIssuer: letsencrypt-staging
-  image: ghcr.io/travelaps/nodejs-worker:v521
+  image: ghcr.io/travelaps/nodejs-worker:v527
   httpimage: ghcr.io/travelaps/nodejs-http:v28-beta
   replicas: 1
   config:
@@ -73,7 +73,7 @@ sql:
   agentEnabled: true
   runCreationScripts: true
   createSqlAgentJobs: true
-  creationScriptImage: ghcr.io/travelaps/elektrawebdb:onprem-v15
+  creationScriptImage: ghcr.io/travelaps/elektrawebdb:onprem-v16
   serviceType: ClusterIP
   elektraAdminUser:
     username: elektraweb
@@ -102,7 +102,7 @@ sql:
 # Angus
 angus:
   install: true
-  image: ghcr.io/travelaps/angus:v565
+  image: ghcr.io/travelaps/angus:v616
   host: elektraweb
   tlsSecretName: elektraweb-cert
   # sslClusterIssuer: letsencrypt-staging
@@ -116,7 +116,7 @@ angus:
 # Pos
 pos:
   install: true
-  image: ghcr.io/travelaps/pos-ng11:v355
+  image: ghcr.io/travelaps/pos-ng11:v405
   host: elektrawebpos
   tlsSecretName: elektrawebpos-cert
   # sslClusterIssuer: letsencrypt-staging
