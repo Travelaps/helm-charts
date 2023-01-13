@@ -18,6 +18,8 @@ spec:
         - name: nodejs-http
           image: {{ .Values.worker.httpimage | default "ghcr.io/travelaps/nodejs-http:latest" }}
           env:
+            - name: PORT
+              value: '8080'
             - name: AMQP
               value: 'amqp://guest:guest@rabbit:5672/'
             - name: HOSTS
@@ -38,8 +40,8 @@ spec:
   ports:
     - name: nodejs-port
       protocol: TCP
-      port: 80
-      targetPort: 80
+      port: 8080
+      targetPort: 8080
   selector:
     k8s-app: nodejs-http
   type: ClusterIP
@@ -83,4 +85,4 @@ spec:
               service:
                 name: nodejs-http
                 port:
-                  number: 80
+                  number: 8080
