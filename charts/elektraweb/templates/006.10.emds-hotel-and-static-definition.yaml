@@ -65,9 +65,15 @@ spec:
               VALUES  (0,'SYSTEM RATECODE', 0);
               SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL_RATECODE OFF
 
-              INSERT INTO {{ .Values.dbNames.EMDS }}..HOTEL_KEY_VALUE(HOTELID,[KEY],[VALUE])
-              VALUES(0,'endpointUrl','https://{{ .Values.worker.host}}')
+              INSERT INTO {{ .Values.dbNames.EMDS }}..ELEKTRAWEB_CONSTANTS([KEY],[VALUE])
+              VALUES('endpointUrl','https://{{ .Values.worker.host}}')
 
-              INSERT INTO {{ .Values.dbNames.EMDS }}..HOTEL_KEY_VALUE(HOTELID,[KEY],[VALUE])
-              VALUES(0,'reportUrl','https://{{ .Values.reporting.host}}')
+              INSERT INTO {{ .Values.dbNames.EMDS }}..ELEKTRAWEB_CONSTANTS([KEY],[VALUE])
+              VALUES('reportUrl','https://{{ .Values.reporting.host}}')
+
+              INSERT INTO {{ .Values.dbNames.EMDS }}..ELEKTRAWEB_CONSTANTS([KEY],[VALUE])
+              VALUES('posUrl','https://{{ .Values.pos.host}}')
+
+              INSERT INTO {{ .Values.dbNames.EMDS }}..ELEKTRAWEB_CONSTANTS([KEY],[VALUE])
+              VALUES('appUrl','https://{{ .Values.angus.host}}')
 {{ end }}
