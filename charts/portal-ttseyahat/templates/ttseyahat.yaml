@@ -328,30 +328,39 @@ spec:
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: reportingcore
+  name: file-uploader
   labels:
-    k8s-app: reportingcore
+    k8s-app: file-uploader
 spec:
   replicas: 0
   selector:
     matchLabels:
-      k8s-app: reportingcore
+      k8s-app: file-uploader
   template:
     metadata:
-      name: reportingcore
+      name: file-uploader
       labels:
-        k8s-app: reportingcore
+        k8s-app: file-uploader
     spec:
       containers:
-        - name: reportingcore
-          image: {{ .Values.reporting.image }}
+        - name: file-uploader
+          image: {{ .Values.file-uploader.image }}
+              value: '8080'
           env:
-            - name: DS_server
-              value: {{ .Values.reporting.sqlServer }}
-            - name: DS_user
-              value: {{ .Values.reporting.sqlUser }}
-            - name: DS_password
-              value: {{ .Values.reporting.sqlPassword }}
+            - name: TRUSTED_ORIGINS
+              value: '["*"]'
+            - name: TRUSTED_IPS
+              value: '["*"]'
+            - name: ALLOWED_FILETYPES
+              value: '["png","jpg","word","pdf"]'
+            - name: ALLOWED_TOKENS
+              value: >- 
+                [{{ .Values.file-uploader.token }}]
+            - name: PORT
+              value: '8080'
+          volumeMounts:
+            - name: files
+              mountPath: /app/uploads/files/
           resources: {}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
@@ -490,17 +499,17 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: reportingcore
+  name: file-uploader
   labels:
-    k8s-app: reportingcore
+    k8s-app: file-uploader
 spec:
   ports:
-    - name: reporting-port
+    - name: file-uploader-port
       protocol: TCP
-      port: 5000
-      targetPort: 5000
+      port: 8080
+      targetPort: 8080
   selector:
-    k8s-app: reportingcore
+    k8s-app: file-uploader
   type: ClusterIP
   sessionAffinity: None
   ipFamilies:
