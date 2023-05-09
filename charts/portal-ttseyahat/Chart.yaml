@@ -3,4 +3,4 @@ name: portal-ttseyahat
 description: TTSeyahat Portal Helm Chart
 type: application
 version: 1.0.4
-appVersion: "1.0.4"
+appVersion: "1.452.0"
