@@ -1125,6 +1125,16 @@ entries:
     version: 1.0.0
   portal-ttseyahat:
   - apiVersion: v2
+    appVersion: 1.452.0
+    created: "2023-05-09T14:12:01.225265751Z"
+    description: TTSeyahat Portal Helm Chart
+    digest: d1f4fa3233bd179edf6923468d10c82a6111012e30264f1d20b4eb7d26e07248
+    name: portal-ttseyahat
+    type: application
+    urls:
+    - https://github.com/Travelaps/helm-charts/releases/download/portal-ttseyahat-1.0.5/portal-ttseyahat-1.0.5.tgz
+    version: 1.0.5
+  - apiVersion: v2
     appVersion: 1.0.4
     created: "2023-05-09T14:01:51.277147864Z"
     description: TTSeyahat Portal Helm Chart
@@ -1174,4 +1184,4 @@ entries:
     urls:
     - https://github.com/Travelaps/helm-charts/releases/download/portal-ttseyahat-1.0.0/portal-ttseyahat-1.0.0.tgz
     version: 1.0.0
-generated: "2023-05-09T14:01:51.277994177Z"
+generated: "2023-05-09T14:12:01.22766758Z"
