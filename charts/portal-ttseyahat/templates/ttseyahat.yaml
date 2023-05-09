@@ -354,8 +354,7 @@ spec:
             - name: ALLOWED_FILETYPES
               value: '["png","jpg","word","pdf"]'
             - name: ALLOWED_TOKENS
-              value: >- 
-                [{{ .Values.file-uploader.token }}]
+              value: {{ .Values.fileUploader.env.ALLOWED_TOKENS | squote }}
             - name: PORT
               value: '8080'
           volumeMounts:
