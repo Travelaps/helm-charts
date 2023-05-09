@@ -19,7 +19,7 @@ worker:
       password: DB_PASSWORD
       server: DB_ADDR
       trustServerCertificate: true
-portal: 
+portal:
   image: ghcr.io/travelaps/portal:v112-tt
   host: PORTAL_HTTP_URL
 file-uploader:
