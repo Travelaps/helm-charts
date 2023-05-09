@@ -344,7 +344,7 @@ spec:
     spec:
       containers:
         - name: file-uploader
-          image: {{ .Values.file-uploader.image }}
+          image: {{ .Values.fileUploader.image }}
           env:
             - name: TRUSTED_ORIGINS
               value: '["*"]'
@@ -925,10 +925,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - {{ .Values.file-uploader.host }}
+        - {{ .Values.fileUploader.host }}
       secretName: nodejs4001-cert
   rules:
-    - host: {{ .Values.file-uploader.host }}
+    - host: {{ .Values.fileUploader.host }}
       http:
         paths:
           - path: /files

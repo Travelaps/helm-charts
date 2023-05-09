@@ -22,7 +22,7 @@ worker:
 portal:
   image: ghcr.io/travelaps/portal:v112-tt
   host: PORTAL_HTTP_URL
-file-uploader:
+fileUploader:
   image: ghcr.io/travelaps/reportingfull:latest
   host: NODEJS_HTTP_URL
   env:
