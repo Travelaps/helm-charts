@@ -24,3 +24,9 @@ portal:
 file-uploader:
   image: ghcr.io/travelaps/reportingfull:latest
   token: "?token=sSHhAhngybEZzsqm&se=2024-02-26T15:10:47Z"
+# Nginx Ingress
+ingressNginx:
+  install: true
+  class: public
+  namespace: ingress
+  createNamespace: true
