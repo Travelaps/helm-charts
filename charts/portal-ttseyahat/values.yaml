@@ -7,7 +7,7 @@ angus:
   azureSettings:
     container: files
     storageUrl: NODEJS_HTTP_URL
-    token: ?token=TOKEN&se=EXPIRATION_TIME
+    token: "?token=TOKEN&se=EXPIRATION_TIME"
 http:
   image: ghcr.io/travelaps/nodejs-http:v28-beta
   host: NODEJS_HTTP_URL
@@ -19,12 +19,13 @@ worker:
       password: DB_PASSWORD
       server: DB_ADDR
       trustServerCertificate: true
-portal:
+portal: PORTAL_HTTP_URL
   image: ghcr.io/travelaps/portal:v112-tt
+  host: 
 file-uploader:
   image: ghcr.io/travelaps/reportingfull:latest
   token: "?token=sSHhAhngybEZzsqm&se=2024-02-26T15:10:47Z"
-# Nginx Ingress
+  host: NODEJS_HTTP_URL
 ingressNginx:
   install: true
   class: public

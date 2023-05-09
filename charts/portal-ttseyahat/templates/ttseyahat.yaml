@@ -781,3 +781,163 @@ data:
       "ipAccessKey": ""
     }
 
+---
+
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: angus-ingress
+  annotations:
+    {{- if .Values.angus.sslIssuer }}
+    cert-manager.io/issuer: {{ .Values.angus.sslIssuer }}
+    {{- end }}
+    {{- if .Values.angus.sslClusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.angus.sslClusterIssuer }}
+    {{- end }}
+    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.angus.host }}
+      secretName: {{ .Values.angus.tlsSecretName | default "elektraweb-cert" }}
+  rules:
+    - host: {{ .Values.angus.host }}
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: angus
+                port:
+                  number: 80
+
+---
+
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: nodejs-http-ingress
+  annotations:
+    {{- if .Values.worker.sslIssuer }}
+    cert-manager.io/issuer: {{ .Values.worker.sslIssuer }}
+    {{- end }}
+    {{- if .Values.worker.sslClusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.worker.sslClusterIssuer }}
+    {{- end }}
+    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
+    nginx.ingress.kubernetes.io/server-snippet: |
+      gunzip on;
+      gzip on;
+      gzip_vary on;
+      gzip_proxied any;
+      gzip_comp_level 5;
+      gzip_min_length 512;
+      gzip_buffers 16 128k;
+      gzip_types *;
+    nginx.ingress.kubernetes.io/proxy-body-size: '30m'
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.worker.host }}
+      secretName: {{ .Values.worker.tlsSecretName | default "nodejs4001-cert" }}
+  rules:
+    - host: {{ .Values.worker.host }}
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: nodejs-http
+                port:
+                  number: 8080
+
+---
+
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: portal-ingress
+  annotations:
+    {{- if .Values.portal.sslIssuer }}
+    cert-manager.io/issuer: {{ .Values.portal.sslIssuer }}
+    {{- end }}
+    {{- if .Values.portal.sslClusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.portal.sslClusterIssuer }}
+    {{- end }}
+    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
+    nginx.ingress.kubernetes.io/server-snippet: |
+      gunzip on;
+      gzip on;
+      gzip_vary on;
+      gzip_proxied any;
+      gzip_comp_level 5;
+      gzip_min_length 512;
+      gzip_buffers 16 128k;
+      gzip_types *;
+    nginx.ingress.kubernetes.io/proxy-body-size: '30m'
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.portal.host }}
+      secretName: {{ .Values.portal.tlsSecretName | default "nodejs4001-cert" }}
+  rules:
+    - host: {{ .Values.portal.host }}
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: portal
+                port:
+                  number: 8080
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: file-uploader-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: public
+    nginx.ingress.kubernetes.io/cors-allow-credentials: 'true'
+    nginx.ingress.kubernetes.io/cors-allow-headers: >-
+      DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,x-ms-blob-content-md5,x-ms-blob-content-type,x-ms-blob-type,x-ms-client-request-id,x-ms-date,x-ms-version
+    nginx.ingress.kubernetes.io/cors-allow-methods: GET, POST, OPTIONS, PUT
+    nginx.ingress.kubernetes.io/cors-allow-origin: '*'
+    nginx.ingress.kubernetes.io/cors-max-age: '600'
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: 30m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
+    nginx.ingress.kubernetes.io/server-snippet: |
+      gunzip on;
+      gzip on;
+      gzip_vary on;
+      gzip_proxied any;
+      gzip_comp_level 5;
+      gzip_min_length 512;
+      gzip_buffers 16 128k;
+      gzip_types *;
+    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.file-uploader.host }}
+      secretName: nodejs4001-cert
+  rules:
+    - host: {{ .Values.file-uploader.host }}
+      http:
+        paths:
+          - path: /files
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: file-uploader
+                port:
+                  number: 80
+
