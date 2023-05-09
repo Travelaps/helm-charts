@@ -345,7 +345,6 @@ spec:
       containers:
         - name: file-uploader
           image: {{ .Values.file-uploader.image }}
-              value: '8080'
           env:
             - name: TRUSTED_ORIGINS
               value: '["*"]'
