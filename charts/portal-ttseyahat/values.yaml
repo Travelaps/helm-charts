@@ -19,9 +19,9 @@ worker:
       password: DB_PASSWORD
       server: DB_ADDR
       trustServerCertificate: true
-portal: PORTAL_HTTP_URL
+portal: 
   image: ghcr.io/travelaps/portal:v112-tt
-  host: 
+  host: PORTAL_HTTP_URL
 file-uploader:
   image: ghcr.io/travelaps/reportingfull:latest
   token: "?token=sSHhAhngybEZzsqm&se=2024-02-26T15:10:47Z"
