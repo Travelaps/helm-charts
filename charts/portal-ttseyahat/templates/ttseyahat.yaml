@@ -817,11 +817,11 @@ apiVersion: networking.k8s.io/v1
 metadata:
   name: nodejs-http-ingress
   annotations:
-    {{- if .Values.worker.sslIssuer }}
-    cert-manager.io/issuer: {{ .Values.worker.sslIssuer }}
+    {{- if .Values.http.sslIssuer }}
+    cert-manager.io/issuer: {{ .Values.http.sslIssuer }}
     {{- end }}
-    {{- if .Values.worker.sslClusterIssuer }}
-    cert-manager.io/cluster-issuer: {{ .Values.worker.sslClusterIssuer }}
+    {{- if .Values.http.sslClusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.http.sslClusterIssuer }}
     {{- end }}
     kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
     nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
@@ -838,10 +838,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - {{ .Values.worker.host }}
-      secretName: {{ .Values.worker.tlsSecretName | default "nodejs4001-cert" }}
+        - {{ .Values.http.host }}
+      secretName: {{ .Values.http.tlsSecretName | default "nodejs4001-cert" }}
   rules:
-    - host: {{ .Values.worker.host }}
+    - host: {{ .Values.http.host }}
       http:
         paths:
           - path: /
