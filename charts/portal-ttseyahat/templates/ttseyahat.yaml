@@ -325,6 +325,23 @@ spec:
 
 ---
 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: persistent-volume-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 200Gi
+  selector:
+    matchLabels:
+      pv: local
+  storageClassName: file-uploads
+
+---
+
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -332,10 +349,6 @@ metadata:
   labels:
     k8s-app: file-uploader
 spec:
-  volumes:
-    - name: files
-      persistentVolumeClaim:
-        claimName: file-uploads
   replicas: 1
   selector:
     matchLabels:
@@ -346,6 +359,10 @@ spec:
       labels:
         k8s-app: file-uploader
     spec:
+      volumes:
+        - name: files
+          persistentVolumeClaim:
+            claimName: file-uploads
       containers:
         - resources:
               limits:
