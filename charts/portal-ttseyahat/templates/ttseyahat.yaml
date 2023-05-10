@@ -332,7 +332,11 @@ metadata:
   labels:
     k8s-app: file-uploader
 spec:
-  replicas: 0
+  volumes:
+    - name: files
+      persistentVolumeClaim:
+        claimName: file-uploads
+  replicas: 1
   selector:
     matchLabels:
       k8s-app: file-uploader
@@ -343,6 +347,13 @@ spec:
         k8s-app: file-uploader
     spec:
       containers:
+        - resources:
+              limits:
+                cpu: '1'
+                memory: 2Gi
+              requests:
+                cpu: '1'
+                memory: 2Gi
         - name: file-uploader
           image: {{ .Values.fileUploader.image }}
           env:
