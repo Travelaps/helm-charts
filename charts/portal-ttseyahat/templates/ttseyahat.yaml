@@ -946,10 +946,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - {{ .Values.fileUploader.host }}
+        - {{ .Values.http.host }}
       secretName: nodejs4001-cert
   rules:
-    - host: {{ .Values.fileUploader.host }}
+    - host: {{ .Values.http.host }}
       http:
         paths:
           - path: /files

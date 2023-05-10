@@ -111,10 +111,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - {{ .Values.http.host }}
+        - {{ .Values.worker.host }}
       secretName: nodejs4001-cert
   rules:
-    - host: {{ .Values.http.host }}
+    - host: {{ .Values.worker.host }}
       http:
         paths:
           - path: /files
