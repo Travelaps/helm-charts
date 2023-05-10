@@ -364,13 +364,6 @@ spec:
           persistentVolumeClaim:
             claimName: file-uploads
       containers:
-        - resources:
-              limits:
-                cpu: '1'
-                memory: 2Gi
-              requests:
-                cpu: '1'
-                memory: 2Gi
         - name: file-uploader
           image: {{ .Values.fileUploader.image }}
           env:
