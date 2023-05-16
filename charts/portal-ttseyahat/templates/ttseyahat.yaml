@@ -970,4 +970,3 @@ spec:
                 name: file-uploader
                 port:
                   number: 80
-
