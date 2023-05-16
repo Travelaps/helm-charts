@@ -9,10 +9,6 @@ metadata:
   name: regcred
 data:
   .dockerconfigjson: {{ template "imagePullSecret" . }}
-  server.crt: |
-       {{.Values.wildcardSSL.crt}}
-  server.key: |
-       {{.Values.wildcardSSL.key}}
 type: kubernetes.io/dockerconfigjson
 
 ---
@@ -822,7 +818,8 @@ spec:
   tls:
     - hosts:
         - {{ .Values.angus.host }}
-      secretName: {{ .Values.angus.tlsSecretName | default "elektraweb-cert" }}
+      certificate: {{ .Values.wildcardSSL.crt }}
+      key: {{ .Values.wildcardSSL.key }}
   rules:
     - host: {{ .Values.angus.host }}
       http:
@@ -864,7 +861,8 @@ spec:
   tls:
     - hosts:
         - {{ .Values.http.host }}
-      secretName: {{ .Values.http.tlsSecretName | default "nodejs4001-cert" }}
+      certificate: {{ .Values.wildcardSSL.crt }}
+      key: {{ .Values.wildcardSSL.key }}
   rules:
     - host: {{ .Values.http.host }}
       http:
@@ -906,7 +904,8 @@ spec:
   tls:
     - hosts:
         - {{ .Values.portal.host }}
-      secretName: {{ .Values.portal.tlsSecretName | default "nodejs4001-cert" }}
+      certificate: {{ .Values.wildcardSSL.crt }}
+      key: {{ .Values.wildcardSSL.key }}
   rules:
     - host: {{ .Values.portal.host }}
       http:
@@ -951,7 +950,8 @@ spec:
   tls:
     - hosts:
         - {{ .Values.http.host }}
-      secretName: {{ .Values.http.tlsSecretName | default "nodejs4001-cert" }}
+      certificate: {{ .Values.wildcardSSL.crt }}
+      key: {{ .Values.wildcardSSL.key }}
   rules:
     - host: {{ .Values.http.host }}
       http:
@@ -963,3 +963,4 @@ spec:
                 name: file-uploader
                 port:
                   number: 80
+
