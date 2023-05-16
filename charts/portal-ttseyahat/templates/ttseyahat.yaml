@@ -9,6 +9,10 @@ metadata:
   name: regcred
 data:
   .dockerconfigjson: {{ template "imagePullSecret" . }}
+  server.crt: |
+       {{.Values.wildcardSSL.crt}}
+  server.key: |
+       {{.Values.wildcardSSL.key}}
 type: kubernetes.io/dockerconfigjson
 
 ---
@@ -959,16 +963,3 @@ spec:
                 name: file-uploader
                 port:
                   number: 80
----
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: wildcard-app-tls
-  namespace: dev
-type: kubernetes.io/tls
-data:
-  server.crt: |
-       {{.Values.wildcardSSL.crt}}
-  server.key: |
-       {{.Values.wildcardSSL.key}}
