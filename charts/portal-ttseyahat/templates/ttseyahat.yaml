@@ -13,6 +13,19 @@ type: kubernetes.io/dockerconfigjson
 
 ---
 
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wildcard-app-tls
+type: kubernetes.io/tls
+data:
+  server.crt: |
+       {{.Values.wildcardSSL.crt}}
+  server.key: |
+       {{.Values.wildcardSSL.key}}
+
+---
+
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -818,8 +831,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.angus.host }}
-      certificate: {{ .Values.wildcardSSL.crt }}
-      key: {{ .Values.wildcardSSL.key }}
+      secretName: {{ .Values.angus.tlsSecretName | default "elektraweb-cert" }}
   rules:
     - host: {{ .Values.angus.host }}
       http:
@@ -861,8 +873,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.http.host }}
-      certificate: {{ .Values.wildcardSSL.crt }}
-      key: {{ .Values.wildcardSSL.key }}
+      secretName: {{ .Values.http.tlsSecretName | default "nodejs4001-cert" }}
   rules:
     - host: {{ .Values.http.host }}
       http:
@@ -904,8 +915,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.portal.host }}
-      certificate: {{ .Values.wildcardSSL.crt }}
-      key: {{ .Values.wildcardSSL.key }}
+      secretName: {{ .Values.portal.tlsSecretName | default "nodejs4001-cert" }}
   rules:
     - host: {{ .Values.portal.host }}
       http:
@@ -950,8 +960,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.http.host }}
-      certificate: {{ .Values.wildcardSSL.crt }}
-      key: {{ .Values.wildcardSSL.key }}
+      secretName: {{ .Values.http.tlsSecretName | default "nodejs4001-cert" }}
   rules:
     - host: {{ .Values.http.host }}
       http:
