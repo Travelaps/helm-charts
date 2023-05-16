@@ -947,7 +947,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.http.host }}
-      secretName: nodejs4001-cert
+      secretName: {{ .Values.http.tlsSecretName | default "nodejs4001-cert" }}
   rules:
     - host: {{ .Values.http.host }}
       http:
@@ -959,4 +959,16 @@ spec:
                 name: file-uploader
                 port:
                   number: 80
+---
 
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wildcard-app-tls
+  namespace: dev
+type: kubernetes.io/tls
+data:
+  server.crt: |
+       {{.Values.wildcardSSL.crt}}
+  server.key: |
+       {{.Values.wildcardSSL.key}}
