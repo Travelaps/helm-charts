@@ -560,12 +560,13 @@ data:
         {
             "displayName": "TravelAps",
             "shortName": "portal",
+            "tenant": "8",
             "endpoint": "https://{{ .Values.http.host }}/",
             "url": [
               "{{ .Values.angus.host }}"
             ],
             "defaultLang": "TR",
-            "desc": "Travel Aps",
+            "desc": "Kurumsal Seyahat",
             "tenantSelectEveryone": false,
             "infoLink": "https://www.travelaps.com",
             "sendPasswordLink": true,
@@ -577,6 +578,35 @@ data:
               "container": "{{ .Values.angus.azureSettings.container }}",
               "storageUrl": "{{ .Values.angus.azureSettings.storageUrl }}",
               "token": "{{ .Values.angus.azureSettings.token }}"
+            },
+            "languages": ["TR"],
+            "style": {
+              "logoBackground": "#0082ca",
+              "menuBackground": "#002855"
+            },
+            "loginLabels": {
+              "usercode": "Sicil",
+              "password": "Şifre",
+              "moreInfo": "Künye",
+              "login": "Giriş",
+              "captcha": "Captcha"
+            },
+            "moreInfoHTML": "<div>Login aşamasındaki yapılacak işleri ve hata alınması durumunda iletişime geçilecek bilgileri içerir</div>"
+            "logoUrl":"https://www.travelaps.com/wp-content/uploads/2019/02/logo_tr.png"
+            "ttCaptchaUrl": "https://{{ .Values.angus.loginUrl }}/api/Mission/Captcha",
+            "loginURL": "https://{{ .Values.angus.loginUrl }}/api/Mission/AngusLogIn",
+            "loginURLWithCredentials": true,
+            "loginDesign": {
+              "backGroundImage": "https://erspublic.blob.core.windows.net/test/1886766d-cf60-8510-85b9-ee2322ec5000.png",
+              "formBackGroundColor": "#00385b",
+              "isWhite": true,
+              "radius": "10px",
+              "maxWidth": "400px",
+              "loginHeaderDisable": true,
+              "loginBottom": {
+                "backGroungColor": "#00385b",
+                "color": "#fff"
+              }
             }
         }
     ]

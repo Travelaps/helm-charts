@@ -5,6 +5,7 @@ angus:
   image: ghcr.io/travelaps/angus:tt-v2
   host: KOKPIT_URL
   tlsSecretName: wildcard-app-tls
+  loginUrl: ttxml.travelportaldemo.com
   azureSettings:
     container: files
     storageUrl: NODEJS_HTTP_URL
