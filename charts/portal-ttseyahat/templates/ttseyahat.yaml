@@ -859,7 +859,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.angus.host }}
-      secretName: {{ .Values.angus.tlsSecretName | default "elektraweb-cert" }}
+      secretName: {{ .Values.angus.tlsSecretName | default "wildcard-app-tls" }}
   rules:
     - host: {{ .Values.angus.host }}
       http:
@@ -901,7 +901,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.http.host }}
-      secretName: {{ .Values.http.tlsSecretName | default "nodejs4001-cert" }}
+      secretName: {{ .Values.http.tlsSecretName | default "wildcard-app-tls" }}
   rules:
     - host: {{ .Values.http.host }}
       http:
@@ -943,7 +943,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.portal.host }}
-      secretName: {{ .Values.portal.tlsSecretName | default "nodejs4001-cert" }}
+      secretName: {{ .Values.portal.tlsSecretName | default "wildcard-app-tls" }}
   rules:
     - host: {{ .Values.portal.host }}
       http:
@@ -988,7 +988,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.http.host }}
-      secretName: {{ .Values.http.tlsSecretName | default "nodejs4001-cert" }}
+      secretName: {{ .Values.http.tlsSecretName | default "wildcard-app-tls" }}
   rules:
     - host: {{ .Values.http.host }}
       http:
