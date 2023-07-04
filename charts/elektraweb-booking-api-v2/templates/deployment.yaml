@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: {{.Values.name}}
-          image: {{.Values.image}}
+          image: {{.Values.image}}:{{.Charts.appVersion}}
           env: {{- toYaml .Values.env | nindent 12}}
           resources:
             requests:

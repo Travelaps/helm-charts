@@ -1,5 +1,5 @@
 name: elektraweb-booking-api
-image: ghcr.io/travelaps/elektraweb-booking-api-v2:latest
+image: ghcr.io/travelaps/elektraweb-booking-api-v2
 imagePullSecret: secretName
 ingress:
   class: public
