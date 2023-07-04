@@ -1,0 +1,32 @@
+name: elektraweb-booking-api
+image: ghcr.io/travelaps/elektraweb-booking-api-v2
+imagePullSecret: secretName
+ingress:
+  class: public
+  host: bookingapi.elektraweb.com
+  secretName: wildcard-elektraweb-com-cert
+  path: /
+  serverSnippet: |
+    allow all;
+env:
+  - name: ELASTIC_URL
+    value: elasticsearch
+  - name: ELASTIC_USERNAME
+    value: guest
+  - name: ELASTIC_PASSWORD
+    value: guest
+  - name: ELASTIC_TRUST_TLS
+    value: 'false'
+  - name: API_URL
+    value: 'https://4001.hoteladvisor.net/'
+  - name: API_TOKEN
+    value: ''
+  - name: CAPTCHA_SECRET
+    value: ''
+  - name: JWT_PUBLIC_KEY
+    value: ''
+  - name: JWT_PRIVATE_KEY
+    value: ''
+
+
+
