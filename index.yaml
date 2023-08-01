@@ -1014,6 +1014,15 @@ entries:
     version: 1.0.7
   elektraweb-booking-api:
   - apiVersion: v1
+    appVersion: v341
+    created: "2023-08-01T14:59:05.247758178Z"
+    digest: 91dd328662eb127d81362f9e8394ee62b34f4d9f7c88552ae555dfdb612b1654
+    name: elektraweb-booking-api
+    type: application
+    urls:
+    - https://github.com/Travelaps/helm-charts/releases/download/elektraweb-booking-api-1.0.341/elektraweb-booking-api-1.0.341.tgz
+    version: 1.0.341
+  - apiVersion: v1
     appVersion: v340
     created: "2023-08-01T12:47:05.889969677Z"
     digest: c6aac28c4425b6534cdce3c03415dbdc374732ddc41cea637235ed0521e3b729
@@ -1860,4 +1869,4 @@ entries:
     urls:
     - https://github.com/Travelaps/helm-charts/releases/download/portal-ttseyahat-1.0.0/portal-ttseyahat-1.0.0.tgz
     version: 1.0.0
-generated: "2023-08-01T12:47:05.8913794Z"
+generated: "2023-08-01T14:59:05.249488603Z"
