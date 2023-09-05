@@ -79,7 +79,7 @@ sql:
   serviceType: ClusterIP
   elektraAdminUser:
     username: elektraweb
-    password: eE!01012000
+    password: Password!01
   volumes:
     - name: mssql-data
       hostPath:
