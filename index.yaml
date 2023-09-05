@@ -164,6 +164,16 @@ entries:
   elektraweb:
   - apiVersion: v2
     appVersion: 1-452-0
+    created: "2023-09-05T14:45:22.456297473Z"
+    description: ElektraWeb Helm Chart
+    digest: af61b79333d6266237122cfc524fbffd868cd0951af6b292cb21501e94544580
+    name: elektraweb
+    type: application
+    urls:
+    - https://github.com/Travelaps/helm-charts/releases/download/elektraweb-1.4.16/elektraweb-1.4.16.tgz
+    version: 1.4.16
+  - apiVersion: v2
+    appVersion: 1-452-0
     created: "2023-09-05T13:36:12.999984041Z"
     description: ElektraWeb Helm Chart
     digest: b9a382348c6c1bd43cf3eca8ef9ba7143894d2bfe5e2854d7c3ef4525ab49cfe
@@ -2131,4 +2141,4 @@ entries:
     urls:
     - https://github.com/Travelaps/helm-charts/releases/download/portal-ttseyahat-1.0.0/portal-ttseyahat-1.0.0.tgz
     version: 1.0.0
-generated: "2023-09-05T13:36:13.001765011Z"
+generated: "2023-09-05T14:45:22.457872666Z"
