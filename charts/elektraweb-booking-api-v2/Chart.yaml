@@ -1,5 +1,5 @@
 apiVersion: v1
 name: elektraweb-booking-api
 type: application
-version: 1.0.370
-appVersion: v370
+version: 1.0.371
+appVersion: v371
