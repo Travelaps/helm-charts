@@ -30,6 +30,10 @@ spec:
               value: {{ .Values.fileUploader.env.TRUSTED_IPS | squote }}
             - name: ALLOWED_FILETYPES
               value: {{ .Values.fileUploader.env.ALLOWED_FILETYPES | squote }}
+            - name: ALTERNATE_FILE_TYPES
+              value: {{ .Values.fileUploader.env.ALTERNATE_FILE_TYPES | squote }}
+            - name: PORT
+              value: {{ .Values.fileUploader.env.PORT | squote }}
             - name: ALLOWED_TOKENS
               value: {{ .Values.fileUploader.env.ALLOWED_TOKENS | squote }}
           {{- if .Values.fileUploader.volumes }}

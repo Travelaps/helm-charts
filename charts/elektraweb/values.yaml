@@ -19,7 +19,7 @@ worker:
     - "nodejs4002"
   tlsSecretName: nodejs4001-cert
   # sslClusterIssuer: letsencrypt-staging
-  image: ghcr.io/travelaps/nodejs-worker:v529
+  image: ghcr.io/travelaps/nodejs-worker:v550
   httpimage: ghcr.io/travelaps/nodejs-http:v28-beta
   replicas: 1
   config:
@@ -104,7 +104,7 @@ sql:
 # Angus
 angus:
   install: true
-  image: ghcr.io/travelaps/angus:v705
+  image: ghcr.io/travelaps/angus:v866
   host: elektraweb
   tlsSecretName: elektraweb-cert
   # sslClusterIssuer: letsencrypt-staging
@@ -118,7 +118,7 @@ angus:
 # Pos
 pos:
   install: true
-  image: ghcr.io/travelaps/pos-ng11:v449
+  image: ghcr.io/travelaps/pos-ng11:v569
   host: elektrawebpos
   tlsSecretName: elektrawebpos-cert
   # sslClusterIssuer: letsencrypt-staging
@@ -169,7 +169,7 @@ hotel:
 # Static Data
 staticData:
   install: true
-  image: ghcr.io/travelaps/elektraweb-static-data:v10
+  image: ghcr.io/travelaps/elektraweb-static-data:v11
 # File Uploader
 fileUploader:
   install: false
@@ -179,6 +179,8 @@ fileUploader:
     TRUSTED_IPS: '["*"]'
     ALLOWED_FILETYPES: '["*"]'
     ALLOWED_TOKENS: '["TOKEN"]'
+    ALTERNATE_FILE_TYPES: '{"jpg":["jpeg"],"xml":["xlst"]}'
+    PORT: '8080'
   volumes:
     - name: files
       persistentVolumeClaim:
