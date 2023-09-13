@@ -2,10 +2,10 @@
 kind: Job
 apiVersion: batch/v1
 metadata:
-  name: sql-create-emds
+  name: sql-create-emds-archive
   annotations:
     "helm.sh/hook": post-install
-    "helm.sh/hook-weight": "-9"
+    "helm.sh/hook-weight": "-25"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   ttlSecondsAfterFinished: 86400
@@ -19,15 +19,10 @@ spec:
           image: {{ .Values.sql.creationScriptImage }}
           args:
             - /Action:Publish
-            - /SourceFile:/elektrawebdb/EMDS/EMDS.dacpac
+            - /SourceFile:/elektrawebdb/EMDS_ARCHIVE/EMDS_ARCHIVE.dacpac
             - /TargetServerName:tcp:{{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}
             - /TargetUser:{{ .Values.sql.connection.user }}
             - /TargetPassword:{{ .Values.sql.connection.password }}
-            - /TargetDatabaseName:{{ .Values.dbNames.EMDS }}
-            - /Variables:ZDB01={{ .Values.dbNames.ZDB01 }}
+            - /TargetDatabaseName:{{ .Values.dbNames.EMDS_ARCHIVE }}
             - /Variables:DDLEVENTS={{ .Values.dbNames.DDLEVENTS }}
-            - /Variables:ERSDEVELOPER={{ .Values.dbNames.ERSDEVELOPER }}
-            - /Variables:EMDS_LOGS={{ .Values.dbNames.EMDS_LOGS }}
-            - /Variables:master=master
-            - /Variables:msdb=msdb
 {{ end }}
