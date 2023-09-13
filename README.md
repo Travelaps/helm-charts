@@ -75,7 +75,10 @@
     # CertManager kurulumunun tamamlanmasını bekle
     # watch -n1 "kubectl -n cert-manager get pod"
     ```
-
+- Diğer node'ları ekle
+    ```bash
+    microk8s add-node
+    ```
 - Elektraweb Sıfır Kurulum:
     ```bash
     # Travelaps kaynağını tanımla
