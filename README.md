@@ -43,7 +43,7 @@
     ```bash 
     # microk8s add-on'ları aktive et. dns olması şart, ingress ve dashboard opsiyonel
     # dns adresi olarak üstte bulunan adresleri virgülle ayırarak yaz
-    sudo microk8s enable dns:1.1.1.1,8.8.8.8 dashboard ingress
+    sudo microk8s enable rbac dns:1.1.1.1,8.8.8.8 dashboard ingress
     
     # Oluşan kubernetes erişim config dosyasını kubectl'nin görebileceği yere dump et
     mkdir .kube
