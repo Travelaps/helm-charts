@@ -37,7 +37,8 @@
     ```
     ```bash
     # Kullanıcıyı microk8s grubuna ekle
-    sudo usermod -a -G microk8s user && \
+    sudo mkdir ~/.kube && \
+      sudo usermod -a -G microk8s user && \
       sudo chown -R user ~/.kube && \
       newgrp microk8s
     ```    
@@ -52,7 +53,6 @@
     microk8s enable rbac dns:1.1.1.1,8.8.8.8 dashboard ingress
     
     # Oluşan kubernetes erişim config dosyasını kubectl'nin görebileceği yere dump et
-    mkdir .kube
     microk8s config > ~/.kube/config
     
     # Kubernetes çalıştığını doğrula
