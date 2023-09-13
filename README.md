@@ -36,18 +36,24 @@
       sudo snap install helm --classic
     ```
     ```bash
-    # makinanın dns adreslerini bul
+    # Kullanıcıyı microk8s grubuna ekle
+    sudo usermod -a -G microk8s user && \
+      sudo chown -R user ~/.kube && \
+      newgrp microk8s
+    ```    
+    ```bash
+    # Makinanın dns adreslerini bul
     cat /etc/resolv.conf | grep nameserver | grep -v 127.0.0.53; \
       cat /run/systemd/resolve/resolv.conf | grep nameserver | grep -v 127.0.0.53
     ```
     ```bash 
     # microk8s add-on'ları aktive et. dns olması şart, ingress ve dashboard opsiyonel
     # dns adresi olarak üstte bulunan adresleri virgülle ayırarak yaz
-    sudo microk8s enable rbac dns:1.1.1.1,8.8.8.8 dashboard ingress
+    microk8s enable rbac dns:1.1.1.1,8.8.8.8 dashboard ingress
     
     # Oluşan kubernetes erişim config dosyasını kubectl'nin görebileceği yere dump et
     mkdir .kube
-    sudo microk8s config > ~/.kube/config
+    microk8s config > ~/.kube/config
     
     # Kubernetes çalıştığını doğrula
     kubectl cluster-info
