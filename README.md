@@ -54,6 +54,7 @@
     
     # Oluşan kubernetes erişim config dosyasını kubectl'nin görebileceği yere dump et
     microk8s config > ~/.kube/config
+    chmod 600 ~/.kube/config
     
     # Kubernetes çalıştığını doğrula
     kubectl cluster-info
