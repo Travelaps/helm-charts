@@ -41,7 +41,8 @@ data:
             {{ end }}
             "adminTwitterFeed": null,
             "useFirebaseMessaging": true,
-            "showOflineModeButton": "return angus.api.getOfflineCacheData('offlineCacheEnabled')"
+            "showOflineModeButton": "return angus.api.getOfflineCacheData('offlineCacheEnabled')",
+            "maxItemsPerPage": {{ .Values.angus.maxItemsPerPage | default "10000" }}
         }
     ]
 {{ end }}

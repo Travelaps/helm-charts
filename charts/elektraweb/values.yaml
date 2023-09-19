@@ -112,6 +112,7 @@ angus:
   displayName: ElektraWeb
   shortName: ewebcloud
   logo: elektraweb.png
+  maxItemsPerPage: 50000
   # azureSettings:
   #   container: files
   #   storageUrl: nodejs4001
