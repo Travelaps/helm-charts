@@ -4,6 +4,7 @@ imagePullSecret: secretName
 ingress:
   class: public
   host: bookingapi.elektraweb.com
+  # sslClusterIssuer: letsencrypt-staging
   secretName: wildcard-elektraweb-com-cert
   path: /
   serverSnippet: |

@@ -4,6 +4,12 @@ metadata:
   name: {{.Values.name}}
   annotations:
     kubernetes.io/ingress.class: {{.Values.ingress.class}}
+    {{- if .Values.ingress.sslIssuer }}
+    cert-manager.io/issuer: {{ .Values.ingress.sslIssuer }}
+    {{- end }}
+    {{- if .Values.ingress.sslClusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.sslClusterIssuer }}
+    {{- end }}
     nginx.ingress.kubernetes.io/server-snippet: {{.Values.ingress.serverSnippet | quote }}
 spec:
   tls:
