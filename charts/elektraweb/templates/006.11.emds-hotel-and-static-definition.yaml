@@ -31,7 +31,12 @@ spec:
             - |
 
               SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL ON
-              INSERT INTO {{ .Values.dbNames.EMDS }}..HOTEL(ID,[NAME])
+              INSERT INTO {{ .Values.dbNames.EMDS }}.dbo.HOTEL(ID,[NAME])
+              VALUES({{ .Values.hotel.hotelid }},'{{ .Values.hotel.hotelname }}')
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL OFF
+
+              SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL ON
+              INSERT INTO {{ .Values.dbNames.EMDS }}.dbo.HOTEL(ID,[NAME])
               VALUES(0,'SYSTEM HOTEL')
               SET IDENTITY_INSERT {{ .Values.dbNames.EMDS }}.dbo.HOTEL OFF
 
