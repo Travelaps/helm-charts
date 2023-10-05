@@ -345,7 +345,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 200Gi
+      storage: 50Gi
   selector:
     matchLabels:
       pv: local
