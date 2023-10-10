@@ -19,8 +19,8 @@ metadata:
   name: wildcardapptls
 type: kubernetes.io/tls
 data:
-  server.crt: {{.Values.wildcardSSL.crt}}
-  server.key: {{.Values.wildcardSSL.key}}
+  tls.crt: {{.Values.wildcardSSL.crt}}
+  tls.key: {{.Values.wildcardSSL.key}}
 
 ---
 
