@@ -338,7 +338,7 @@ spec:
   selector:
     matchLabels:
       pv: local
-  storageClassName: file-uploads
+  storageClassName: microk8s-hostpath
 
 ---
 
