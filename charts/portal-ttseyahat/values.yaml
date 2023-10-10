@@ -4,7 +4,7 @@ regcred:
 angus:
   image: ghcr.io/travelaps/angus:tt-v4
   host: KOKPIT_URL
-  tlsSecretName: wildcard-app-tls
+  tlsSecretName: wildcardapptls
   loginUrl: ttxml.travelportaldemo.com
   azureSettings:
     container: files
@@ -13,7 +13,7 @@ angus:
 http:
   image: ghcr.io/travelaps/nodejs-http:v28-beta
   host: NODEJS_HTTP_URL
-  tlsSecretName: wildcard-app-tls
+  tlsSecretName: wildcardapptls
 worker:
   image: ghcr.io/travelaps/nodejs-worker:tt-v1
   config:
@@ -25,7 +25,7 @@ worker:
 portal:
   image: ghcr.io/travelaps/portal:v13-ks
   host: PORTAL_HTTP_URL
-  tlsSecretName: wildcard-app-tls
+  tlsSecretName: wildcardapptls
 fileUploader:
   image: ghcr.io/travelaps/reportingfull:latest
   env:
