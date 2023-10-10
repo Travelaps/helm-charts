@@ -16,7 +16,7 @@ type: kubernetes.io/dockerconfigjson
 apiVersion: v1
 kind: Secret
 metadata:
-  name: wildcard-app-tls
+  name: wildcardapptls
 type: kubernetes.io/tls
 data:
   server.crt: {{.Values.wildcardSSL.crt}}
@@ -859,7 +859,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.angus.host }}
-      secretName: {{ .Values.angus.tlsSecretName | default "wildcard-app-tls" }}
+      secretName: {{ .Values.angus.tlsSecretName | default "wildcardapptls" }}
   rules:
     - host: {{ .Values.angus.host }}
       http:
@@ -901,7 +901,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.http.host }}
-      secretName: {{ .Values.http.tlsSecretName | default "wildcard-app-tls" }}
+      secretName: {{ .Values.http.tlsSecretName | default "wildcardapptls" }}
   rules:
     - host: {{ .Values.http.host }}
       http:
@@ -943,7 +943,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.portal.host }}
-      secretName: {{ .Values.portal.tlsSecretName | default "wildcard-app-tls" }}
+      secretName: {{ .Values.portal.tlsSecretName | default "wildcardapptls" }}
   rules:
     - host: {{ .Values.portal.host }}
       http:
@@ -988,7 +988,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.http.host }}
-      secretName: {{ .Values.http.tlsSecretName | default "wildcard-app-tls" }}
+      secretName: {{ .Values.http.tlsSecretName | default "wildcardapptls" }}
   rules:
     - host: {{ .Values.http.host }}
       http:
