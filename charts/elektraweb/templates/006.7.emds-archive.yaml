@@ -25,4 +25,5 @@ spec:
             - /TargetPassword:{{ .Values.sql.connection.password }}
             - /TargetDatabaseName:{{ .Values.dbNames.EMDS_ARCHIVE }}
             - /Variables:DDLEVENTS={{ .Values.dbNames.DDLEVENTS }}
+            - /Variables:EMDS={{ .Values.dbNames.EMDS }}
 {{ end }}
