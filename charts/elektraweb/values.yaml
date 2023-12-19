@@ -171,7 +171,7 @@ hotel:
 # Static Data
 staticData:
   install: true
-  image: ghcr.io/travelaps/elektraweb-static-data:v11
+  image: ghcr.io/travelaps/elektraweb-static-data:v14
 # File Uploader
 fileUploader:
   install: false

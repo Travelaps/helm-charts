@@ -1,3 +1,4 @@
+{{ if .Values.regcred.enabled }}
 {{- define "imagePullSecret" }}
 {{- with .Values.regcred }}
 {{- printf "{\"auths\":{\"ghcr.io\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"a@a.com\",\"auth\":\"%s\"}}}" .user .key (printf "%s:%s" .user .key | b64enc) | b64enc }}
@@ -10,3 +11,4 @@ metadata:
 data:
   .dockerconfigjson: {{ template "imagePullSecret" . }}
 type: kubernetes.io/dockerconfigjson
+{{ end }}
