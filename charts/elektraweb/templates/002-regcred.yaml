@@ -1,9 +1,9 @@
-{{ if .Values.regcred.enabled }}
 {{- define "imagePullSecret" }}
 {{- with .Values.regcred }}
 {{- printf "{\"auths\":{\"ghcr.io\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"a@a.com\",\"auth\":\"%s\"}}}" .user .key (printf "%s:%s" .user .key | b64enc) | b64enc }}
 {{- end }}
 {{- end }}
+{{ if .Values.regcred.enabled }}
 kind: Secret
 apiVersion: v1
 metadata:
