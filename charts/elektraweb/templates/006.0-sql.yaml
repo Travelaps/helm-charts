@@ -24,7 +24,7 @@ spec:
       {{ end }}
       containers:
         - name: sql
-          image: ghcr.io/travelaps/mssql2019fts:v2
+          image: ghcr.io/travelaps/mssql-fts:2022-v3
           env:
             - name: ACCEPT_EULA
               value: 'Y'
