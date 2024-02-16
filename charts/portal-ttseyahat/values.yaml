@@ -2,7 +2,7 @@ regcred:
   user: talyabilisim
   key: GITHUB_TOKEN
 angus:
-  image: ghcr.io/travelaps/angus:tt-v4
+  image: ghcr.io/travelaps/angus:tt-v14
   host: KOKPIT_URL
   tlsSecretName: wildcardapptls
   loginUrl: ttxml.travelportaldemo.com
@@ -23,7 +23,7 @@ worker:
       server: DB_ADDR
       trustServerCertificate: true
 portal:
-  image: ghcr.io/travelaps/portal:v13-ks
+  image: ghcr.io/travelaps/portal:v51-ks
   host: PORTAL_HTTP_URL
   tlsSecretName: wildcardapptls
 fileUploader:
