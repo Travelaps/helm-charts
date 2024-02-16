@@ -338,7 +338,7 @@ spec:
   selector:
     matchLabels:
       pv: local
-  storageClassName: microk8s-hostpath
+  storageClassName: longhorn
 
 ---
 
