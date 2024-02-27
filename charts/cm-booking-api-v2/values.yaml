@@ -1,3 +1,4 @@
+namespace: elektraweb-booking-api
 name: cm-booking-api
 image: ghcr.io/travelaps/elektraweb-booking-api-v2
 imagePullSecret: secretName

@@ -1,8 +1,8 @@
 kind: ServiceMonitor
 apiVersion: monitoring.coreos.com/v1
 metadata:
+  namespace: {{.Values.namespace}}
   name: {{.Values.name}}
-  namespace: {{.Values.name}}
   labels:
     release: prometheus-stack
 spec:
@@ -11,7 +11,7 @@ spec:
       port: metrics
   namespaceSelector:
     matchNames:
-      - {{.Values.name}}
+      - {{.Values.namespace}}
   selector:
     matchLabels:
       k8s-app: {{.Values.name}}
