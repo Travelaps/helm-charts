@@ -161,6 +161,16 @@ entries:
     urls:
     - https://github.com/Travelaps/helm-charts/releases/download/Personel-1.0.1/Personel-1.0.1.tgz
     version: 1.0.1
+  cm-booking-api:
+  - apiVersion: v1
+    appVersion: v527
+    created: "2024-02-27T13:01:32.037907694Z"
+    digest: dbb66c9cd372ebf99487ba1d5751a454879dd2cf9a6a1009c5422e0d7137d06e
+    name: cm-booking-api
+    type: application
+    urls:
+    - https://github.com/Travelaps/helm-charts/releases/download/cm-booking-api-1.0.527/cm-booking-api-1.0.527.tgz
+    version: 1.0.527
   elektraweb:
   - apiVersion: v2
     appVersion: 1-452-0
@@ -3701,4 +3711,4 @@ entries:
     urls:
     - https://github.com/Travelaps/helm-charts/releases/download/portal-ttseyahat-1.0.0/portal-ttseyahat-1.0.0.tgz
     version: 1.0.0
-generated: "2024-02-27T09:05:49.490703506Z"
+generated: "2024-02-27T13:01:32.041554415Z"
