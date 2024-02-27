@@ -4,16 +4,16 @@ metadata:
   namespace: {{.Values.namespace}}
   name: {{.Values.name}}
   labels:
-    k8s-app: {{.Values.name}}
+    k8s-app: {{.Values.namespace}}
 spec:
   selector:
     matchLabels:
-      k8s-app: {{.Values.name}}
+      k8s-app: {{.Values.namespace}}
   template:
     metadata:
       name: {{.Values.name}}
       labels:
-        k8s-app: {{.Values.name}}
+        k8s-app: {{.Values.namespace}}
     spec:
       containers:
         - name: {{.Values.name}}
