@@ -1,0 +1,43 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{.Values.name}}
+  labels:
+    k8s-app: {{.Values.name}}
+spec:
+  selector:
+    matchLabels:
+      k8s-app: {{.Values.name}}
+  template:
+    metadata:
+      name: {{.Values.name}}
+      labels:
+        k8s-app: {{.Values.name}}
+    spec:
+      containers:
+        - name: {{.Values.name}}
+          image: {{.Values.image}}:{{.Chart.AppVersion}}
+          env: {{- toYaml .Values.env | nindent 12}}
+          resources:
+            requests:
+              cpu: '500m'
+              memory: '500Mi'
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+          securityContext:
+            privileged: false
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+      imagePullSecrets:
+        - name: {{.Values.imagePullSecret}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
