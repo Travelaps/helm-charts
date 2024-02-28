@@ -2,7 +2,6 @@ kind: ServiceMonitor
 apiVersion: monitoring.coreos.com/v1
 metadata:
   name: {{.Values.name}}
-  namespace: {{.Values.name}}
   labels:
     release: prometheus-stack
 spec:
