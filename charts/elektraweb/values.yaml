@@ -135,7 +135,7 @@ reporting:
   sqlPassword: aA!01012000
 # Online Rezervasyon
 onlineBooking:
-  install: true
+  install: false
   image: ghcr.io/travelaps/online-booking:v3
   host: onlinebooking
   tlsSecretName: onlinebooking-cert
