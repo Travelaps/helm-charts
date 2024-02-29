@@ -68,8 +68,8 @@ metadata:
     {{- if .Values.angus.sslClusterIssuer }}
     cert-manager.io/cluster-issuer: {{ .Values.angus.sslClusterIssuer }}
     {{- end }}
-    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
 spec:
+  ingressClassName: {{ .Values.ingressNginx.class }}
   tls:
     - hosts:
         - {{ .Values.angus.host }}

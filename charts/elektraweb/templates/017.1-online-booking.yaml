@@ -89,8 +89,8 @@ metadata:
     {{- if .Values.onlineBooking.sslClusterIssuer }}
     cert-manager.io/cluster-issuer: {{ .Values.onlineBooking.sslClusterIssuer }}
     {{- end }}
-    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
 spec:
+  ingressClassName: {{ .Values.ingressNginx.class }}
   tls:
     - hosts:
         - {{ .Values.onlineBooking.host }}
