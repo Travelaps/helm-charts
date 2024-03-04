@@ -27,7 +27,7 @@ portal:
   host: PORTAL_HTTP_URL
   tlsSecretName: wildcardapptls
 fileUploader:
-  image: ghcr.io/travelaps/reportingfull:latest
+  image: ghcr.io/travelaps/file-uploader:v3
   env:
     ALLOWED_TOKENS: '["TOKEN"]'
 ingressNginx:
