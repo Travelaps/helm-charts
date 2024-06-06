@@ -28,6 +28,16 @@ env:
     value: ''
   - name: JWT_PRIVATE_KEY
     value: ''
+  - name: USE_SQL
+    value: 'false'
+  - name: MSSQL_USERNAME
+    value: ''
+  - name: MSSQL_PASSWORD
+    value: ''
+  - name: MSSQL_SERVER
+    value: ''
+  - name: MSSQL_DATABASE
+    value: ''
 
 
 
