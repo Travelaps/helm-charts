@@ -17,6 +17,12 @@ env:
     value: guest
   - name: ELASTIC_PASSWORD
     value: guest
+  - name: LOG_ELASTIC_URL
+    value: elasticsearch
+  - name: LOG_ELASTIC_USERNAME
+    value: guest
+  - name: LOG_ELASTIC_PASSWORD
+    value: guest
   - name: ELASTIC_TRUST_TLS
     value: 'false'
   - name: API_URL
