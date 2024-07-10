@@ -11,6 +11,8 @@ ingress:
   serverSnippet: |
     allow all;
 env:
+  - name: GITHUB_IMAGE_VERSION
+    value: ''
   - name: ELASTIC_URL
     value: elasticsearch
   - name: ELASTIC_USERNAME
