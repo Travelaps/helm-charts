@@ -75,7 +75,6 @@ apiVersion: networking.k8s.io/v1
 metadata:
   name: file-uploader-ingress
   annotations:
-    kubernetes.io/ingress.class: public
     nginx.ingress.kubernetes.io/enable-cors: 'true'
     nginx.ingress.kubernetes.io/cors-allow-methods: GET, POST, OPTIONS, PUT
     nginx.ingress.kubernetes.io/cors-allow-origin: '*'
@@ -109,6 +108,7 @@ metadata:
       gzip_buffers 16 128k;
       gzip_types *;
 spec:
+  ingressClassName: {{ .Values.ingressNginx.class }}
   tls:
     - hosts:
         - {{ .Values.worker.host }}
