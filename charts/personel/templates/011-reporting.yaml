@@ -56,15 +56,6 @@ metadata:
     cert-manager.io/cluster-issuer: {{ .Values.reporting.sslClusterIssuer }}
     {{- end }}
     nginx.ingress.kubernetes.io/affinity: cookie
-    nginx.ingress.kubernetes.io/server-snippet: |
-      gunzip on;
-      gzip on;
-      gzip_vary on;
-      gzip_proxied any;
-      gzip_comp_level 5;
-      gzip_min_length 512;
-      gzip_buffers 16 128k;
-      gzip_types *;
 spec:
   ingressClassName: {{ .Values.ingressNginx.class }}
   tls:

@@ -59,15 +59,6 @@ metadata:
     cert-manager.io/cluster-issuer: {{ .Values.worker.sslClusterIssuer }}
     {{- end }}
     nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
-    nginx.ingress.kubernetes.io/server-snippet: |
-      gunzip on;
-      gzip on;
-      gzip_vary on;
-      gzip_proxied any;
-      gzip_comp_level 5;
-      gzip_min_length 512;
-      gzip_buffers 16 128k;
-      gzip_types *;
     nginx.ingress.kubernetes.io/proxy-body-size: '30m'
 spec:
   ingressClassName: {{ .Values.ingressNginx.class }}

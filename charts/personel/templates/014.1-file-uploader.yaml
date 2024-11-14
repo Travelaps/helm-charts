@@ -98,15 +98,6 @@ metadata:
     nginx.ingress.kubernetes.io/cors-max-age: '86400'
     nginx.ingress.kubernetes.io/proxy-body-size: 30m
     nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
-    nginx.ingress.kubernetes.io/server-snippet: |
-      gunzip on;
-      gzip on;
-      gzip_vary on;
-      gzip_proxied any;
-      gzip_comp_level 5;
-      gzip_min_length 512;
-      gzip_buffers 16 128k;
-      gzip_types *;
 spec:
   ingressClassName: {{ .Values.ingressNginx.class }}
   tls:
