@@ -24,10 +24,23 @@ Bu komut, default namespace'deki podları listeleyecektir.
 
 ### Pod Listesi Çıktısı Örneği:
 ```
-NAME                     READY   STATUS    RESTARTS   AGE
-nginx-6d9f7d4d5-abc12   1/1     Running   0          2h
-redis-74d8c69b7f-xkj34  1/1     Running   1          5h
-mysql-84bd9c6c7-vqkw1   1/1     Error     3          10m
+NAME                                        READY   STATUS    RESTARTS        AGE
+pos-ng11-5f6fd7db8d-58w6l                   1/1     Running   8 (4h41m ago)   528d
+einvoice-integrator-875586df-cgcd6          1/1     Running   1 (4h41m ago)   15d
+file-uploader-dc7c7cbc7-xp4zp               1/1     Running   8 (4h41m ago)   528d
+sql-7fc77f8cd4-z4lwr                        1/1     Running   1 (4h41m ago)   7d6h
+nodejs-http-74b894d659-dlnwt                1/1     Running   1 (4h41m ago)   19d
+nodejs-http-74b894d659-vckx2                1/1     Running   1 (4h41m ago)   7h6m
+action-script                               1/1     Running   7 (4h41m ago)   525d
+nodejs-ingenico-74c84d69fc-5wzst            1/1     Running   1 (4h41m ago)   19d
+rabbit-5bb478698b-zcss4                     1/1     Running   0               4h37m
+reportingcore-7984754499-69jn6              1/1     Running   1 (4h41m ago)   19d
+redis-5c49b5d47f-w98st                      1/1     Running   0               4h36m
+nodejs-worker-elektraweb-5f8866f568-ghpwf   1/1     Running   0               4h32m
+nodejs-worker-elektraweb-5f8866f568-gkzdp   1/1     Running   0               4h32m
+angus-7fff4db88-p42k4                       1/1     Running   6 (4h41m ago)   293d
+nodejs-worker-elektraweb-5f8866f568-mztqp   1/1     Running   0               4h32m
+nodejs-worker-elektraweb-5f8866f568-9lbw8   1/1     Running   0               4h32m
 ```
 
 ## 3. Podları Toplu Yeniden Başlatma
@@ -45,11 +58,10 @@ kubectl rollout restart deployment nodejs-worker
 
 | Durum      | Anlamı                                      |
 |------------|----------------------------------------------|
-| Pending    | Pod, bir node'da çalıştırılmaya hazır ancak henüz başlamamış. |
+| Pending    | Pod, bir node'da çalıştırılmaya hazır ancak henüz başlamamış, bir süre sonra running durumuna geçmesi beklenir. |
 | Running    | Pod, bir node'da başlamış ve en az bir container çalışıyor. |
 | ContainerCreating | Pod'un container'ları oluşturuluyor. Bu süreç, image pull, volume mount gibi adımları içerir. |
-| Succeeded  | Pod, görevi başarıyla tamamladı ve sona erdi.       |
-| Failed     | Pod, görevini tamamlayamadan sona erdi.        |
+| Failed     | Pod, çalışmayı durdurdu.        |
 | CrashLoopBackOff | Pod, tekrar tekrar başlamaya çalışıyor ancak başarısız. |
 
 ---
