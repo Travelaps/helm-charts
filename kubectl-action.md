@@ -25,17 +25,12 @@ mysql-84bd9c6c7-vqkw1   1/1     Error     3          10m
 Tüm deployment'ları toplu olarak yeniden başlatmak için aşağıdaki komut kullanılır:
 
 ```bash
-kubectl rollout restart deployment --all
+kubectl rollout restart deployment -n default
 ```
 Belirli bir deployment için:
 ```bash
-kubectl rollout restart deployment nginx
+kubectl rollout restart deployment nodejs-worker
 ```
-Ya da belirli bir namespace için tüm podlar:
-```bash
-kubectl delete pods --all -n default
-```
-Bu komut, default namespace'deki tüm podları silerek yeniden oluşmasını sağlar.
 
 ## 3. Pod Durumlarının Anlamları
 
