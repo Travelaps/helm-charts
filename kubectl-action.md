@@ -2,7 +2,16 @@
 
 Bu dökümanda Ubuntu kümesinde podları listeleme, toplu olarak yeniden başlatma ve pod durumlarının anlamları üzerine temel bilgiler verilecektir. 
 
-## 1. Podları Listeleme
+## 1. Microk8s komutları
+ElektraWeb uygulaması microk8s içerisinde çalışmaktadır, öncelikle microk8s uygulamasının çalışma durumu kontrol edilmelidir:
+```bash
+sudo microk8s status
+```
+Kontrol sonrası "microk8s not running" uyarısı alınıyorsa, aşağıdaki komut çalıştırılarak microk8s yeniden başlatılır:
+```bash
+sudo microk8s start
+```
+## 2. Microk8s içerisinde ElektraWeb Podlarını Listeleme
 Kubernetes kümesindeki podları listelemek için aşağıdaki komut kullanılır:
 ```bash
 kubectl get pods
@@ -21,7 +30,7 @@ redis-74d8c69b7f-xkj34  1/1     Running   1          5h
 mysql-84bd9c6c7-vqkw1   1/1     Error     3          10m
 ```
 
-## 2. Podları Toplu Yeniden Başlatma
+## 3. Podları Toplu Yeniden Başlatma
 Tüm deployment'ları toplu olarak yeniden başlatmak için aşağıdaki komut kullanılır:
 
 ```bash
@@ -32,7 +41,7 @@ Belirli bir deployment için:
 kubectl rollout restart deployment nodejs-worker
 ```
 
-## 3. Pod Durumlarının Anlamları
+## 4. Pod Durumlarının Anlamları
 
 | Durum      | Anlamı                                      |
 |------------|----------------------------------------------|
