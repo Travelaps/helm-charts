@@ -1,4 +1,4 @@
-# Ubuntu Kubernetes Pod Yönetimi Dökümanı
+# Ubuntu Kubernetes Yönetimi Dökümanı
 
 Bu dökümanda Ubuntu kümesinde podları listeleme, toplu olarak yeniden başlatma ve pod durumlarının anlamları üzerine temel bilgiler verilecektir. 
 
