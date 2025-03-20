@@ -24,7 +24,7 @@ spec:
       {{ end }}
       containers:
         - name: sql
-          image: ghcr.io/travelaps/mssql-fts:2022-v3
+          image: ghcr.io/travelaps/mssql-fts:2022-v5
           env:
             - name: ACCEPT_EULA
               value: 'Y'
@@ -46,7 +46,7 @@ spec:
         - name: regcred
       hostname: mssqlinst
       securityContext:
-        fsGroup: 999
+        fsGroup: 10001
 ---
 kind: Service
 apiVersion: v1
