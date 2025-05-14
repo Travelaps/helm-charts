@@ -31,4 +31,6 @@ spec:
             - /Variables:EMDS_ARCHIVE={{ .Values.dbNames.EMDS_ARCHIVE }}
             - /Variables:master=master
             - /Variables:msdb=msdb
+            - /TargetTrustServerCertificate:True
+            - /SourceTrustServerCertificate:True
 {{ end }}

@@ -26,4 +26,6 @@ spec:
             - /TargetDatabaseName:{{ .Values.dbNames.EMDS_ARCHIVE }}
             - /Variables:DDLEVENTS={{ .Values.dbNames.DDLEVENTS }}
             - /Variables:EMDS={{ .Values.dbNames.EMDS }}
+            - /TargetTrustServerCertificate:True
+            - /SourceTrustServerCertificate:True
 {{ end }}

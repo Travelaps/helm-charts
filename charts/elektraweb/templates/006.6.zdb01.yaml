@@ -26,4 +26,6 @@ spec:
             - /TargetDatabaseName:{{ .Values.dbNames.ZDB01 }}
             - /Variables:EMDS={{ .Values.dbNames.EMDS }}
             - /Variables:ERSDEVELOPER={{ .Values.dbNames.ERSDEVELOPER }}
+            - /TargetTrustServerCertificate:True
+            - /SourceTrustServerCertificate:True
 {{ end }}

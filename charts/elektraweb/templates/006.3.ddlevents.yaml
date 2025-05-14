@@ -24,4 +24,6 @@ spec:
             - /TargetUser:{{ .Values.sql.connection.user }}
             - /TargetPassword:{{ .Values.sql.connection.password }}
             - /TargetDatabaseName:{{ .Values.dbNames.DDLEVENTS }}
+            - /TargetTrustServerCertificate:True
+            - /SourceTrustServerCertificate:True
 {{ end }}
