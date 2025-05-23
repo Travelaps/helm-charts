@@ -29,6 +29,7 @@ spec:
             - /Variables:ERSDEVELOPER={{ .Values.dbNames.ERSDEVELOPER }}
             - /Variables:EMDS_LOGS={{ .Values.dbNames.EMDS_LOGS }}
             - /Variables:EMDS_ARCHIVE={{ .Values.dbNames.EMDS_ARCHIVE }}
+            - /Variables:LOGSERVER=LOGSERVER
             - /Variables:master=master
             - /Variables:msdb=msdb
             - /TargetTrustServerCertificate:True
