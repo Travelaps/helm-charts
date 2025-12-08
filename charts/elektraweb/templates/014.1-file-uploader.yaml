@@ -22,7 +22,7 @@ spec:
       {{- end }}
       containers:
         - name: file-uploader
-          image: {{ .Values.fileUploader.image }}
+          image: {{ if .Values.proxy.enabled }}{{ .Values.proxy.url }}/{{ end }}{{ .Values.fileUploader.image }}
           env:
             - name: TRUSTED_ORIGINS
               value: {{ .Values.fileUploader.env.TRUSTED_ORIGINS | squote }}

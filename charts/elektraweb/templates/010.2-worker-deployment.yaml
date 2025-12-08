@@ -28,7 +28,7 @@ spec:
         - name: regcred
       containers:
         - name: nodejs-worker-elektraweb
-          image: {{ .Values.worker.image }}
+          image: {{ if .Values.proxy.enabled }}{{ .Values.proxy.url }}/{{ end }}{{ .Values.worker.image }}
           args:
             - '-i'
             - '1'

@@ -16,7 +16,7 @@ spec:
         - name: regcred
       containers:
         - name: initial-creator
-          image: {{ .Values.sql.creationScriptImage }}
+          image: {{ if .Values.proxy.enabled }}{{ .Values.proxy.url }}/{{ end }}{{ .Values.sql.creationScriptImage }}
           args:
             - /Action:Publish
             - /SourceFile:/elektrawebdb/ERSDEVELOPER/ERSDEVELOPER.dacpac

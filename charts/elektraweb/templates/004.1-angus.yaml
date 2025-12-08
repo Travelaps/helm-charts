@@ -24,7 +24,7 @@ spec:
               name: angus-endpoints
       containers:
         - name: angus
-          image: {{ .Values.angus.image }}
+          image: {{ if .Values.proxy.enabled }}{{ .Values.proxy.url }}/{{ end }}{{ .Values.angus.image }}
           volumeMounts:
             - name: endpoints
               mountPath: /usr/share/nginx/html/app/assets/endpoints-client.json

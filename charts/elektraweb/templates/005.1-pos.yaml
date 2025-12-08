@@ -25,7 +25,7 @@ spec:
             defaultMode: 420
       containers:
         - name: pos-ng11
-          image: {{ .Values.pos.image }}
+          image: {{ if .Values.proxy.enabled }}{{ .Values.proxy.url }}/{{ end }}{{ .Values.pos.image }}
           volumeMounts:
             - name: endpoints
               mountPath: /usr/share/nginx/html/assets/endpoints-pos-client.json

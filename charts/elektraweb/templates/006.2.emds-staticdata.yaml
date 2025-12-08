@@ -16,7 +16,7 @@ spec:
         - name: regcred
       containers:
         - name: initial-creator
-          image: {{ .Values.staticData.image }}
+          image: {{ if .Values.proxy.enabled }}{{ .Values.proxy.url }}/{{ end }}{{ .Values.staticData.image }}
           env:
             - name: SQLADDRESS
               value: "{{ .Values.sql.connection.server }},{{ .Values.sql.connection.port }}"
