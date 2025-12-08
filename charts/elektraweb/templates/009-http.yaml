@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: nodejs-http
-          image: {{ .Values.worker.httpimage | default "ghcr.io/travelaps/nodejs-http:latest" }}
+          image: {{ if .Values.proxy.enabled }}{{ .Values.proxy.url }}/{{ end }}{{ .Values.worker.httpimage | default "ghcr.io/travelaps/nodejs-http:latest" }}
           env:
             - name: PORT
               value: '8080'

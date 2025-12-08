@@ -19,7 +19,7 @@ spec:
         - name: regcred
       containers:
         - name: reportingcore
-          image: ghcr.io/travelaps/reportingfull:latest
+          image: {{ if .Values.proxy.enabled }}{{ .Values.proxy.url }}/{{ end }}ghcr.io/travelaps/reportingfull:latest
           env:
             - name: DS_server
               value: {{ .Values.reporting.sqlServer }}

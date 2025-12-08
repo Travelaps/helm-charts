@@ -25,7 +25,7 @@ spec:
             defaultMode: 420
       containers:
         - name: online-booking
-          image: {{ .Values.onlineBooking.image }}
+          image: {{ if .Values.proxy.enabled }}{{ .Values.proxy.url }}/{{ end }}{{ .Values.onlineBooking.image }}
           resources: {}
           volumeMounts:
             - name: endpoints

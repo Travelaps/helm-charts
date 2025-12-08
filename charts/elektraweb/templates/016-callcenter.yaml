@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: call-center-integration
-          image: {{ .Values.callcenterintegration.image }}
+          image: {{ if .Values.proxy.enabled }}{{ .Values.proxy.url }}/{{ end }}{{ .Values.callcenterintegration.image }}
           env:
             - name: APIURL
               value: https://{{ .Values.worker.host }}/

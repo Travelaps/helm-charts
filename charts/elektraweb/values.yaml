@@ -1,3 +1,7 @@
+# Proxy: Uygulama paketlerinin proxy üzerinden geçirilmesi gerektiği durumlarda kullanılan ayarlar
+proxy:
+  enabled: false
+  url: proxy:30000
 # Programlarımıza erişim için gerekli GitHub erişim anahtarı
 regcred:
   enabled: true
