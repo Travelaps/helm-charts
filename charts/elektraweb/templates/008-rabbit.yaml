@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: rabbit
-          image: 'rabbitmq:3-management'
+          image: {{ if .Values.proxy.enabled }}{{ .Values.proxy.url }}/{{ end }}'rabbitmq:3-management'
 ---
 kind: Service
 apiVersion: v1

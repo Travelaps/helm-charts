@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: redis
-          image: redis
+          image: {{ if .Values.proxy.enabled }}{{ .Values.proxy.url }}/{{ end }}redis
 ---
 kind: Service
 apiVersion: v1
