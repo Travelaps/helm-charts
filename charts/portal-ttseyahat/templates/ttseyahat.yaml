@@ -843,8 +843,8 @@ metadata:
     {{- if .Values.angus.sslClusterIssuer }}
     cert-manager.io/cluster-issuer: {{ .Values.angus.sslClusterIssuer }}
     {{- end }}
-    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
 spec:
+  ingressClassName: {{ .Values.ingressNginx.class }}
   tls:
     - hosts:
         - {{ .Values.angus.host }}
@@ -874,7 +874,6 @@ metadata:
     {{- if .Values.http.sslClusterIssuer }}
     cert-manager.io/cluster-issuer: {{ .Values.http.sslClusterIssuer }}
     {{- end }}
-    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
     nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
     nginx.ingress.kubernetes.io/server-snippet: |
       gunzip on;
@@ -887,6 +886,7 @@ metadata:
       gzip_types *;
     nginx.ingress.kubernetes.io/proxy-body-size: '30m'
 spec:
+  ingressClassName: {{ .Values.ingressNginx.class }}
   tls:
     - hosts:
         - {{ .Values.http.host }}
@@ -916,7 +916,6 @@ metadata:
     {{- if .Values.portal.sslClusterIssuer }}
     cert-manager.io/cluster-issuer: {{ .Values.portal.sslClusterIssuer }}
     {{- end }}
-    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
     nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
     nginx.ingress.kubernetes.io/server-snippet: |
       gunzip on;
@@ -929,6 +928,7 @@ metadata:
       gzip_types *;
     nginx.ingress.kubernetes.io/proxy-body-size: '30m'
 spec:
+  ingressClassName: {{ .Values.ingressNginx.class }}
   tls:
     - hosts:
         - {{ .Values.portal.host }}
@@ -953,7 +953,6 @@ metadata:
   name: file-uploader-ingress
   namespace: default
   annotations:
-    kubernetes.io/ingress.class: public
     nginx.ingress.kubernetes.io/cors-allow-credentials: 'true'
     nginx.ingress.kubernetes.io/cors-allow-headers: >-
       DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,x-ms-blob-content-md5,x-ms-blob-content-type,x-ms-blob-type,x-ms-client-request-id,x-ms-date,x-ms-version
@@ -974,6 +973,7 @@ metadata:
       gzip_types *;
     nginx.ingress.kubernetes.io/ssl-redirect: 'false'
 spec:
+  ingressClassName: {{ .Values.ingressNginx.class }}
   tls:
     - hosts:
         - {{ .Values.http.host }}
