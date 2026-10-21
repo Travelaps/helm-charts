@@ -56,33 +56,4 @@ spec:
     k8s-app: angus
   type: ClusterIP
   sessionAffinity: None
----
-kind: Ingress
-apiVersion: networking.k8s.io/v1
-metadata:
-  name: angus-ingress
-  annotations:
-    {{- if .Values.angus.sslIssuer }}
-    cert-manager.io/issuer: {{ .Values.angus.sslIssuer }}
-    {{- end }}
-    {{- if .Values.angus.sslClusterIssuer }}
-    cert-manager.io/cluster-issuer: {{ .Values.angus.sslClusterIssuer }}
-    {{- end }}
-spec:
-  ingressClassName: {{ .Values.ingressNginx.class }}
-  tls:
-    - hosts:
-        - {{ .Values.angus.host }}
-      secretName: {{ .Values.angus.tlsSecretName | default "elektraweb-cert" }}
-  rules:
-    - host: {{ .Values.angus.host }}
-      http:
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: angus
-                port:
-                  number: 80
 {{ end }}

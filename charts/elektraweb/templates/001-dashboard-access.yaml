@@ -1,26 +1,35 @@
-{{ if .Values.dashboardAccess.ingress.enabled }}
-kind: Ingress
-apiVersion: networking.k8s.io/v1
+{{ if and .Values.istio.enabled .Values.dashboardAccess.gateway.enabled }}
+{{ if ne .Values.dashboard.namespace .Release.Namespace }}
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
 metadata:
-  name: kubernetes-dashboard-ingress
+  name: kubernetes-dashboard
   namespace: {{ .Values.dashboard.namespace }}
-  annotations:
-    kubernetes.io/ingress.class: {{ .Values.ingressNginx.class }}
-    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
-    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
-    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
 spec:
-  rules:
-    - host: {{ .Values.dashboardAccess.ingress.host }}
-      http:
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: kubernetes-dashboard
-                port:
-                  number: 443
+  from:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: {{ .Release.Namespace }}
+  to:
+  - group: ""
+    kind: Service
+    name: kubernetes-dashboard
+---
+{{ end }}
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: kubernetes-dashboard
+  namespace: {{ .Release.Namespace }}
+spec:
+  host: kubernetes-dashboard.{{ .Values.dashboard.namespace }}.svc.cluster.local
+  exportTo:
+  - "."
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      # The legacy dashboard uses a self-signed backend certificate.
+      insecureSkipVerify: true
 ---
 {{ end }}
 {{ if .Values.dashboardAccess.adminUser.enabled }}

@@ -1,0 +1,111 @@
+{{- if .Values.istio.enabled }}
+{{- $services := include "elektraweb.gatewayServices" . | fromYamlArray }}
+{{- if .Values.istio.httpsRedirect }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ .Values.istio.gateway.name }}-https-redirect
+  namespace: {{ .Release.Namespace }}
+spec:
+  parentRefs:
+  - name: {{ .Values.istio.gateway.name }}
+    sectionName: http
+  hostnames:
+    {{- range $service := $services }}
+  - {{ $service.config.host | quote }}
+    {{- end }}
+  rules:
+  - filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        port: 443
+        statusCode: 301
+---
+{{- end }}
+{{- range $service := $services }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $service.backend }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  parentRefs:
+  - name: {{ $.Values.istio.gateway.name }}
+    sectionName: https-{{ $service.name }}
+  {{- if not $.Values.istio.httpsRedirect }}
+  - name: {{ $.Values.istio.gateway.name }}
+    sectionName: http
+  {{- end }}
+  hostnames:
+  - {{ $service.config.host | quote }}
+  rules:
+  {{- if and (eq $service.name "worker") $.Values.fileUploader.install }}
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /files
+    backendRefs:
+    - name: file-uploader
+      port: 80
+    timeouts:
+      request: 600s
+    filters:
+    - type: CORS
+      cors:
+        allowOrigins:
+        - "*"
+        allowMethods:
+        - GET
+        - POST
+        - OPTIONS
+        - PUT
+        allowHeaders:
+        - DNT
+        - X-CustomHeader
+        - Keep-Alive
+        - User-Agent
+        - X-Requested-With
+        - If-Modified-Since
+        - Cache-Control
+        - Content-Type
+        - Authorization
+        - x-ms-blob-content-md5
+        - x-ms-blob-content-type
+        - x-ms-blob-type
+        - x-ms-client-request-id
+        - x-ms-date
+        - x-ms-version
+        allowCredentials: true
+        maxAge: 86400
+  {{- end }}
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: {{ $service.backend }}
+      {{- with $service.namespace }}
+      namespace: {{ . }}
+      {{- end }}
+      port: {{ $service.port }}
+    {{- with $service.timeout }}
+    timeouts:
+      request: {{ . }}
+    {{- end }}
+    {{- if eq $service.name "callcenter" }}
+    filters:
+    - type: CORS
+      cors:
+        allowOrigins:
+        - "*"
+        allowMethods:
+        - GET
+        - POST
+        - OPTIONS
+        allowCredentials: true
+        maxAge: 600
+    {{- end }}
+---
+{{- end }}
+{{- end }}

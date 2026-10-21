@@ -1,0 +1,128 @@
+{{- if .Values.istio.enabled }}
+{{- $gateway := .Values.istio.gateway }}
+{{- if and $gateway.hostNetwork (ne (int $gateway.replicas) 1) }}
+{{- fail "istio.gateway.replicas must be 1 with hostNetwork (ports 80/443 are exclusive)" }}
+{{- end }}
+{{- if lt (int $gateway.replicas) 1 }}
+{{- fail "istio.gateway.replicas must be at least 1" }}
+{{- end }}
+{{- if not (has $gateway.serviceType (list "ClusterIP" "LoadBalancer" "NodePort")) }}
+{{- fail "istio.gateway.serviceType must be ClusterIP, LoadBalancer or NodePort" }}
+{{- end }}
+{{- $services := include "elektraweb.gatewayServices" . | fromYamlArray }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $gateway.name }}-options
+  namespace: {{ .Release.Namespace }}
+data:
+  deployment: |
+    spec:
+      replicas: {{ $gateway.replicas }}
+      {{- if $gateway.hostNetwork }}
+      strategy:
+        type: Recreate
+        rollingUpdate: null
+      {{- end }}
+      template:
+        spec:
+          {{- with $gateway.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if $gateway.hostNetwork }}
+          hostNetwork: true
+          dnsPolicy: ClusterFirstWithHostNet
+          # Pod-level network sysctls cannot be used with hostNetwork.
+          securityContext:
+            sysctls: []
+          containers:
+          - name: istio-proxy
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              privileged: false
+              capabilities:
+                drop:
+                - ALL
+                add:
+                - NET_BIND_SERVICE
+          {{- else }}
+          hostNetwork: false
+          {{- end }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ required "istio.gateway.name is required" $gateway.name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    networking.istio.io/service-type: {{ ternary "ClusterIP" $gateway.serviceType $gateway.hostNetwork | quote }}
+spec:
+  gatewayClassName: istio
+  infrastructure:
+    {{- with $gateway.serviceAnnotations }}
+    annotations:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    parametersRef:
+      group: ""
+      kind: ConfigMap
+      name: {{ $gateway.name }}-options
+  listeners:
+  - name: http
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: Same
+  {{- range $service := $services }}
+  - name: https-{{ $service.name }}
+    hostname: {{ $service.config.host | quote }}
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: {{ $service.config.tlsSecretName | default $service.secret }}
+    allowedRoutes:
+      namespaces:
+        from: Same
+  {{- end }}
+{{- $certificates := dict }}
+{{- range $service := $services }}
+{{- $secret := $service.config.tlsSecretName | default $service.secret }}
+{{- $certificate := get $certificates $secret | default (dict "name" $service.name "hosts" list) }}
+{{- $_ := set $certificate "hosts" (append $certificate.hosts $service.config.host) }}
+{{- if or $service.config.sslIssuer $service.config.sslClusterIssuer }}
+{{- $issuer := $service.config.sslClusterIssuer | default $service.config.sslIssuer }}
+{{- $kind := ternary "ClusterIssuer" "Issuer" (not (empty $service.config.sslClusterIssuer)) }}
+{{- if and $certificate.issuer (or (ne $certificate.issuer $issuer) (ne $certificate.kind $kind)) }}
+{{- fail (printf "TLS secret %s cannot use different certificate issuers" $secret) }}
+{{- end }}
+{{- $_ := set $certificate "issuer" $issuer }}
+{{- $_ := set $certificate "kind" $kind }}
+{{- end }}
+{{- $_ := set $certificates $secret $certificate }}
+{{- end }}
+{{- range $secret, $certificate := $certificates }}
+{{- if $certificate.issuer }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $certificate.name }}-cert
+  namespace: {{ $.Release.Namespace }}
+spec:
+  secretName: {{ $secret }}
+  dnsNames:
+    {{- toYaml $certificate.hosts | nindent 2 }}
+  issuerRef:
+    name: {{ $certificate.issuer }}
+    kind: {{ $certificate.kind }}
+{{- end }}
+{{- end }}
+{{- end }}

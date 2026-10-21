@@ -43,43 +43,4 @@ spec:
   selector:
     k8s-app: reportingcore
   type: ClusterIP
----
-kind: Ingress
-apiVersion: networking.k8s.io/v1
-metadata:
-  name: reportingcore-ingress
-  annotations:
-    {{- if .Values.reporting.sslIssuer }}
-    cert-manager.io/issuer: {{ .Values.reporting.sslIssuer }}
-    {{- end }}
-    {{- if .Values.reporting.sslClusterIssuer }}
-    cert-manager.io/cluster-issuer: {{ .Values.reporting.sslClusterIssuer }}
-    {{- end }}
-    nginx.ingress.kubernetes.io/affinity: cookie
-    nginx.ingress.kubernetes.io/server-snippet: |
-      gunzip on;
-      gzip on;
-      gzip_vary on;
-      gzip_proxied any;
-      gzip_comp_level 5;
-      gzip_min_length 512;
-      gzip_buffers 16 128k;
-      gzip_types *;
-spec:
-  ingressClassName: {{ .Values.ingressNginx.class }}
-  tls:
-    - hosts:
-        - {{ .Values.reporting.host }}
-      secretName: {{ .Values.reporting.tlsSecretName | default "elektrawebreport-cert" }}
-  rules:
-    - host: {{ .Values.reporting.host }}
-      http:
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: reportingcore
-                port:
-                  number: 5000
 {{ end }}

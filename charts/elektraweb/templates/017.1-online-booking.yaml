@@ -77,33 +77,4 @@ spec:
     - IPv4
   ipFamilyPolicy: SingleStack
   internalTrafficPolicy: Cluster
----
-kind: Ingress
-apiVersion: networking.k8s.io/v1
-metadata:
-  name: online-booking-ingress
-  annotations:
-    {{- if .Values.onlineBooking.sslIssuer }}
-    cert-manager.io/issuer: {{ .Values.onlineBooking.sslIssuer }}
-    {{- end }}
-    {{- if .Values.onlineBooking.sslClusterIssuer }}
-    cert-manager.io/cluster-issuer: {{ .Values.onlineBooking.sslClusterIssuer }}
-    {{- end }}
-spec:
-  ingressClassName: {{ .Values.ingressNginx.class }}
-  tls:
-    - hosts:
-        - {{ .Values.onlineBooking.host }}
-      secretName: {{ .Values.onlineBooking.tlsSecretName | default "onlinebooking-cert" }}
-  rules:
-    - host: {{ .Values.onlineBooking.host }}
-      http:
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: online-booking
-                port:
-                  number: 8080
-  {{ end }}
+{{ end }}
