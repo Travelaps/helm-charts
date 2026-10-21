@@ -48,33 +48,4 @@ spec:
   selector:
     k8s-app: pos-ng11
   type: ClusterIP
----
-kind: Ingress
-apiVersion: networking.k8s.io/v1
-metadata:
-  name: pos-ng11-ingress
-  annotations:
-    {{- if .Values.pos.sslIssuer }}
-    cert-manager.io/issuer: {{ .Values.pos.sslIssuer }}
-    {{- end }}
-    {{- if .Values.pos.sslClusterIssuer }}
-    cert-manager.io/cluster-issuer: {{ .Values.pos.sslClusterIssuer }}
-    {{- end }}
-spec:
-  ingressClassName: {{ .Values.ingressNginx.class }}
-  tls:
-    - hosts:
-        - {{ .Values.pos.host }}
-      secretName: {{ .Values.pos.tlsSecretName | default "elektrawebpos-cert" }}
-  rules:
-    - host: {{ .Values.pos.host }}
-      http:
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: pos-ng11
-                port:
-                  number: 80
-  {{ end }}
+{{ end }}

@@ -1,6 +1,17 @@
 Elektraweb başarıyla kuruldu!
-{{ if .Values.dashboardAccess.ingress.enabled }}
-Dashboard Adresi: https://{{ .Values.dashboardAccess.ingress.host }}/
+{{ if .Values.istio.enabled }}
+Gateway: {{ .Values.istio.gateway.name }} ({{ .Release.Namespace }})
+{{ if .Values.istio.gateway.hostNetwork }}
+Domainleri sunucunun LAN IP'sine yonlendirin, TCP 80/443 portlarini acin.
+Internet erisimi icin modem 80/443 -> sunucu 80/443 yonlendirmesi yapin.
+{{ else }}
+Gateway IP: kubectl -n {{ .Release.Namespace }} get svc {{ .Values.istio.gateway.name }}-istio
+{{ end }}
+HTTPS icin TLS secret'lari hazir olmali veya sslIssuer/sslClusterIssuer ayarlanmalidir.
+Durum: kubectl -n {{ .Release.Namespace }} get gateways.gateway.networking.k8s.io,httproutes.gateway.networking.k8s.io
+{{ end }}
+{{ if and .Values.istio.enabled .Values.dashboardAccess.gateway.enabled }}
+Dashboard Adresi: https://{{ .Values.dashboardAccess.gateway.host }}/
 {{ end }}
 {{ if .Values.dashboardAccess.adminUser.enabled }}
 Dashboard Token: kubectl -n {{ .Values.dashboard.namespace }} get secret $(kubectl -n {{ .Values.dashboard.namespace }} get sa/{{ .Values.dashboardAccess.adminUser.name }} -o jsonpath="{.secrets[0].name}") -o go-template="{{ "{{" }}.data.token | base64decode}}"

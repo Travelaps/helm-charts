@@ -152,20 +152,34 @@ dashboard:
   install: false
   namespace: kube-system
   createNamespace: false
-# Kubernetes Dashboard'a dışarıdan erişim için ingress/user
+# Kubernetes Dashboard'a dışarıdan erişim için gateway/user
 dashboardAccess:
-  ingress:
+  gateway:
     enabled: false
     host: kubernetes.docker.internal
+    tlsSecretName: kubernetes-dashboard-cert
+    # sslClusterIssuer: letsencrypt-prod
   adminUser:
     enabled: false
     name: admin-user
-# Nginx Ingress
-ingressNginx:
-  install: false
-  class: public
-  namespace: ingress
-  createNamespace: true
+# Kubernetes Gateway API + Istio (sidecar/mesh yok)
+istio:
+  enabled: true
+  gateway:
+    name: elektraweb-gateway
+    # Lokal: sunucunun 80/443 portlarini dogrudan dinler, ek IP gerekmez.
+    # Cloud: hostNetwork=false, serviceType=LoadBalancer kullanin.
+    hostNetwork: true
+    serviceType: LoadBalancer
+    replicas: 1
+    # Cok node varsa modem yonlendirmesinin yapildigi sunucuyu secin.
+    # nodeSelector:
+    #   kubernetes.io/hostname: hotel-server
+    nodeSelector: {}
+    # Cloud saglayicisina ozel Service annotation'lari.
+    serviceAnnotations: {}
+  # HTTP -> HTTPS yönlendirme
+  httpsRedirect: true
 # Create Hotel?
 hotel:
   install: false
@@ -199,3 +213,5 @@ callcenterintegration:
   install: false 
   image: ghcr.io/travelaps/call-center-integration:v20
   host: callcenterintegration
+  tlsSecretName: callcenterintegration-cert
+  # sslClusterIssuer: letsencrypt-prod
