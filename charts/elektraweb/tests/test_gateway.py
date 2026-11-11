@@ -308,6 +308,17 @@ class GatewayTests(unittest.TestCase):
             render(kube_version="1.27.0")
         self.assertIn("kubeVersion", error.exception.stderr)
 
+    def test_emds_logs_publish_defines_sqlcmd_variables(self):
+        documents = render({
+            "dbNames": {"DDLEVENTS": "hotel-ddlevents"},
+        })
+        job = named(documents, "Job", "sql-create-emds-logs")
+        args = job["spec"]["template"]["spec"]["containers"][0]["args"]
+        self.assertIn("/Variables:DDLEVENTS=hotel-ddlevents", args)
+        self.assertIn("/Variables:LOGSERVER=LOGSERVER", args)
+        self.assertIn("/Variables:master=master", args)
+        self.assertIn("/Variables:msdb=msdb", args)
+
 
 if __name__ == "__main__":
     unittest.main()
