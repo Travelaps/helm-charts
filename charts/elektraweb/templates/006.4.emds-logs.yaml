@@ -25,6 +25,8 @@ spec:
             - /TargetPassword:{{ .Values.sql.connection.password }}
             - /TargetDatabaseName:{{ .Values.dbNames.EMDS_LOGS }}
             - /Variables:master=master
+            - /Variables:msdb=msdb
+            - /Variables:DDLEVENTS={{ .Values.dbNames.DDLEVENTS }}
             - /Variables:LOGSERVER=LOGSERVER
             - /TargetTrustServerCertificate:True
             - /SourceTrustServerCertificate:True
